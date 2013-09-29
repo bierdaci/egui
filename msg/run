@@ -1,0 +1,1 @@
+FONTCONFIG_FILE=/etc/fonts/fonts.conf LD_LIBRARY_PATH=../egui/.libs/:../egal/.libs/:../elib/.libs:/home/zxh/cairo-1.8.10/src/.libs/:/home/zxh/gtk/fontconfig-2.8.0/src/.libs/ ./test

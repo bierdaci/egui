@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<profile>
+	<username>abc</username>
+	<password>123</password>
+	<friend>
+		<aaa/>
+	</friend>
+</profile>
