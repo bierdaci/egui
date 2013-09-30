@@ -34,8 +34,3 @@ libegui_la_SOURCES = \
 					ddlist.c \
 					progressbar.c
 
-# libegui_la_LIBADD =  ../elib/libelib.la ../egal/libegal.la
-
-##libegui_la_LDFLAGS = -L/usr/local/lib -lminigui -ljpeg -lpng -lpthread
-
-## widget_la_LIBADD = $(libglib)
