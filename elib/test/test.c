@@ -134,14 +134,37 @@ eGeneType egui_genetype_scrollwin(void)
     return gtype;
 }
 
+typedef struct {
+	eint i, j;
+} MenuScrollData;
+
+typedef struct {
+	eint (*set_font)(eHandle, MenuScrollData *, eint, edouble, ellong, efloat, eullong, efloat,  efloat,  efloat,  efloat,  efloat,  efloat,  efloat, edouble);
+	void (*set_color)(eHandle, eint);
+} MenuScrollOrders;
+
+static eint test_cb(eHandle hobj, eHandle  h1, eHandle h2, eHandle h3, eHandle h4, int i1, int i2, int i3, int i4)
+{
+	printf("%lx  %lx  %lx  %lx %d  %d  %d  %d\n", h1, h2, h3, h4, i1, i2, i3, i4);
+	return 0;
+}
+
+static void widget_init_orders(eGeneType new, ePointer this)
+{
+	MenuScrollOrders *ms = this;
+	ms->set_font = test_cb;
+}
+
 static eGeneType egui_genetype_menu_scrollwin(void)
 { 
     static eGeneType gtype = 0;    
   
     if (!gtype) {
         eGeneInfo info = {
-			//"menu-scrollwin",
-            0, NULL, 0, NULL, NULL, NULL,
+            sizeof(MenuScrollOrders),
+			widget_init_orders,
+			sizeof(MenuScrollData),
+			NULL, NULL, NULL,
         };
   
         gtype = e_register_genetype(&info, GTYPE_SCROLLWIN, GTYPE_BOX, NULL);
@@ -152,10 +175,22 @@ static eGeneType egui_genetype_menu_scrollwin(void)
 int main(void)
 {
 	eHandle obj1 = e_object_new(GTYPE_MENU_SCROLLWIN);
+	//eHandle obj2 = e_object_new(GTYPE_HOOK_BOX);
 	//printf("check box  %d\n", e_object_type_check(hobj, GTYPE_BOX));
-	eHandle obj2 = e_object_new(GTYPE_HOOK_BOX);
-	printf("obj1 check box  %d\n", e_object_type_check(obj1, GTYPE_BOX));
-	printf("obj2 check box  %d\n", e_object_type_check(obj2, GTYPE_BOX));
+
+	//esig_t sig = e_signal_new("set_font",
+	//		GTYPE_SCROLLWIN,
+	//		STRUCT_OFFSET(MenuScrollOrders, set_font),
+	//		true, 0, "%n %n %n %p %d %d %d %d");
+	esig_t sig = e_signal_new1("aaaa", GTYPE_SCROLLWIN, "%n %n %n %p %d %d %d %d");
+
+
+	e_signal_connect(obj1, sig, test_cb);
+
+	//printf("obj1 check box  %d\n", e_object_type_check(obj1, GTYPE_BOX));
+	//printf("obj2 check box  %d\n", e_object_type_check(obj2, GTYPE_BOX));
+
+	e_signal_emit(obj1, sig, 1, 2, 3, 4, 5, 6, 7, 8);
 
 	return 0;
 }

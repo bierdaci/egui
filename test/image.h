@@ -12,5 +12,5 @@ struct _GuiImage {
 #define GTYPE_IMAGE					(egui_genetype_image())
 #define GUI_IMAGE_DATA(hobj)		((GuiImage *)e_object_type_data(hobj, GTYPE_IMAGE))
 
-eHandle egui_image_new(const echar *filename);
+eHandle egui_image_new(int w, int h);
 #endif

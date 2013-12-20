@@ -191,7 +191,7 @@ static GalPixbuf *png_load_end(ePointer context)
 	return pixbuf;
 }
 
-static bool png_load_increment(ePointer context, const euchar *buf, size_t size)
+static bool png_load_increment(ePointer context, const euchar *buf, png_size_t size)
 {
 	PNGContext *lc = context;
 

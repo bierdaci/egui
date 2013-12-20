@@ -6,14 +6,14 @@ static void widget_init_orders(eGeneType, ePointer);
 static void widget_free_data(eHandle, ePointer);
 static void widget_init_gene(eGeneType);
 
-eint widget_signal_hide           = 0;
-eint widget_signal_show           = 0;
-eint widget_signal_realize        = 0;
-eint widget_signal_configure      = 0;
-eint widget_signal_expose         = 0;
-eint widget_signal_resize         = 0;
-eint widget_signal_expose_bg      = 0;
-eint widget_signal_destroy        = 0;
+esig_t widget_signal_hide           = 0;
+esig_t widget_signal_show           = 0;
+esig_t widget_signal_realize        = 0;
+esig_t widget_signal_configure      = 0;
+esig_t widget_signal_expose         = 0;
+esig_t widget_signal_resize         = 0;
+esig_t widget_signal_expose_bg      = 0;
+esig_t widget_signal_destroy        = 0;
 
 eGeneType egui_genetype_widget(void)
 {
@@ -197,36 +197,36 @@ static void widget_init_gene(eGeneType new)
 	widget_signal_hide = e_signal_new("hide",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, hide),
-			false, 0, 0);
+			false, 0, NULL);
 	widget_signal_show = e_signal_new("show",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, show),
-			false, 0, 0);
+			false, 0, NULL);
 
 	widget_signal_realize = e_signal_new("realize",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, realize),
-			true, 0, 0);
+			true, 0, NULL);
 	widget_signal_resize = e_signal_new("resize",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, resize),
-			true, _INTSIZEOF(ePointer), 0);
+			true, 0, "%p");
 	widget_signal_expose = e_signal_new("expose",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, expose),
-			true, _INTSIZEOF(ePointer), 0);
+			true, 0, "%p");
 	widget_signal_configure = e_signal_new("configure",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, configure),
-			true, _INTSIZEOF(ePointer), 0);
+			true, 0, "%p");
 	widget_signal_expose_bg = e_signal_new("expose_bg",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, expose_bg),
-			true, _INTSIZEOF(ePointer), 0);
+			true, 0, "%p");
 	widget_signal_destroy = e_signal_new("destroy",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, destroy),
-			false, 0, 0);
+			false, 0, NULL);
 }
 
 eGeneType egui_genetype_font(void)

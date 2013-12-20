@@ -5,8 +5,8 @@
 static eTree *signal_tree = NULL;
 static e_pthread_mutex_t signal_lock = PTHREAD_MUTEX_INITIALIZER;
 
-eint __signal_call_marshal(eObject *, eVoidFunc, eValist, eint);
-eint __signal_call_marshal_1(eObject *, eVoidFunc, ePointer, eValist, eint);
+eint __signal_call_marshal(eObject *, eVoidFunc, eValist, struct _argsnode *, eint, eint);
+eint __signal_call_marshal_1(eObject *, eVoidFunc, ePointer, eValist, struct _argsnode *, eint, eint);
 
 #define SLOT			0
 #define SLOT_FUNC		1
@@ -61,7 +61,7 @@ static bool e_signal_check_name(const echar *name)
 	return false;
 }
 
-static bool e_signal_slot_insert_func(eObject *obj, eint sig, eSignalFunc func,
+static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func,
 		ePointer data, ePointer data2, ePointer data3, ePointer data4)
 {
 	eSignalSlot *slot;
@@ -104,7 +104,7 @@ static bool e_signal_slot_insert_func(eObject *obj, eint sig, eSignalFunc func,
 	return true;
 }
 
-static ePointer e_signal_slot_get_data(eObject *obj, eint sig, eint slot_type)
+static ePointer e_signal_slot_get_data(eObject *obj, esig_t sig, eint slot_type)
 {
 	eSignalSlot *slot;
 
@@ -134,7 +134,7 @@ static ePointer e_signal_slot_get_data(eObject *obj, eint sig, eint slot_type)
 	return NULL;
 }
 
-bool e_signal_connect(eHandle hobj, eint sig, eSignalFunc func)
+bool e_signal_connect(eHandle hobj, esig_t sig, eSignalFunc func)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -150,7 +150,7 @@ bool e_signal_connect(eHandle hobj, eint sig, eSignalFunc func)
 	return true;
 }
 
-bool e_signal_connect1(eHandle hobj, eint sig, eSignalFunc func, ePointer data)
+bool e_signal_connect1(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -166,7 +166,7 @@ bool e_signal_connect1(eHandle hobj, eint sig, eSignalFunc func, ePointer data)
 	return true;
 }
 
-bool e_signal_connect2(eHandle hobj, eint sig, eSignalFunc func, ePointer data, ePointer data2)
+bool e_signal_connect2(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data, ePointer data2)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -182,7 +182,7 @@ bool e_signal_connect2(eHandle hobj, eint sig, eSignalFunc func, ePointer data, 
 	return true;
 }
 
-bool e_signal_connect3(eHandle hobj, eint sig, eSignalFunc func, ePointer data, ePointer data2, ePointer data3)
+bool e_signal_connect3(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data, ePointer data2, ePointer data3)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -198,7 +198,7 @@ bool e_signal_connect3(eHandle hobj, eint sig, eSignalFunc func, ePointer data, 
 	return true;
 }
 
-bool e_signal_connect4(eHandle hobj, eint sig, eSignalFunc func,
+bool e_signal_connect4(eHandle hobj, esig_t sig, eSignalFunc func,
 		ePointer data, ePointer data2, ePointer data3, ePointer data4)
 {
 	eObject  *obj    = (eObject *)hobj;
@@ -215,10 +215,64 @@ bool e_signal_connect4(eHandle hobj, eint sig, eSignalFunc func,
 	return true;
 }
 
-eint e_signal_new(const char *name, eGeneType gtype,
-		euint32 offset, bool prefix, euint va_size, eSignalType stype)
+static eint fmstr2node(const char *fmstr, struct _argsnode *node)
+{
+	const char *p = fmstr;
+	eint n = 0;
+
+	if (!p) return 0;
+
+	while (*p) {
+		if (*p != '%')
+			return -1;
+		p++;
+		node[n].type = ATYPE_OTHER;
+		if (p[0] == 'l') {
+			p++;
+			if (p[0] == 'l') {
+				p++;
+				node[n].size = sizeof(ellong);
+				if (p[0] != 'd' && p[0] != 'u')
+					return -1;
+			}
+			else if (p[0] == 'f') {
+				node[n].type = ATYPE_FLOAT;
+				node[n].size = sizeof(edouble);
+			}
+			else if (p[0] == 'd' || p[0] == 'u') {
+				node[n].size = sizeof(elong);
+			}
+			else
+				return -1;
+		}
+		else if (p[0] == 'f') {
+			node[n].type = ATYPE_FLOAT;
+			node[n].size = sizeof(efloat);
+		}
+		else if (p[0] == 'p') {
+			node[n].size = sizeof(ePointer);
+		}
+		else if (p[0] == 'n' || p[0] == 'h') {
+			node[n].size = sizeof(eHandle);
+		}
+		else if (p[0] == 'd' || p[0] == 'u') {
+			node[n].size = sizeof(eint);
+		}
+		else
+			return -1;
+
+		p++;
+		while (*p == ' ') p++;
+		n++; 
+	}
+	return n;
+}
+
+static esig_t __signal_new(const char *name, eGeneType gtype,
+		euint32 offset, bool prefix, eSignalType stype, const char *fmstr, eValist vp)
 {
 	eSignal *new;
+	struct _argsnode tmp[256];
 
 	e_pthread_mutex_lock(&signal_lock);
 
@@ -232,7 +286,18 @@ eint e_signal_new(const char *name, eGeneType gtype,
 	new->prefix  = prefix;
 	new->gtype   = gtype;
 	new->offset  = offset;
-	new->size    = (va_size + sizeof(eulong) - 1) & ~(sizeof(euint) - 1);
+	new->size = 0;
+	new->num  = fmstr2node(fmstr, tmp);
+	if (new->num < 0)
+		return -1;
+	if (new->num > 0) {
+		eint i;
+		new->node = e_malloc(sizeof(struct _argsnode) * new->num);
+		for (i = 0; i < new->num; i++) {
+			new->node[i] = tmp[i];
+			new->size   += ALIGN_WORD(tmp[i].size);
+		}
+	}
 	if (stype < STYPE_DEFAULT || stype > STYPE_ANYONE)
 		new->stype = STYPE_ANYONE;
 	else
@@ -242,22 +307,38 @@ eint e_signal_new(const char *name, eGeneType gtype,
 
 	e_pthread_mutex_unlock(&signal_lock);
 
-	return (eint)new;
+	return (esig_t)new;
 }
 
-eint e_signal_connect_new(const char *name, eGeneType gtype, euint va_size)
+esig_t e_signal_new(const char *name, eGeneType gtype,
+		euint32 offset, bool prefix, eSignalType stype, const char *fmstr, ...)
 {
-	return e_signal_new(name, gtype, 0, false, va_size, STYPE_CONNECT);
+	if (fmstr) {
+		eValist vp;
+		e_va_start(vp, fmstr);
+		return __signal_new(name, gtype, offset, prefix, stype, fmstr, vp);
+	}
+	return __signal_new(name, gtype, offset, prefix, stype, fmstr, 0);
+}
+
+esig_t e_signal_new1(const char *name, eGeneType gtype, const char *fmstr, ...)
+{
+	if (fmstr) {
+		eValist vp;
+		e_va_start(vp, fmstr);
+		return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, vp);
+	}
+	return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, 0);
 }
 
 static eint signal_call_marshal(eObject *obj, eSignal *signal, eVoidFunc func, eValist vp)
 {
-	return __signal_call_marshal(obj, func, vp, signal->size);
+	return __signal_call_marshal(obj, func, vp, signal->node, signal->num, signal->size);
 }
 
 static eint signal_call_marshal_1(eObject *obj, eSignal *signal, eVoidFunc func, ePointer *data, eValist vp)
 {
-	return __signal_call_marshal_1(obj, func, data, vp, signal->size);
+	return __signal_call_marshal_1(obj, func, data, vp, signal->node, signal->num, signal->size);
 }
 
 static eint e_signal_call(eHandle hobj, eSignal *signal, eSignalType type, eValist vp)
@@ -270,7 +351,7 @@ static eint e_signal_call(eHandle hobj, eSignal *signal, eSignalType type, eVali
 		return 0;
 
 	if ((type & STYPE_CONNECT) && (signal->stype & STYPE_CONNECT))
-		func = e_signal_slot_get_data(obj, (eint)signal, SLOT_FUNC);
+		func = e_signal_slot_get_data(obj, (esig_t)signal, SLOT_FUNC);
 
 	if ((!func || !*func)
 			&& (type & STYPE_DEFAULT)
@@ -294,12 +375,12 @@ static eint e_signal_call(eHandle hobj, eSignal *signal, eSignalType type, eVali
 	return 0;
 }
 
-eint e_signal_emit_valist(eHandle hobj, eint sig, eValist vp)
+eint e_signal_emit_valist(eHandle hobj, esig_t sig, eValist vp)
 {
 	return e_signal_call(hobj, (eSignal *)sig, STYPE_ANYONE, vp);
 }
 
-eint e_signal_emit(eHandle hobj, eint sig, ...)
+eint e_signal_emit(eHandle hobj, esig_t sig, ...)
 {
 	eValist vp;
 	eint    retval;
@@ -311,7 +392,7 @@ eint e_signal_emit(eHandle hobj, eint sig, ...)
 	return retval;
 }
 
-eint e_signal_emit_default(eHandle hobj, eint sig, ...)
+eint e_signal_emit_default(eHandle hobj, esig_t sig, ...)
 {
 	eValist vp;
 	eint    retval;
@@ -323,7 +404,7 @@ eint e_signal_emit_default(eHandle hobj, eint sig, ...)
 	return retval;
 }
 
-eint e_signal_emit_connect(eHandle hobj, eint sig, ...)
+eint e_signal_emit_connect(eHandle hobj, esig_t sig, ...)
 {
 	eValist vp;
 	eint    retval;
@@ -335,39 +416,39 @@ eint e_signal_emit_connect(eHandle hobj, eint sig, ...)
 	return retval;
 }
 
-eSignalSlot *e_signal_get_slot(eHandle hobj , eint sig)
+eSignalSlot *e_signal_get_slot(eHandle hobj , esig_t sig)
 {
 	return e_signal_slot_get_data((eObject *)hobj, sig, SLOT);
 }
 
-ePointer e_signal_get_data(eHandle hobj, eint sig)
+ePointer e_signal_get_data(eHandle hobj, esig_t sig)
 {
 	return e_signal_slot_get_data((eObject *)hobj, sig, SLOT_DATA);
 }
 
-ePointer e_signal_get_data2(eHandle hobj, eint sig)
+ePointer e_signal_get_data2(eHandle hobj, esig_t sig)
 {
 	return e_signal_slot_get_data((eObject *)hobj, sig, SLOT_DATA2);
 }
 
-ePointer e_signal_get_data3(eHandle hobj, eint sig)
+ePointer e_signal_get_data3(eHandle hobj, esig_t sig)
 {
 	return e_signal_slot_get_data((eObject *)hobj, sig, SLOT_DATA3);
 }
 
-ePointer e_signal_get_data4(eHandle hobj, eint sig)
+ePointer e_signal_get_data4(eHandle hobj, esig_t sig)
 {
 	return e_signal_slot_get_data((eObject *)hobj, sig, SLOT_DATA4);
 }
 
-eSignalFunc e_signal_get_func(eHandle hobj, eint sig)
+eSignalFunc e_signal_get_func(eHandle hobj, esig_t sig)
 {
 	eVoidFunc *func = e_signal_slot_get_data((eObject *)hobj, sig, SLOT_FUNC);
 	if (func) return *func;
 	return NULL;
 }
 
-void e_signal_lock(eHandle hobj, eint sig)
+void e_signal_lock(eHandle hobj, esig_t sig)
 {
 	eObject *obj = (eObject *)hobj;
 	eSignalSlot *slot;
@@ -402,7 +483,7 @@ void e_signal_lock(eHandle hobj, eint sig)
 	e_pthread_mutex_unlock(&obj->slot_lock);
 }
 
-void e_signal_unlock(eHandle hobj, eint sig)
+void e_signal_unlock(eHandle hobj, esig_t sig)
 {
 	eObject *obj = (eObject *)hobj;
 	eSignalSlot *slot;

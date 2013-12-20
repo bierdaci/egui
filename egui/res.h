@@ -19,7 +19,7 @@ struct _GuiRes {
 };
 
 extern eHandle egui_res_handle;
-eint egui_init_res(void);
+elong egui_init_res(void);
 
 GuiResItem *egui_res_find(eHandle, const echar *);
 ePointer egui_res_find_item(GuiResItem *, const echar *);

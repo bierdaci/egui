@@ -64,9 +64,9 @@ int egui_init(int argc, char *const args[])
 	return 0;
 }
 
-static euint event_to_signal(GalEvent *event)
+static esig_t event_to_signal(GalEvent *event)
 {
-	euint signal;
+	esig_t signal;
 
 	switch (event->type) {
 		case GAL_ET_CONFIGURE:
@@ -154,8 +154,8 @@ static void do_private_event(GalEvent *event)
 	switch (event->private_type) {
 		case GUI_ASYNC_SIGNAL:
 		{
-			eint sig   = (eint)event->e.private.args[0];
-			eint nargs = (eint)event->e.private.args[1];
+			esig_t sig  = (esig_t)event->e.private.args[0];
+			elong nargs = (elong)event->e.private.args[1];
 			if (nargs == 0)
 				e_signal_emit(event->window, sig);
 			if (nargs == 1)
@@ -214,7 +214,7 @@ static void do_private_event(GalEvent *event)
 int egui_main()
 {
 	GalEvent event;
-	eHandle  signal;
+	esig_t   signal;
 
 	egal_event_init();
 	while (egal_wait_event(&event)) {
@@ -255,7 +255,7 @@ void egui_quit(void)
 	egal_add_async_event_to_queue(&event);
 }
 
-void egui_signal_emit(eHandle hobj, eint sig)
+void egui_signal_emit(eHandle hobj, esig_t sig)
 {
 	GalEvent event;
 	event.type   = GAL_ET_PRIVATE;
@@ -266,7 +266,7 @@ void egui_signal_emit(eHandle hobj, eint sig)
 	egal_add_async_event_to_queue(&event);
 }
 
-void egui_signal_emit1(eHandle hobj, eint sig, ePointer args)
+void egui_signal_emit1(eHandle hobj, esig_t sig, ePointer args)
 {
 	GalEvent event;
 	event.type   = GAL_ET_PRIVATE;
@@ -278,7 +278,7 @@ void egui_signal_emit1(eHandle hobj, eint sig, ePointer args)
 	egal_add_async_event_to_queue(&event);
 }
 
-void egui_signal_emit2(eHandle hobj, eint sig, ePointer args1, ePointer args2)
+void egui_signal_emit2(eHandle hobj, esig_t sig, ePointer args1, ePointer args2)
 {
 	GalEvent event;
 	event.type   = GAL_ET_PRIVATE;
@@ -291,7 +291,7 @@ void egui_signal_emit2(eHandle hobj, eint sig, ePointer args1, ePointer args2)
 	egal_add_async_event_to_queue(&event);
 }
 
-void egui_signal_emit3(eHandle hobj, eint sig, ePointer args1, ePointer args2, ePointer args3)
+void egui_signal_emit3(eHandle hobj, esig_t sig, ePointer args1, ePointer args2, ePointer args3)
 {
 	GalEvent event;
 	event.type   = GAL_ET_PRIVATE;
@@ -305,7 +305,7 @@ void egui_signal_emit3(eHandle hobj, eint sig, ePointer args1, ePointer args2, e
 	egal_add_async_event_to_queue(&event);
 }
 
-void egui_signal_emit4(eHandle hobj, eint sig, ePointer args1, ePointer args2, ePointer args3, ePointer args4)
+void egui_signal_emit4(eHandle hobj, esig_t sig, ePointer args1, ePointer args2, ePointer args3, ePointer args4)
 {
 	GalEvent event;
 	event.type   = GAL_ET_PRIVATE;
@@ -1077,5 +1077,12 @@ void egui_draw_hbar(GalWindow window, GalPB pb,
 
 	if (tail)
 		egal_draw_image(window, pb, x, y, tail, 0, oy + y, tail->w, h - y);
+}
+
+void egui_make_GL(eHandle hobj)
+{
+	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+	if (wid->window)
+		egal_window_make_GL(wid->window);
 }
 

@@ -106,15 +106,14 @@ struct _GuiWidgetOrders {
 #define WIDGET_STATUS_ACTIVE(wid)				(((wid)->status & GuiStatusActive) && WIDGET_STATUS_VISIBLE(wid))
 #define WIDGET_STATUS_MOUSE(wid)				(((wid)->status & GuiStatusMouse)  && WIDGET_STATUS_VISIBLE(wid))
 
-extern eint widget_signal_configure;
-extern eint widget_signal_expose;
-extern eint widget_signal_expose_bg;
-extern eint widget_signal_resize;
-extern eint widget_signal_realize;
-extern eint widget_signal_background;
-extern eint widget_signal_hide;
-extern eint widget_signal_show;
-extern eint widget_signal_destroy;
+extern esig_t widget_signal_configure;
+extern esig_t widget_signal_expose;
+extern esig_t widget_signal_expose_bg;
+extern esig_t widget_signal_resize;
+extern esig_t widget_signal_realize;
+extern esig_t widget_signal_hide;
+extern esig_t widget_signal_show;
+extern esig_t widget_signal_destroy;
 
 eGeneType egui_genetype_widget(void);
 eGeneType egui_genetype_font(void);

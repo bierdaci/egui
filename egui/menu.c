@@ -698,7 +698,7 @@ static eHandle menu_point_in(GuiBin *bin, eint x, eint y)
 	return 0;
 }
 
-static eint mouse_signal_emit(eHandle hobj, eint sig, int x, int y)
+static eint mouse_signal_emit(eHandle hobj, esig_t sig, int x, int y)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 

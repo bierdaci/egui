@@ -2,5 +2,8 @@
 <profile>
 	<username>zxh</username>
 	<password>123</password>
-	<friend/>
+	<friend>
+		<abc/>
+		<aaa/>
+	</friend>
 </profile>

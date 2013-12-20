@@ -201,7 +201,7 @@ static void leave_signal_emit(eHandle hobj)
 	}
 }
 
-static eint mouse_signal_emit(eHandle hobj, eint sig, GalEventMouse *ent)
+static eint mouse_signal_emit(eHandle hobj, esig_t sig, GalEventMouse *ent)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 

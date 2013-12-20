@@ -1,17 +1,17 @@
 CC = gcc
 
 CFLAGS = -Wall -g -I../ -I/usr/include/freetype2
-LDFLAGS = -L../egui/.libs/ -L../egal/.libs -L../elib/.libs -lelib -legui -legal -lfreetype -lXrender
-ALL: button fixed label text clist anim box scrollwin menu menu_entrys entry frame notebook filesel ddlist hello bn image.o
+LDFLAGS = -L../egui/.libs/ -L../egal/.libs -L../elib/.libs -legal -lelib -legui -lfreetype -lXrender
+ALL: button fixed label text clist anim box scrollwin menu menu_entrys entry frame notebook filesel ddlist hello opengl image.o
 
-bn: bn.c image.o
+opengl: opengl.c image.o
+	${CC} ${CFLAGS} $^ -o $@ ${LDFLAGS}
+
+hello: hello.c image.o
 	${CC} ${CFLAGS} $^ -o $@ ${LDFLAGS}
 
 image.o: image.c
-	$(CC) $(CFLAGS) $^
-
-hello: hello.c
-	$(CC) $(CFLAGS) -o hello $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $^ -c
 
 ddlist: ddlist.c
 	$(CC) $(CFLAGS) -o ddlist $^ $(LDFLAGS)
@@ -59,4 +59,4 @@ fixed: fixed.c
 	$(CC) $(CFLAGS) -o fixed $^ $(LDFLAGS)
 
 clean:
-	rm -f label text button clist anim box frame entry notebook menu menu_entrys scrollwin fixed ddlist filesel
+	rm label text button clist anim box frame entry notebook menu menu_entrys scrollwin fixed ddlist filesel

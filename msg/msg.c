@@ -1148,7 +1148,7 @@ static eint main_window(const char *name, const char *passwd)
 	win  = egui_window_new(GUI_WINDOW_TOPLEVEL);
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 
-	SIG_RECV_MSG = e_signal_connect_new("recv_msg", GTYPE_TEXT, sizeof(eint) + sizeof(echar *));
+	SIG_RECV_MSG = e_signal_new1("recv_msg", GTYPE_TEXT, "%d %p");
 
 	egui_window_set_name(win, _(name));
 	vbox = egui_vbox_new();

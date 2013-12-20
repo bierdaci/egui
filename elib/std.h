@@ -60,12 +60,13 @@ void e_strfreev(echar **str_array);
 
 #define e_new(type, nmemb)         e_malloc(sizeof(type) * nmemb)
 #define e_renew(type, ptr, nmemb)  e_realloc(ptr, sizeof(type) * nmemb)
+#define ALIGN_WORD(size) ((size + sizeof(elong) - 1) & ~(sizeof(elong) - 1))
 
 static inline ePointer e_malloc(euint size)
 {
 	if (!size)
 		return NULL;
-	return e_heap_malloc((size + 3) & ~3, false);
+	return e_heap_malloc(ALIGN_WORD(size), false);
 }
 
 static inline ePointer e_realloc(ePointer ptr, euint size)
@@ -75,13 +76,13 @@ static inline ePointer e_realloc(ePointer ptr, euint size)
 		return NULL;
 	}
 	if (ptr)
-		return e_heap_realloc(ptr, (size + 3) & ~3);
-	return e_heap_malloc((size + 3) & ~3, false);
+		return e_heap_realloc(ptr, ALIGN_WORD(size));
+	return e_heap_malloc(ALIGN_WORD(size), false);
 }
 
 static inline ePointer e_calloc(euint nmemb, euint size)
 {
-	eint    nsize = (nmemb * size + 3) & ~3;
+	eint    nsize = ALIGN_WORD(size) * nmemb;
 	ePointer addr = e_heap_malloc(nsize, false);
 	e_memset(addr, 0, nsize);
 	return addr;

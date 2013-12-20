@@ -13,7 +13,7 @@ struct _GuiCharOrders {
 	eint (*achar)(eHandle, echar);
 };
 
-extern eint char_signal_char;
+extern esig_t char_signal_char;
 
 eGeneType egui_genetype_char(void);
 eHandle egui_char_new(int w, int h);

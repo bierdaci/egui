@@ -1,7 +1,7 @@
 #ifndef __ELIB_TYPES_H__
 #define __ELIB_TYPES_H__
 
-#include <egconfig.h>
+#include <econfig.h>
 
 #undef  MAX
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
@@ -14,22 +14,22 @@ typedef enum {false = 0, true = 1} bool;
 #endif
 
 typedef long				elong;
-typedef char				eint8;
 typedef short				eint16;
 typedef int					eint;
 typedef int					eint32;
 typedef long long			eint64;
-typedef long long			edlong;
-typedef unsigned char		echar;
+typedef long long			ellong;
+typedef char				echar;
 typedef unsigned char		euchar;
+typedef char				eint8;
 typedef unsigned char		euint8;
 typedef unsigned short		euint16;
-typedef unsigned long		euint32;
+typedef unsigned int 		euint32;
 typedef unsigned long long	euint64;
 typedef unsigned long		eulong;
-typedef unsigned long long	eudlong;
+typedef unsigned long long	eullong;
 typedef unsigned int		euint;
-typedef double				efloat;
+typedef float				efloat;
 typedef double				edouble;
 typedef void				evoid;
 
@@ -62,7 +62,7 @@ typedef void		(*eFunc)(ePointer data, ePointer user_data);
 typedef void		(*eDestroyNotify)(ePointer data);
 #define _(a)		((const echar *)(a))
 
-#define STRUCT_OFFSET(type, offset) ((euint32)(&((type *)0)->offset))
+#define STRUCT_OFFSET(type, offset)  ((eulong)(&((type *)0)->offset))
 #define TABLES_SIZEOF(arr)           (sizeof(arr) / sizeof((arr)[0]))
 
 #endif

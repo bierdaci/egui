@@ -65,6 +65,6 @@ void egui_adjust_reset_hook(eHandle, efloat, efloat, efloat, efloat, efloat);
 void egui_adjust_set_hook(eHandle, efloat);
 void egui_adjust_set_owner(eHandle, eHandle);
 
-extern eint adjust_signal_update;
+extern esig_t adjust_signal_update;
 
 #endif

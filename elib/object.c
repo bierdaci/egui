@@ -705,7 +705,7 @@ static eDnaNode *__dnode_branch_find_subset_cast(eDnaNode *nodes, eDnaNode *type
 {
 	euchar *base = (euchar *)&nodes->index[nodes->branch_num];
 
-	eint i;
+	elong i;
 	for (i = 0; i < nodes->branch_num; i++) {
 		eBranchIndex *index = &nodes->index[i];
 		eDnaNode *t = (eDnaNode *)(base + index->offset);
@@ -721,7 +721,7 @@ static eDnaNode *__dnode_find_subset(eDnaNode *nodes, eint n1, eDnaNode *type, e
 	eDnaNode *p1 = nodes;
 	eDnaNode *p2 = type;
 
-	eint i = 0;
+	elong i = 0;
 	do {
 		if (p2->id > p1->id)
 			return (eDnaNode *)i;

@@ -18,6 +18,12 @@
 
 #include "window.h"
 
+#ifdef _GAL_SUPPORT_OPENGL
+#include <GL/gl.h>
+#include <GL/glx.h>
+#include <GL/glu.h>
+#endif
+
 #define X11_PB_DATA(hobj)			((GalPBX11       *)e_object_type_data(hobj, x11_genetype_pb()))
 #define X11_WINDOW_DATA(hobj)		((GalWindowX11   *)e_object_type_data(hobj, x11_genetype_window()))
 #define X11_PIXMAP_DATA(hobj)		((GalPixmapX11   *)e_object_type_data(hobj, x11_genetype_pixmap()))
@@ -125,6 +131,16 @@ struct _GalColormapX11 {
 	Colormap xmap;
 };
 
+#ifdef _GAL_SUPPORT_OPENGL
+typedef struct _GalGLXContext GalGLXContext;
+struct _GalGLXContext {
+	GLXContext    context;
+	GalWindowX11 *current;
+};
+//static GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
+static GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, None};
+static GalGLXContext *x11_glc;
+#endif
 static GalWindow      root_window;
 static GalVisualX11   x11_visual;
 static GalColormapX11 x11_cmap;
@@ -281,18 +297,21 @@ static struct {
 
 static eint x11_compare_func(eConstPointer a, eConstPointer b)
 {
-	if ((eint)a > (eint)b) return  1;
-	if ((eint)a < (eint)b) return -1;
+	if ((elong)a > (elong)b) return  1;
+	if ((elong)a < (elong)b) return -1;
 	return 0;
 }
 
 static eint x11_window_get_attr(GalWindow, GalWindowAttr *);
 int x11_wmananger_init(GalWindowManager *wm)
 {
-	int vnum;
-	XVisualInfo   vinfo;
 	GalWindowAttr attributes;
 	GalDrawableX11 *xdraw;
+
+#ifndef _GAL_SUPPORT_OPENGL
+	int vnum;
+	XVisualInfo   vinfo;
+#endif
 
 	XInitThreads();
 	x11_tree = e_tree_new(x11_compare_func);
@@ -304,12 +323,18 @@ int x11_wmananger_init(GalWindowManager *wm)
 	}
 	XSynchronize(x11_dpy, False);
 
+#ifdef _GAL_SUPPORT_OPENGL
+	x11_vinfo = glXChooseVisual(x11_dpy, XDefaultScreen(x11_dpy), att);
+	x11_glc = e_malloc(sizeof(GalGLXContext));
+	x11_glc->context = glXCreateContext(x11_dpy, x11_vinfo, NULL, GL_TRUE);
+#else
 	vinfo.visualid = XVisualIDFromVisual(XDefaultVisual(x11_dpy, XDefaultScreen(x11_dpy)));
 	x11_vinfo = XGetVisualInfo(x11_dpy, VisualIDMask, &vinfo, &vnum);
 	if (vnum == 0) {
 		printf("Bad visual id %d\n", (int)vinfo.visualid);
 		return -1;
 	}
+#endif
 
 	attributes.type = GalWindowRoot;
 	root_window     = x11_window_new(&attributes);
@@ -614,6 +639,9 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 		//xevent_mask |= CWBackPixel;
 		//xattribs.background_pixel = child->attr.bg_color;
 		//xattribs.background_pixel = XBlackPixel(x11_dpy, x11_vinfo->screen);
+#ifdef _GAL_SUPPORT_OPENGL
+		xevent_mask |= CWColormap;
+#endif
 	}
 	else if (child->attr.wclass == GAL_INPUT_ONLY) {
 		wclass       = InputOnly;
@@ -633,6 +661,11 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 			x11_vinfo->visual,
 			xevent_mask,
 			&xattribs);
+
+#ifdef _GAL_SUPPORT_OPENGL
+	if (x11_glc->current == child)
+		glXMakeCurrent(x11_dpy, child->xid, x11_glc->context);
+#endif
 
 	if (child->attr.type == GalWindowTop || child->attr.type == GalWindowDialog) {
 		Atom protocols = XInternAtom(x11_dpy, "WM_DELETE_WINDOW", True);
@@ -1341,6 +1374,16 @@ static int x11_set_font(GalPB *pb, GalFont *font)
 }
 */
 
+#ifdef _GAL_SUPPORT_OPENGL
+static void x11_window_make_GL(GalWindow window)
+{
+	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
+	x11_glc->current   = xwin;
+	if (xwin->xid)
+		glXMakeCurrent(x11_dpy, xwin->xid, x11_glc->context);
+}
+#endif
+
 static eint x11_window_set_name(GalWindow window, const echar *name)
 {
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
@@ -1387,6 +1430,9 @@ static void x11_window_init_orders(eGeneType new, ePointer this)
 	//win->set_font        = x11_set_font;
 
 	win->set_name        = x11_window_set_name;
+#ifdef _GAL_SUPPORT_OPENGL
+	win->make_GL         = x11_window_make_GL;
+#endif
 }
 
 static void x11_window_free(eHandle hobj, ePointer data)

@@ -695,7 +695,7 @@ static TextLine *y_offset_to_line(GuiText *text)
 	 return top;
 }
 
-static eint text_adjust_update(eHandle hobj, eint value)
+static eint text_adjust_update(eHandle hobj, efloat value)
 {
 	eHandle   obj = GUI_ADJUST_DATA(hobj)->owner;
 	GuiText *text = GUI_TEXT_DATA(obj);
@@ -1054,7 +1054,7 @@ static void line_load_glyphs(TextLine *line, GalFont font)
 	if (line->load_nichar > 0) {
 		line->glyphs     = e_realloc(line->glyphs, sizeof(GalGlyph) * n);
 		line->coffsets   = e_realloc(line->coffsets, sizeof(eint)  * n + 1);
-		line->underlines = e_realloc(line->coffsets, n);
+		line->underlines = e_realloc(line->underlines, n);
 	}
 	else {
 		line->glyphs     = e_malloc(sizeof(GalGlyph) * n);
@@ -1738,7 +1738,7 @@ static eint _text_delete_area(eHandle hobj, GuiText *text,
 		sl->coffsets   = e_realloc(sl->coffsets, (sl->nichar + 1) * sizeof(eint));
 		sl->underlines = e_realloc(sl->underlines, sl->nichar);
 	}
-	else if ((eid - sid) == 1 && (sl->nichar == 1 || sl->next->nichar == 1)) {
+	else if ((eid - sid) == 1 && ((sl->nichar == 1 && eioff == 0) || sl->next->nichar == 1)) {
 		if (sl->nichar == 1) {
 			sl = sl->next;
 			sl->id--;

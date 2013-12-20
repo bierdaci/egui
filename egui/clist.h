@@ -137,12 +137,12 @@ void egui_clist_set_clear(eHandle, void (*)(ClsItemBar *));
 ePointer clist_get_grid_data(eHandle, ClsItemBar *, eint);
 void egui_clist_set_menu(eHandle hobj, eHandle menu);
 
-extern eint signal_clist_cmp;
-extern eint signal_clist_find;
-extern eint signal_clist_insert;
-extern eint signal_clist_update;
-extern eint signal_clist_draw_title;
-extern eint signal_clist_draw_grid;
-extern eint signal_clist_draw_grid_bk;
+extern esig_t signal_clist_cmp;
+extern esig_t signal_clist_find;
+extern esig_t signal_clist_insert;
+extern esig_t signal_clist_update;
+extern esig_t signal_clist_draw_title;
+extern esig_t signal_clist_draw_grid;
+extern esig_t signal_clist_draw_grid_bk;
 
 #endif

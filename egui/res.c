@@ -9,7 +9,7 @@
 eHandle egui_res_handle = 0;
 static const echar *res_path = NULL;
 
-eint egui_init_res(void)
+elong egui_init_res(void)
 {
 	return 0;
 }
@@ -56,26 +56,26 @@ ePointer egui_res_find_item(GuiResItem *item, const echar *name)
 		res_path = e_strdup(path);
 	}
 	
-	if (((eint)item) == 0)
+	if (((elong)item) == 0)
 		e_strcat(path, _("common/"));
-	else if (((eint)item) == 1)
+	else if (((elong)item) == 1)
 		e_strcat(path, _("v/"));
-	else if (((eint)item) == 2)
+	else if (((elong)item) == 2)
 		e_strcat(path, _("h/"));
-	else if (((eint)item) == 3)
+	else if (((elong)item) == 3)
 		e_strcat(path, _("listview/"));
-	else if (((eint)item) == 4)
+	else if (((elong)item) == 4)
 		e_strcat(path, _("menu/"));
-	else if (((eint)item) == 5)
+	else if (((elong)item) == 5)
 		e_strcat(path, _("filesel/"));
-	else if (((eint)item) == 6)
+	else if (((elong)item) == 6)
 		e_strcat(path, _("button/"));
 
 	e_strcat(path, name);
-	if (((eint)item) == 4
-			||  ((eint)item) == 0
-			||  ((eint)item) == 5
-			|| (((eint)item) == 6 && e_strstr(name, _("radio"))))
+	if (((elong)item) == 4
+			||  ((elong)item) == 0
+			||  ((elong)item) == 5
+			|| (((elong)item) == 6 && e_strstr(name, _("radio"))))
 		e_strcat(path, _(".png"));
 	else
 		e_strcat(path, _(".bmp"));

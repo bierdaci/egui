@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -Wall -g -I../../
 LDFLAGS = -L../.libs -lelib -lpthread
-ALL: test xml load
+ALL: test
 
 load: load.c
 	$(CC) $(CFLAGS) -o load $^ $(LDFLAGS)

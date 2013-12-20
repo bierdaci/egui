@@ -1,4 +1,4 @@
-/* egconfig.h.in.  Generated from configure.in by autoheader.  */
+/* econfig.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -88,6 +88,9 @@
 
 /* Define if support JPEG file format */
 #undef _GAL_SUPPORT_JPEG
+
+/* Define if support OpenGL file format */
+#undef _GAL_SUPPORT_OPENGL
 
 /* Define if support PNG file format */
 #undef _GAL_SUPPORT_PNG

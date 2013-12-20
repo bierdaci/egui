@@ -109,7 +109,7 @@ static LayoutLine *y_offset_to_line(GuiLayout *layout)
 	 return top;
 }
 
-static eint layout_vadjust_update(eHandle hobj, eint value)
+static eint layout_vadjust_update(eHandle hobj, efloat value)
 {
 	eHandle       obj = GUI_ADJUST_DATA(hobj)->owner;
 	GuiLayout *layout = GUI_LAYOUT_DATA(obj);
@@ -119,7 +119,7 @@ static eint layout_vadjust_update(eHandle hobj, eint value)
     return 0;
 }   
 
-static eint layout_hadjust_update(eHandle hobj, eint value)
+static eint layout_hadjust_update(eHandle hobj, efloat value)
 {
 	eHandle       obj = GUI_ADJUST_DATA(hobj)->owner;
 	GuiLayout *layout = GUI_LAYOUT_DATA(obj);

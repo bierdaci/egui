@@ -128,6 +128,11 @@ eint egal_window_set_name(GalWindow window, const echar *name)
 	return GAL_WINDOW_ORDERS(window)->set_name(window, name);
 }
 
+void egal_window_make_GL(GalWindow window)
+{
+	GAL_WINDOW_ORDERS(window)->make_GL(window);
+}
+
 void egal_pb_set_attr(GalPB pb, GalPBAttr *attr)
 {
 	GAL_PB_ORDERS(pb)->set_attr(pb, attr);

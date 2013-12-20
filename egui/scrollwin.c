@@ -126,7 +126,7 @@ static void scrollwin_init_orders(eGeneType new, ePointer this)
 	c->init            = scrollwin_init;
 }
 
-static eint scrollwin_vadjust_update(eHandle hobj, eint value)
+static eint scrollwin_vadjust_update(eHandle hobj, efloat value)
 {
 	eHandle own = GUI_ADJUST_DATA(hobj)->owner;
 	GuiScrollWin *scr = GUI_SCROLLWIN_DATA(own);
@@ -142,7 +142,7 @@ static eint scrollwin_vadjust_update(eHandle hobj, eint value)
     return 0;
 }
 
-static eint scrollwin_hadjust_update(eHandle hobj, eint value)
+static eint scrollwin_hadjust_update(eHandle hobj, efloat value)
 {
 	eHandle own = GUI_ADJUST_DATA(hobj)->owner;
 	GuiScrollWin *scr = GUI_SCROLLWIN_DATA(own);

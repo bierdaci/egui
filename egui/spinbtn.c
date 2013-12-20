@@ -264,11 +264,11 @@ static eint spinbtn_init(eHandle hobj, eValist vp)
 	echar       buf[100];
 	eint        bn_size;
 
-	spin->value    = e_va_arg(vp, efloat);
-	spin->min      = e_va_arg(vp, efloat);
-	spin->max      = e_va_arg(vp, efloat);
-	spin->step_inc = e_va_arg(vp, efloat);
-	spin->page_inc = e_va_arg(vp, efloat);
+	spin->value    = e_va_arg(vp, edouble);
+	spin->min      = e_va_arg(vp, edouble);
+	spin->max      = e_va_arg(vp, edouble);
+	spin->step_inc = e_va_arg(vp, edouble);
+	spin->page_inc = e_va_arg(vp, edouble);
 	spin->digits   = e_va_arg(vp, eint);
 
 	eint s1 = (eint)spin->max;

@@ -78,7 +78,7 @@ static eint timer_down_cb(eTimer timer, euint num, ePointer args)
 		if (b->act_rn->down(hobj, b, 0, 0) && h->adjust) {
 			eint val = ((b->steps >> SCALE) * b->adj_step + b->adj_recoup) >> SCALE;
 			GUI_ADJUST_DATA(h->adjust)->value = val;
-			e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, val);
+			e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, (efloat)val);
 		}
 	}
 	return 0;
@@ -92,7 +92,7 @@ static eint timer_drag_cb(eTimer timer, euint num, ePointer args)
 		eHandle     hobj = OBJECT_OFFSET(args);
 		GuiAdjustHook *h = GUI_ADJUST_HOOK_DATA(hobj);
 		GUI_ADJUST_DATA(h->adjust)->value = b->move_val;
-		e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, b->move_val);
+		e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, (efloat)b->move_val);
 		b->move_val = -1;
 		b->time     = 0;
 	}
@@ -125,7 +125,7 @@ static eint scrollbar_lbuttondown(eHandle hobj, GalEventMouse *event)
 	if (b->act_rn->down(hobj, b, x, y) && h->adjust) {
 		eint val = ((b->steps >> SCALE) * b->adj_step + b->adj_recoup) >> SCALE;
 		GUI_ADJUST_DATA(h->adjust)->value = val;
-		e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, val);
+		e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, (efloat)val);
 	}
 
 	if (h->adjust) {
@@ -148,7 +148,7 @@ static eint scrollbar_lbuttonup(eHandle hobj, GalEventMouse *event)
 		b->time  = 0;
 		if (b->move_val >= 0) {
 			GUI_ADJUST_DATA(h->adjust)->value = b->move_val;
-			e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, b->move_val);
+			e_signal_emit(h->adjust, SIG_ADJUST_UPDATE, (efloat)b->move_val);
 			b->move_val = -1;
 		}
 	}
@@ -202,7 +202,7 @@ static void scrollbar_reset(eHandle hobj)
 		b->bn_steps   = a->step_inc * b->bar_step + b->bar_recoup;
 
 		if (GUI_SCROLLBAR_ORDERS(hobj)->update(hobj, b, a->value * b->bar_step + b->bar_recoup))
-			e_signal_emit(adjust, SIG_ADJUST_UPDATE, (eint)a->value);
+			e_signal_emit(adjust, SIG_ADJUST_UPDATE, (efloat)a->value);
 
 		if (b->auto_hide && b->adj_span == 0)
 			egui_hide_async(hobj, true);
@@ -223,6 +223,6 @@ static void scrollbar_set(eHandle hobj)
 		GuiAdjust    *a = GUI_ADJUST_DATA(adjust);
 		GuiScrollBar *b = GUI_SCROLLBAR_DATA(hobj);
 		if (GUI_SCROLLBAR_ORDERS(hobj)->update(hobj, b, a->value * b->bar_step + b->bar_recoup))
-			e_signal_emit(adjust, SIG_ADJUST_UPDATE, (eint)a->value);
+			e_signal_emit(adjust, SIG_ADJUST_UPDATE, (efloat)a->value);
 	}
 }

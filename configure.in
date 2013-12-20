@@ -4,7 +4,7 @@
 AC_PREREQ([2.63])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([elib/elib.h])
-AC_CONFIG_HEADERS([egconfig.h])
+AC_CONFIG_HEADERS([econfig.h])
 
 AC_CONFIG_MACRO_DIR([m4])
 # Checks for programs.
@@ -16,22 +16,29 @@ AM_INIT_AUTOMAKE
 
 build_jpeg_support="no"
 build_png_support="no"
+build_freetype_support="no"
+build_cairo_support="no"
+build_opengl_support="no"
 
 AC_ARG_ENABLE(jpeg,
-              AC_HELP_STRING([--enable-jpeg	use jpeglib @<:@default=no@:>@]),,
+              AC_HELP_STRING([--enable-jpeg		use jpeglib @<:@default=yes@:>@]),,
               enable_jpeg="yes")
 
 AC_ARG_ENABLE(png,
-              AC_HELP_STRING([--enable-png	use pnglib @<:@default=no@:>@]),,
+              AC_HELP_STRING([--enable-png		use pnglib @<:@default=yes@:>@]),,
               enable_png="yes")
 
 AC_ARG_ENABLE(freetype,
-              AC_HELP_STRING([--enable-freetype	use pnglib @<:@default=no@:>@]),,
-              enable_freetype="yes")
+              AC_HELP_STRING([--enable-freetype	use freetypelib @<:@default=no@:>@]),,
+              enable_freetype="no")
 
 AC_ARG_ENABLE(cairo,
-              AC_HELP_STRING([--enable-cairo	use cairolib @<:@default=no@:>@]),,
+              AC_HELP_STRING([--enable-cairo	use cairolib @<:@default=yes@:>@]),,
               enable_cairo="yes")
+
+AC_ARG_ENABLE(opengl,
+              AC_HELP_STRING([--enable-opengl	use GLlib @<:@default=no@:>@]),,
+              enable_opengl="no")
 
 # Checks for libraries.
 
@@ -67,19 +74,16 @@ fi
 
 if test "x$enable_freetype" = "xyes"; then
 	AC_CHECK_LIB(freetype, FT_New_Face,
-				 [AC_CHECK_HEADER(freetype.h, build_freetype_support=yes, build_freetype_support=no)],
-				 AC_MSG_WARN(*** freetype loader will not be built (FREETYPE library not found) ***),
-				 -lm)
+				 [AC_CHECK_HEADER(freetype2/freetype/freetype.h, build_freetype_support=yes, build_freetype_support=no)],
+				 AC_MSG_WARN(*** freetype loader will not be built (FREETYPE library not found) ***))
 fi
 
 if test "x$build_freetype_support" = "xyes"; then
     AC_DEFINE(_GAL_SUPPORT_FREETYPE, 1, [Define if support FREETYPE font])
-	SYSTEM_LIBS="$SYSTEM_LIBS -lfreetype -I/usr/include/freetype2"
+	SYSTEM_LIBS="$SYSTEM_LIBS -lfreetype"
 	AM_CONDITIONAL(FONT_USE_FREETYPE, true)
 else
-    AC_DEFINE(_GAL_SUPPORT_FREETYPE, 1, [Define if support FREETYPE font])
-	SYSTEM_LIBS="$SYSTEM_LIBS -lfreetype -I/usr/include/freetype2"
-	AM_CONDITIONAL(FONT_USE_FREETYPE, true)
+	AM_CONDITIONAL(FONT_USE_FREETYPE, false)
 fi
 
 if test "x$enable_cairo" = "xyes"; then
@@ -95,6 +99,25 @@ if test "x$build_cairo_support" = "xyes"; then
 	SYSTEM_LIBS="$SYSTEM_LIBS -lcairo"
 else
 	AM_CONDITIONAL(GAL_USE_CAIRO, false)
+fi
+
+if test "x$enable_opengl" = "xyes"; then
+	AC_CHECK_LIB(GL, glEnable,
+				 [AC_CHECK_HEADER(GL/gl.h, build_opengl_support=yes, build_opengl_support=no)],
+				 AC_MSG_WARN(*** OpenGL loader will not be built (OpenGL library not found) ***),
+				 -lGLU)
+fi
+
+if test "x$build_opengl_support" = "xyes"; then
+    AC_DEFINE(_GAL_SUPPORT_OPENGL, 1, [Define if support OpenGL file format])
+    SYSTEM_LIBS="$SYSTEM_LIBS -lGL -lGLU"
+fi
+
+if test "$(getconf LONG_BIT)" = "64"; then
+    AC_DEFINE(HOST_SYSTEM_64, 1, [host system 64])
+	AM_CONDITIONAL(USE_MARSHAL64, true)
+else
+	AM_CONDITIONAL(USE_MARSHAL64, false)
 fi
 
 # Checks for header files.

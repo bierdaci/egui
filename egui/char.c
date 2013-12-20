@@ -5,7 +5,7 @@ static void char_init_orders(eGeneType, ePointer);
 static void char_init_gene(eGeneType);
 static eint char_keydown(eHandle, GalEventKey *ent);
 
-eint char_signal_char = 0;
+esig_t char_signal_char = 0;
 
 eGeneType egui_genetype_char(void)
 {
@@ -35,7 +35,7 @@ static void char_init_gene(eGeneType new)
 	char_signal_char = e_signal_new("char",
 			new,
 			STRUCT_OFFSET(GuiCharOrders, achar),
-			false, _INTSIZEOF(ePointer), 0);
+			false, 0, "%p");
 }
 
 static euchar char_trans(GalKeyCode code)

@@ -1,7 +1,7 @@
 #include "gui.h"
 #include "adjust.h"
 
-eint adjust_signal_update = 0;
+esig_t adjust_signal_update = 0;
 
 static void adjust_init_orders(eGeneType, ePointer);
 static void adjust_init_gene(eGeneType);
@@ -30,7 +30,7 @@ static void adjust_init_gene(eGeneType new)
 	adjust_signal_update = e_signal_new("adjust_update",
 			new,
 			STRUCT_OFFSET(GuiAdjustOrders, update),
-			false, _INTSIZEOF(efloat), 0);
+			false, 0, "%f");
 }
 
 static void adjust_reset_hook(eHandle hobj, efloat value, efloat min, efloat max, efloat step_inc, efloat page_inc)
@@ -59,11 +59,11 @@ static void adjust_set_hook(eHandle hobj, efloat value)
 
 static eint adjust_init(eHandle hobj, eValist vp)
 {
-	efloat value    = e_va_arg(vp, efloat);
-	efloat min      = e_va_arg(vp, efloat);
-	efloat max      = e_va_arg(vp, efloat);
-	efloat step_inc = e_va_arg(vp, efloat);
-	efloat page_inc = e_va_arg(vp, efloat);
+	efloat value    = e_va_arg(vp, edouble);
+	efloat min      = e_va_arg(vp, edouble);
+	efloat max      = e_va_arg(vp, edouble);
+	efloat step_inc = e_va_arg(vp, edouble);
+	efloat page_inc = e_va_arg(vp, edouble);
 
 	adjust_reset_hook(hobj, value, min, max, step_inc, page_inc);
 

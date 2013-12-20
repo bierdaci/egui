@@ -52,21 +52,21 @@ struct _GuiEventOrders {
 
 };
 
-extern eint event_signal_keydown;
-extern eint event_signal_keyup;
-extern eint event_signal_mousemove;
-extern eint event_signal_lbuttondown;
-extern eint event_signal_lbuttonup;
-extern eint event_signal_rbuttondown;
-extern eint event_signal_rbuttonup;
-extern eint event_signal_mbuttondown;
-extern eint event_signal_mbuttonup;
-extern eint event_signal_focus_in;
-extern eint event_signal_focus_out;
-extern eint event_signal_enter;
-extern eint event_signal_leave;
-extern eint event_signal_clicked;
-extern eint event_signal_2clicked;
+extern esig_t event_signal_keydown;
+extern esig_t event_signal_keyup;
+extern esig_t event_signal_mousemove;
+extern esig_t event_signal_lbuttondown;
+extern esig_t event_signal_lbuttonup;
+extern esig_t event_signal_rbuttondown;
+extern esig_t event_signal_rbuttonup;
+extern esig_t event_signal_mbuttondown;
+extern esig_t event_signal_mbuttonup;
+extern esig_t event_signal_focus_in;
+extern esig_t event_signal_focus_out;
+extern esig_t event_signal_enter;
+extern esig_t event_signal_leave;
+extern esig_t event_signal_clicked;
+extern esig_t event_signal_2clicked;
 
 eGeneType egui_genetype_event(void);
 

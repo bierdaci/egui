@@ -22,7 +22,7 @@ typedef enum {
 
 struct _HeapNode {
 	ePointer  addr;
-	euint     size :31;
+	eulong    size :31;
 	bool      is_alloc :1;
 	HeapNode *all_next;
 	HeapNode *all_prev;
@@ -36,13 +36,13 @@ struct _HeapNode {
 struct _MemoryChain {
 	MemoryType  type;
 	ePointer    addr;
-	euint       size;
+	eulong      size;
 	MemoryChain *next;
 };
 
 struct _MemoryHeap {
 	MemoryChain m;
-	euint       free_max;
+	eulong      free_max;
 	HeapNode   *all_head;
 	HeapNode   *all_tail;
 	HeapNode   *free_tables_head[FREE_TABLES_SIZE];				//8 16 32 64 128 256 512 1024 2048 4096
@@ -63,7 +63,7 @@ static void cache_node_add(void)
 {
 	HeapNode *node;
 	cache_head = __calloc(CACHE_NUM, sizeof(HeapNode));
-	eint i;
+	elong i;
 	
 	node = cache_head;
 	for (i = 0; i < CACHE_NUM - 1; i++) {
@@ -115,7 +115,7 @@ static void heap_all_node_delete(MemoryHeap *heap, HeapNode *node)
 
 static void heap_alloc_tables_insert(MemoryHeap *heap, HeapNode *node)
 {
-	euint   index = ((echar *)node->addr - (echar *)heap->m.addr) / PAGE_SIZE;
+	elong   index = ((echar *)node->addr - (echar *)heap->m.addr) / PAGE_SIZE;
 	HeapNode **pp = &heap->alloc_tables[index];
 
 	while (*pp && node->addr > (*pp)->addr)
@@ -124,7 +124,7 @@ static void heap_alloc_tables_insert(MemoryHeap *heap, HeapNode *node)
 	if (pp == &heap->alloc_tables[index])
 		node->alloc_prev = NULL;
 	else
-		node->alloc_prev = (HeapNode *)((euint)pp - STRUCT_OFFSET(HeapNode, alloc_next));
+		node->alloc_prev = (HeapNode *)((elong)pp - STRUCT_OFFSET(HeapNode, alloc_next));
 
 	if (*pp)
 		(*pp)->alloc_prev = node;
@@ -170,7 +170,7 @@ static euint size_to_free_index(MemoryHeap *heap, euint size)
 
 static void heap_free_tables_insert(MemoryHeap *heap, HeapNode *node)
 {
-	euint   index = size_to_free_index(heap, node->size);
+	elong   index = size_to_free_index(heap, node->size);
 	HeapNode **pp = heap->free_tables_head + index;
 
 	while (*pp && node->size > (*pp)->size)
@@ -179,7 +179,7 @@ static void heap_free_tables_insert(MemoryHeap *heap, HeapNode *node)
 	if (pp == heap->free_tables_head + index)
 		node->free_prev = NULL;
 	else
-		node->free_prev = (HeapNode *)((euint)pp - STRUCT_OFFSET(HeapNode, free_next));
+		node->free_prev = (HeapNode *)((elong)pp - STRUCT_OFFSET(HeapNode, free_next));
 
 	if (*pp)
 		(*pp)->free_prev = node;
@@ -200,7 +200,7 @@ static void set_free_max(MemoryHeap *heap, HeapNode *node)
 		return;
 
 	if (!node->free_prev) {
-		eint i = FREE_TABLES_SIZE - 1;
+		elong i = FREE_TABLES_SIZE - 1;
 		for (; i >= 0; i--)
 		   	if (heap->free_tables_tail[i]) {
 				heap->free_max = heap->free_tables_tail[i]->size;
@@ -238,7 +238,7 @@ static void heap_free_tables_delete(MemoryHeap *heap, HeapNode *node)
 
 static HeapNode *free_tables_find_node(MemoryHeap *heap, euint size)
 {
-	eint  index = size_to_free_index(heap, size);
+	elong index = size_to_free_index(heap, size);
 	HeapNode *p = NULL;
 
 	for (; index < FREE_TABLES_SIZE; index++) {
@@ -314,7 +314,7 @@ while (chain) { \
 		break; \
 	chain = chain->next; \
 }
-static HeapNode *heap_get_free_node(eint size, bool is_slice)
+static HeapNode *heap_get_free_node(elong size, bool is_slice)
 {
 	MemoryChain *chain;
 	MemoryHeap  *heap = NULL;
@@ -354,7 +354,7 @@ static HeapNode *heap_get_free_node(eint size, bool is_slice)
 	return node;
 }
 
-ePointer e_heap_malloc(eint size, bool is_slice)
+ePointer e_heap_malloc(elong size, bool is_slice)
 {
 	HeapNode *node;
 	ePointer  addr = NULL;
@@ -404,7 +404,7 @@ ePointer e_heap_realloc(ePointer addr, euint size)
 		if (node->size < size) {
 			HeapNode *n = node->all_next;
 			if (n && !n->is_alloc && node->size + n->size >= size) {
-				eint lack  = size - node->size;
+				elong lack = size - node->size;
 				heap_free_tables_delete((MemoryHeap *)chain, n);
 				n->size   -= lack;
 				n->addr    = (echar *)n->addr + lack;
@@ -425,7 +425,7 @@ ePointer e_heap_realloc(ePointer addr, euint size)
 			}
 		}
 		else if (size < node->size) {
-			eint  over = node->size - size;
+			elong  over = node->size - size;
 			node->size = size;
 			if (node->all_next && !node->all_next->is_alloc) {
 				HeapNode *n = node->all_next;
@@ -536,7 +536,7 @@ static SliceHead *slice_tables[SLICE_TABLES_NUM];
 static void slice_free_release(bool is_slice)
 {
 	SliceHead *head;
-	eint i;
+	elong i;
 
 	if (!is_slice)
 		e_pthread_mutex_lock(&slice_lock);
@@ -598,7 +598,7 @@ static ePointer slice_free_alloc(SliceHead *head)
 	}
 	else {
 		node = e_heap_malloc(sizeof(SliceNode) + head->num + head->num * head->size, true);
-		node->base  = (echar *)(node + 1) + head->num;
+		node->base  = (euchar *)(node + 1) + head->num;
 		node->index = 1;
 		for (node->free_num = 1; node->free_num < head->num - 1; node->free_num++)
 			node->map[node->free_num] = node->free_num + 1;
@@ -672,7 +672,7 @@ void e_slice_free1(euint size, ePointer addr)
 	head = slice_tables[type];
 	pp   = &head->fill;
 	while (*pp) {
-		index = ((euint)addr - (euint)(*pp)->base) / head->size;
+		index = ((elong)addr - (elong)(*pp)->base) / head->size;
 		if (index < head->num)
 			break;
 		pp = &(*pp)->next;
@@ -688,7 +688,7 @@ void e_slice_free1(euint size, ePointer addr)
 	if (!node) {
 		pp = &head->half;
 		while (*pp) {
-			index = ((euint)addr - (euint)(*pp)->base) / head->size;
+			index = ((elong)addr - (elong)(*pp)->base) / head->size;
 			if (index < head->num)
 				break;
 			pp = &(*pp)->next;

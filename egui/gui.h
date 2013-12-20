@@ -8,7 +8,7 @@
 #include <egui/bin.h>
 
 #define GUI_TYPE_WINDOW(hobj)					(e_object_type_check(hobj, GTYPE_WINDOW))
-static inline bool GUI_TYPE_BIN(hobj)
+static inline bool GUI_TYPE_BIN(eHandle hobj)
 {
 	GuiBin *b = GUI_BIN_DATA(hobj);
 	if (b && b->is_bin)
@@ -138,6 +138,7 @@ void egui_request_layout(eHandle, eHandle, eint, eint, bool, bool);
 void egui_strings_extent(GalFont, const echar *, eint *, eint *);
 void egui_set_strings(eHandle, const echar *);
 const echar *egui_get_strings(eHandle);
+void egui_make_GL(eHandle);
 
 eint egui_get_text(eHandle, echar *, eint);
 void egui_set_max_text(eHandle, eint);
@@ -160,9 +161,9 @@ void egui_set_expand_h(eHandle, bool);
 
 void egui_accelkey_connect(eHandle hobj, const echar *accelkey, AccelKeyCB cb, ePointer data);
 
-void egui_signal_emit (eHandle, eint);
-void egui_signal_emit1(eHandle, eint, ePointer);
-void egui_signal_emit2(eHandle, eint, ePointer, ePointer);
-void egui_signal_emit3(eHandle, eint, ePointer, ePointer, ePointer);
-void egui_signal_emit4(eHandle, eint, ePointer, ePointer, ePointer, ePointer);
+void egui_signal_emit (eHandle, esig_t);
+void egui_signal_emit1(eHandle, esig_t, ePointer);
+void egui_signal_emit2(eHandle, esig_t, ePointer, ePointer);
+void egui_signal_emit3(eHandle, esig_t, ePointer, ePointer, ePointer);
+void egui_signal_emit4(eHandle, esig_t, ePointer, ePointer, ePointer, ePointer);
 #endif

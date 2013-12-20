@@ -233,6 +233,8 @@ struct _GalWindowOrders {
 
 	void (*set_geometry_hints)(GalWindow, GalGeometry *, GalWindowHints);
 	void (*get_geometry_hints)(GalWindow, GalGeometry *, GalWindowHints *);
+
+	void (*make_GL)(GalWindow);
 };
 
 struct _GalDrawableOrders {
@@ -410,9 +412,9 @@ typedef struct {
 } GalEventPrivate;
 
 struct _GalEvent {
-	GalEventType type;
+	GalEventType  type;
 	eint private_type;
-	GalWindow  window;
+	GalWindow   window;
 	union {
 		GalEventPrivate   private;
 		GalEventExpose    expose;
@@ -507,5 +509,7 @@ void egal_window_get_origin(GalWindow, eint *, eint *);
 
 GalWindow egal_window_wait_event(GalEvent *);
 eint egal_window_init(void);
+
+void egal_window_make_GL(GalWindow);
 
 #endif

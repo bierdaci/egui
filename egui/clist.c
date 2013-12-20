@@ -16,13 +16,13 @@
 #define TITLE_BAR_H						30
 #define ITEM_BAR_H						25
 
-eint signal_clist_cmp          = 0;
-eint signal_clist_find         = 0;
-eint signal_clist_insert       = 0;
-eint signal_clist_update       = 0;
-eint signal_clist_draw_title   = 0;
-eint signal_clist_draw_grid    = 0;
-eint signal_clist_draw_grid_bk = 0;
+esig_t signal_clist_cmp          = 0;
+esig_t signal_clist_find         = 0;
+esig_t signal_clist_insert       = 0;
+esig_t signal_clist_update       = 0;
+esig_t signal_clist_draw_title   = 0;
+esig_t signal_clist_draw_grid    = 0;
+esig_t signal_clist_draw_grid_bk = 0;
 
 static eGeneType GTYPE_VIEW = 0;
 static eGeneType GTYPE_TBAR = 0;
@@ -79,41 +79,35 @@ static void clist_init_gene(eGeneType new)
 	signal_clist_insert = e_signal_new("clist_insert",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, insert),
-			true, _INTSIZEOF(ClsItemBar *),
-			0);
+			true, 0, "%p");
 	signal_clist_update = e_signal_new("clist_update",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, update),
-			true, _INTSIZEOF(ClsItemBar *),
-			0);
+			true, 0, "%p");
 	signal_clist_cmp = e_signal_new("clist_cmp",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, cmp),
-			false, _INTSIZEOF(ClsItemBar *) * 3,
-			0);
+			false, 0,
+			"%n %p %p");
 	signal_clist_draw_title = e_signal_new("draw_title",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, draw_title),
-			true,
-			sizeof(eHandle) * 2,
-			0);
+			true, 0,
+			"%n %n");
 	signal_clist_draw_grid = e_signal_new("draw_grid",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, draw_grid),
-			false,
-			sizeof(eHandle) * 3 + sizeof(ePointer) + sizeof(int) * 4,
-			0);
+			false, 0,
+			"%n %n %n %n %d %d %d %d");
 	signal_clist_draw_grid_bk = e_signal_new("draw_grid_bk",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, draw_grid_bk),
-			true,
-			sizeof(eHandle) * 2 + sizeof(int) * 6,
-			0);
+			true, 0,
+			"%n %n %d %d %d %d %d %d");
 	signal_clist_find = e_signal_new("clist_find",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, find),
-			false, _INTSIZEOF(ClsItemBar *) * 2,
-			0);
+			false, 0, "%p %p");
 }
 
 static void (*hbox_set_min)(eHandle, eint, eint);
@@ -666,7 +660,7 @@ static void tbar_init_orders(eGeneType new, ePointer this)
 	e->lbuttondown     = tbar_lbuttondown;
 }
 
-static eint clist_vadjust_update(eHandle hobj, eint value)
+static eint clist_vadjust_update(eHandle hobj, efloat value)
 {
 	eHandle    own = GUI_ADJUST_DATA(hobj)->owner;
 	GuiClist   *cl = GUI_WIDGET_DATA(own)->extra_data;
@@ -676,7 +670,7 @@ static eint clist_vadjust_update(eHandle hobj, eint value)
     return 0;
 }   
 
-static eint clist_hadjust_update(eHandle hobj, eint value)
+static eint clist_hadjust_update(eHandle hobj, efloat value)
 {
 	//eHandle    own = GUI_ADJUST_DATA(hobj)->owner;
 	//GuiClist   *cl = GUI_CLIST_DATA(own);
