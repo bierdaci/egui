@@ -2,543 +2,354 @@
 #include "types.h"
 #include "elist.h"
 
-void e_list_push_allocator(ePointer dummy) { /* present for binary compat only */ }
-void e_list_pop_allocator(void)           { /* present for binary compat only */ }
-
-#if 1
-#define _e_list_alloc()         e_slice_new(elist_t)
-#define _e_list_alloc0()        e_slice_new(elist_t)
-#define _e_list_free1(list)     e_slice_free(elist_t, list)
-#else
-#define _e_list_alloc()         e_malloc(sizeof(elist_t))
-#define _e_list_alloc0()        e_malloc(sizeof(elist_t))
-#define _e_list_free1(list)     e_free(list)
-#endif
-
-
-elist_t* e_list_alloc(void)
+void e_list_init(elist_t *elist, int size)
 {
-	return _e_list_alloc0();
+	elist->head  = 0;
+	elist->tail  = 0;
+	elist->sort  = 0;
+	elist->count = 0;
+	elist->size  = size;
 }
 
-void e_list_free(elist_t *list)
+elist_t *e_list_new(int size)
 {
-	elist_t *p = list;
-	while (p) {
-		elist_t *t = p;
-		p = p->next;
-		_e_list_free1(t);
-	}
+	elist_t *elist = e_malloc(sizeof(elist_t));
+	e_list_init(elist, size);
+	return elist;
 }
 
-void e_list_free_1(elist_t *list)
+void e_list_insert_head(elist_t *elist, elistnode_t *new)
 {
-	_e_list_free1(list);
-}
-
-elist_t* e_list_append(elist_t *list, ePointer data)
-{
-	elist_t *new_list;
-	elist_t *last;
-
-	new_list = _e_list_alloc();
-	new_list->data = data;
-	new_list->next = NULL;
-
-	if (list) {
-		last = e_list_last(list);
-		last->next = new_list;
-		new_list->prev = last;
-
-		return list;
+	if (!elist->head) {
+		new->next = 0;
+		new->prev = 0;
+		elist->head = new;
+		elist->tail = new;
+		elist->count = 1;
 	}
 	else {
-		new_list->prev = NULL;
-		return new_list;
+		new->next  = elist->head;
+		elist->head->prev = new;
+		elist->head = new;
+		new->prev  = 0;
+		elist->count++;
 	}
 }
 
-elist_t* e_list_prepend(elist_t *list, ePointer data)
+void e_list_insert_tail(elist_t *elist, elistnode_t *new)
 {
-	elist_t *new_list;
+	if (!elist->tail) {
+		new->next = 0;
+		new->prev = 0;
+		elist->head = new;
+		elist->tail = new;
+		elist->count = 1;
+	}
+	else {
+		new->prev  = elist->tail;
+		elist->tail->next = new;
+		elist->tail = new;
+		new->next   = 0;
+		elist->count++;
+	}
+}
 
-	new_list = _e_list_alloc();
-	new_list->data = data;
-	new_list->next = list;
-
-	if (list) {
-		new_list->prev = list->prev;
-		if (list->prev)
-			list->prev->next = new_list;
-		list->prev = new_list;
+void e_list_insert_after(elist_t *elist, elistnode_t *node, elistnode_t *new)
+{
+	if (!elist->head) {
+		new->next = 0;
+		new->prev = 0;
+		elist->head = new;
+		elist->tail = new;
+		elist->count = 1;
+	}
+	else if (node) {
+		new->prev = node;
+		if (node->next) {
+			new->next = node->next;
+			node->next->prev = new;
+		}
+		else {
+			new->next   = 0;
+			elist->tail = new;
+		}
+		node->next = new;
+		elist->count++;
 	}
 	else
-		new_list->prev = NULL;
-
-	return new_list;
+		e_list_insert_head(elist, new);
 }
 
-elist_t* e_list_insert(elist_t *list, ePointer data, eint position)
+void e_list_insert_before(elist_t *elist, elistnode_t *node, elistnode_t *new)
 {
-	elist_t *new_list;
-	elist_t *tmp_list;
-
-	if (position < 0)
-		return e_list_append(list, data);
-	else if (position == 0)
-		return e_list_prepend(list, data);
-
-	tmp_list = e_list_nth(list, position);
-	if (!tmp_list)
-		return e_list_append(list, data);
-
-	new_list = _e_list_alloc();
-	new_list->data = data;
-	new_list->prev = tmp_list->prev;
-	if (tmp_list->prev)
-		tmp_list->prev->next = new_list;
-	new_list->next = tmp_list;
-	tmp_list->prev = new_list;
-
-	if (tmp_list == list)
-		return new_list;
-	else
-		return list;
-}
-
-elist_t* e_list_insert_before(elist_t *list, elist_t *sibling, ePointer data)
-{
-	if (!list) {
-		list = e_list_alloc();
-		list->data = data;
-		e_return_val_if_fail(sibling == NULL, list);
-		return list;
+	if (!elist->head) {
+		new->next = 0;
+		new->prev = 0;
+		elist->head = new;
+		elist->tail = new;
+		elist->count  = 1;
 	}
-	else if (sibling) {
-		elist_t *node;
-
-		node = _e_list_alloc();
-		node->data = data;
-		node->prev = sibling->prev;
-		node->next = sibling;
-		sibling->prev = node;
+	else if (node) {
+		new->next = node;
 		if (node->prev) {
-			node->prev->next = node;
-			return list;
+			new->prev = node->prev;
+			node->prev->next = new;
 		}
 		else {
-			e_return_val_if_fail(sibling == list, node);
-			return node;
+			new->prev = 0;
+			elist->head = new;
 		}
+		node->prev = new;
+		elist->count++;
+	}
+	else
+		e_list_insert_tail(elist, new);
+}
+
+void e_list_remove(elist_t *elist, elistnode_t *node)
+{
+	if (node == elist->tail && node == elist->head) {
+		elist->head = 0;
+		elist->tail = 0;
+	}
+	else if (node == elist->tail) {
+		elist->tail = node->prev;
+		node->prev->next = 0;
+	}
+	else if (node == elist->head) {
+		elist->head = node->next;
+		node->next->prev = 0;
 	}
 	else {
-		elist_t *last;
-
-		last = list;
-		while (last->next)
-			last = last->next;
-
-		last->next = _e_list_alloc ();
-		last->next->data = data;
-		last->next->prev = last;
-		last->next->next = NULL;
-
-		return list;
+		node->prev->next = node->next;
+		node->next->prev = node->prev;
 	}
+	elist->count--;
 }
 
-elist_t * e_list_concat(elist_t *list1, elist_t *list2)
+elistnode_t *e_list_alloc_node(int size)
 {
-	elist_t *tmp_list;
-
-	if (list2) {
-		tmp_list = e_list_last (list1);
-		if (tmp_list)
-			tmp_list->next = list2;
-		else
-			list1 = list2;
-		list2->prev = tmp_list;
-	}
-
-	return list1;
+	elistnode_t *node = e_malloc(sizeof(elistnode_t) + size);
+	return node;
 }
 
-elist_t* e_list_remove(elist_t *list, eConstPointer data)
+void e_list_free_node(elist_t *elist, elistnode_t *node)
 {
-	elist_t *tmp;
+	e_list_remove(elist, node);
+	e_free(node);
+}
 
-	tmp = list;
-	while (tmp) {
-		if (tmp->data != data)
-			tmp = tmp->next;
-		else {
-			if (tmp->prev)
-				tmp->prev->next = tmp->next;
-			if (tmp->next)
-				tmp->next->prev = tmp->prev;
+void e_list_empty(elist_t *elist)
+{
+	elistnode_t *node = elist->head;
+	while (node) {
+		elistnode_t *t = node;
+		node = node->next;
+		e_free(t);
+	}
+	elist->count = 0;
+	elist->head  = 0;
+	elist->tail  = 0;
+}
 
-			if (list == tmp)
-				list = list->next;
+void e_list_add_by_copy(elist_t *elist, void *data)
+{
+	elistnode_t *node = e_list_alloc_node(elist->size);
+	memcpy(node + 1, data, elist->size);
+	e_list_insert_tail(elist, node);
+}
 
-			_e_list_free1(tmp);
+void e_list_add_by_copy_size(elist_t *elist, void *data, int size)
+{
+	elistnode_t *node = e_list_alloc_node(size);
+	memcpy(node + 1, data, size);
+	e_list_insert_tail(elist, node);
+}
 
+void e_list_add_by_sort_copy_size(elist_t *elist, void *data, int size, int (*cb)(elistnode_t *, elistnode_t *))
+{
+	elistnode_t *node = elist->head;
+	elistnode_t *new  = e_list_alloc_node(size);
+	memcpy(new + 1, data, size);
+
+	while (node) {
+		if (cb(node, new))
 			break;
-		}
+		node = node->next;
 	}
-	return list;
+	e_list_insert_before(elist, node, new);
 }
 
-elist_t* e_list_remove_all(elist_t *list, eConstPointer data)
+void e_list_add_data(elist_t *elist, void *data)
 {
-	elist_t *tmp = list;
+	elistnode_t *node = e_list_alloc_node(elist->size);
+	memcpy(node + 1, data, elist->size);
+	e_list_insert_tail(elist, node);
+}
 
-	while (tmp) {
-		if (tmp->data != data)
-			tmp = tmp->next;
-		else {
-			elist_t *next = tmp->next;
+void e_list_push_data(elist_t *elist, void *data)
+{
+	elistnode_t *node = e_list_alloc_node(elist->size);
+	memcpy(node + 1, data, elist->size);
+	e_list_insert_head(elist, node);
+}
 
-			if (tmp->prev)
-				tmp->prev->next = next;
-			else
-				list = next;
-			if (next)
-				next->prev = tmp->prev;
-
-			_e_list_free1(tmp);
-			tmp = next;
-		}
+void e_list_pop_data(elist_t *elist, void *data)
+{
+	if (elist->head) {
+		if (data)
+			memcpy(data, e_list_get_data(elist->head), elist->size);
+		e_list_free_node(elist, elist->head);
 	}
-	return list;
 }
 
-static inline elist_t* _g_list_remove_link(elist_t *list, elist_t *link)
+void *e_list_next_data(elist_t *elist, void *data)
 {
-	if (link) {
-		if (link->prev)
-			link->prev->next = link->next;
-		if (link->next)
-			link->next->prev = link->prev;
-
-		if (link == list)
-			list = list->next;
-
-		link->next = NULL;
-		link->prev = NULL;
+	if (data) {
+		elistnode_t *node = (elistnode_t *)data - 1;
+		return e_list_get_data(node->next);
 	}
-
-	return list;
-}
-
-elist_t* e_list_remove_link(elist_t *list, elist_t *link)
-{
-	return _g_list_remove_link(list, link);
-}
-
-elist_t* e_list_delete_link(elist_t *list, elist_t *link)
-{
-	list = _g_list_remove_link(list, link);
-	_e_list_free1(link);
-
-	return list;
-}
-
-elist_t* e_list_copy(elist_t *list)
-{
-	elist_t *new_list = NULL;
-
-	if (list) {
-		elist_t *last;
-
-		new_list = _e_list_alloc();
-		new_list->data = list->data;
-		new_list->prev = NULL;
-		last = new_list;
-		list = list->next;
-		while (list) {
-			last->next = _e_list_alloc();
-			last->next->prev = last;
-			last = last->next;
-			last->data = list->data;
-			list = list->next;
-		}
-		last->next = NULL;
-	}
-
-	return new_list;
-}
-
-elist_t* e_list_reverse(elist_t *list)
-{
-	elist_t *last;
-
-	last = NULL;
-	while (list) {
-		last = list;
-		list = last->next;
-		last->next = last->prev;
-		last->prev = list;
-	}
-
-	return last;
-}
-
-elist_t* e_list_nth(elist_t *list, euint n)
-{
-	while ((n-- > 0) && list)
-		list = list->next;
-
-	return list;
-}
-
-elist_t* e_list_nth_prev(elist_t *list, euint n)
-{
-	while ((n-- > 0) && list)
-		list = list->prev;
-
-	return list;
-}
-
-ePointer e_list_nth_data(elist_t *list, euint n)
-{
-	while ((n-- > 0) && list)
-		list = list->next;
-
-	return list ? list->data : NULL;
-}
-
-elist_t* e_list_find(elist_t *list, eConstPointer data)
-{
-	while (list) {
-		if (list->data == data)
-			break;
-		list = list->next;
-	}
-
-	return list;
-}
-
-elist_t* e_list_find_custom(elist_t *list, eConstPointer data, eCompareFunc func)
-{
-	e_return_val_if_fail(func != NULL, list);
-
-	while (list) {
-		if (!func(list->data, data))
-			return list;
-		list = list->next;
-	}
+	else if (elist->head)
+		return e_list_get_data(elist->head);
 
 	return NULL;
 }
 
-eint e_list_position(elist_t *list, elist_t *link)
+void *e_list_prev_data(elist_t *elist, void *data)
 {
-	eint i;
-
-	i = 0;
-	while (list) {
-		if (list == link)
-			return i;
-		i++;
-		list = list->next;
+	if (data) {
+		elistnode_t *node = (elistnode_t *)data - 1;
+		return e_list_get_data(node->prev);
 	}
+	else if (elist->tail)
+		return e_list_get_data(elist->tail);
 
-	return -1;
+	return NULL;
 }
 
-eint e_list_index(elist_t *list, eConstPointer data)
+void e_list_free_data(elist_t *elist, void *data)
 {
-	eint i;
-
-	i = 0;
-	while (list) {
-		if (list->data == data)
-			return i;
-		i++;
-		list = list->next;
-	}
-
-	return -1;
+	e_list_free_node(elist, (elistnode_t *)data - 1);
 }
 
-elist_t* e_list_last(elist_t *list)
+void e_list_add_data_by_sort(elist_t *elist, void *data)
 {
-	if (list) {
-		while (list->next)
-			list = list->next;
-	}
+	elistnode_t *node = elist->head;
+	elistnode_t *new  = e_list_alloc_node(elist->size);
 
-	return list;
-}
+	memcpy(new + 1, data, elist->size);
 
-elist_t* e_list_first(elist_t *list)
-{
-	if (list) {
-		while (list->prev)
-			list = list->prev;
-	}
-
-	return list;
-}
-
-euint e_list_length(elist_t *list)
-{
-	euint length;
-
-	length = 0;
-	while (list) {
-		length++;
-		list = list->next;
-	}
-
-	return length;
-}
-
-void e_list_foreach(elist_t *list, eFunc func, ePointer user_data)
-{
-	while (list) {
-		elist_t *next = list->next;
-		(*func)(list->data, user_data);
-		list = next;
-	}
-}
-
-static elist_t*
-e_list_insert_sorted_real(elist_t    *list,
-		ePointer  data,
-		eFunc     func,
-		ePointer  user_data)
-{
-	elist_t *tmp_list = list;
-	elist_t *new_list;
-	eint cmp;
-
-	e_return_val_if_fail(func != NULL, list);
-
-	if (!list) {
-		new_list = _e_list_alloc0();
-		new_list->data = data;
-		return new_list;
-	}
-
-	cmp = ((eCompareDataFunc)func)(data, tmp_list->data, user_data);
-
-	while ((tmp_list->next) && (cmp > 0)) {
-		tmp_list = tmp_list->next;
-
-		cmp = ((eCompareDataFunc)func)(data, tmp_list->data, user_data);
-	}
-
-	new_list = _e_list_alloc0();
-	new_list->data = data;
-
-	if ((!tmp_list->next) && (cmp > 0)) {
-		tmp_list->next = new_list;
-		new_list->prev = tmp_list;
-		return list;
-	}
-
-	if (tmp_list->prev) {
-		tmp_list->prev->next = new_list;
-		new_list->prev = tmp_list->prev;
-	}
-	new_list->next = tmp_list;
-	tmp_list->prev = new_list;
-
-	if (tmp_list == list)
-		return new_list;
-	else
-		return list;
-}
-
-elist_t*
-e_list_insert_sorted(elist_t  *list,
-		ePointer      data,
-		eCompareFunc  func)
-{
-	return e_list_insert_sorted_real(list, data, (eFunc) func, NULL);
-}
-
-elist_t*
-e_list_insert_sorted_with_data(elist_t  *list,
-		ePointer          data,
-		eCompareDataFunc  func,
-		ePointer          user_data)
-{
-	return e_list_insert_sorted_real(list, data, (eFunc)func, user_data);
-}
-
-static elist_t *
-e_list_sort_merge(elist_t     *l1, 
-		elist_t     *l2,
-		eFunc     compare_func,
-		ePointer  user_data)
-{
-	elist_t list, *l, *lprev;
-	eint cmp;
-
-	l = &list; 
-	lprev = NULL;
-
-	while (l1 && l2) {
-		cmp = ((eCompareDataFunc)compare_func)(l1->data, l2->data, user_data);
-
-		if (cmp <= 0) {
-			l->next = l1;
-			l1 = l1->next;
-		} 
-		else {
-			l->next = l2;
-			l2 = l2->next;
+	if (elist->sort) {
+		while (node) {
+			if (elist->sort(node, new, elist->data))
+				break;
+			node = node->next;
 		}
-		l = l->next;
-		l->prev = lprev; 
-		lprev = l;
+		e_list_insert_before(elist, node, new);
 	}
-	l->next = l1 ? l1 : l2;
-	l->next->prev = l;
-
-	return list.next;
+	else
+		e_list_insert_tail(elist, node);
 }
 
-static elist_t* 
-e_list_sort_real(elist_t *list,
-		eFunc     compare_func,
-		ePointer  user_data)
+void e_list_insert_data_before(elist_t *elist, elistnode_t *node, void *data)
 {
-	elist_t *l1, *l2;
-
-	if (!list) 
-		return NULL;
-	if (!list->next) 
-		return list;
-
-	l1 = list; 
-	l2 = list->next;
-
-	while ((l2 = l2->next) != NULL) {
-		if ((l2 = l2->next) == NULL) 
-			break;
-		l1 = l1->next;
-	}
-	l2 = l1->next; 
-	l1->next = NULL; 
-
-	return e_list_sort_merge(e_list_sort_real(list, compare_func, user_data),
-			e_list_sort_real(l2, compare_func, user_data),
-			compare_func,
-			user_data);
+	elistnode_t *new = e_list_alloc_node(elist->size);
+	memcpy(new + 1, data, elist->size);
+	e_list_insert_before(elist, node, new);
 }
 
-elist_t *e_list_sort(elist_t *list, eCompareFunc compare_func)
+void e_list_insert_data_after(elist_t *elist, elistnode_t *node, void *data)
 {
-	return e_list_sort_real(list, (eFunc)compare_func, NULL);
+	elistnode_t *new = e_list_alloc_node(elist->size);
+	memcpy(new + 1, data, elist->size);
+	e_list_insert_after(elist, node, new);
 }
 
-elist_t *
-e_list_sort_with_data(elist_t    *list,
-		eCompareDataFunc  compare_func,
-		ePointer          user_data)
+void *e_list_get_data(elistnode_t *node)
 {
-	return e_list_sort_real(list, (eFunc)compare_func, user_data);
+	if (node)
+		return (void *)(node + 1);
+	return NULL;
+}
+
+void *e_list_get_index_data(elist_t *elist, int index)
+{
+	int i;
+	elistnode_t *node;
+
+	if (index == 0)
+		return e_list_get_data(elist->head);
+	if (index == elist->count - 1)
+		return e_list_get_data(elist->tail);
+
+	if (index <= elist->count / 2) {
+		node = elist->head;
+		for (i = 0; node && i < index; i++)
+			node = node->next;
+	}       
+	else {
+		node = elist->tail;
+		for (i = elist->count - 1; node && i > index; i--)
+			node = node->prev;
+	}       
+
+	if (node)
+		return (void *)(node + 1);
+
+	return NULL;
+}
+
+void e_list_set_func(elist_t *elist, int (*sort)(elistnode_t *, elistnode_t *, void *data), void *data)
+{
+	elist->sort = sort;
+	elist->data = data;
+}
+
+void e_list_reverse(elist_t *list)
+{
+	elistnode_t *last = NULL;
+	elistnode_t *node = list->head;
+
+    while (node) {
+        last = node;
+        node = last->next;
+        last->next = last->prev;
+        last->prev = node;
+    }
+
+	last = list->tail;
+	list->tail = list->head;
+	list->head = last;
+}
+
+elist_t *e_list_copy(elist_t *src, elist_t *dst)
+{
+	elistnode_t *node = src->head;
+
+	e_list_empty(dst);
+	dst->size  = src->size;
+	dst->count = src->count;
+	dst->data  = src->data;
+
+    while (node) {
+		e_list_add_data(dst, e_list_get_data(node));
+        node = node->next;
+    }
+	return dst;
+}
+
+elist_t *e_list_reverse_copy(elist_t *src, elist_t *dst)
+{
+	elistnode_t *node = src->tail;
+
+	e_list_empty(dst);
+	dst->size  = src->size;
+	dst->count = src->count;
+	dst->data  = src->data;
+
+    while (node) {
+		e_list_add_data(dst, e_list_get_data(node));
+        node = node->prev;
+    }
+	return dst;
 }

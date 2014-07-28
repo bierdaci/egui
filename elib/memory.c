@@ -620,7 +620,7 @@ static inline SliceHead *slice_head_new(euint type, euint level)
 	return head;
 }
 
-void e_slice_create(euint type, euint level)
+void e_slice_set_level(euint type, euint level)
 {
 	type = (type + 7) / 8;
 	if (type > SLICE_TABLES_NUM || slice_tables[type])
@@ -643,7 +643,7 @@ ePointer e_slice_alloc(euint size)
 	e_pthread_mutex_lock(&slice_lock);
 
 	if (!slice_tables[type])
-		slice_tables[type] = slice_head_new(type, 2);
+		slice_tables[type] = slice_head_new(type, 5);
 
 	head = slice_tables[type];
 	addr = slice_half_alloc(head);

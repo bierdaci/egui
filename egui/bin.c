@@ -9,8 +9,12 @@ static void bin_free_data(eHandle, ePointer);
 static eint bin_mousemove(eHandle, GalEventMouse *);
 static eint bin_lbuttonup(eHandle, GalEventMouse *);
 static eint bin_rbuttonup(eHandle, GalEventMouse *);
+static eint bin_mbuttonup(eHandle, GalEventMouse *);
 static eint bin_lbuttondown(eHandle, GalEventMouse *);
 static eint bin_rbuttondown(eHandle, GalEventMouse *);
+static eint bin_mbuttondown(eHandle, GalEventMouse *);
+static eint bin_wheelforward(eHandle, GalEventMouse *);
+static eint bin_wheelbackward(eHandle, GalEventMouse *);
 static eint bin_keydown(eHandle, GalEventKey *);
 static eint bin_keyup(eHandle, GalEventKey *);
 static void bin_put(eHandle, eHandle);
@@ -77,25 +81,29 @@ static void bin_init_orders(eGeneType new, ePointer this)
 	GuiEventOrders  *o = e_genetype_orders(new, GTYPE_EVENT);
 	GuiBinOrders    *b = this;
 
-	w->put          = bin_put;
-	w->hide         = bin_hide;
-	w->show         = bin_show;
-	w->move         = bin_move;
-	w->remove       = bin_remove;
-	w->expose       = bin_expose;
-	w->configure    = bin_configure;
-	w->unset_focus  = bin_unset_focus;
+	w->put           = bin_put;
+	w->hide          = bin_hide;
+	w->show          = bin_show;
+	w->move          = bin_move;
+	w->remove        = bin_remove;
+	w->expose        = bin_expose;
+	w->configure     = bin_configure;
+	w->unset_focus   = bin_unset_focus;
 
-	o->keyup        = bin_keyup;
-	o->keydown      = bin_keydown;
-	o->mousemove    = bin_mousemove;
-	o->lbuttonup    = bin_lbuttonup;
-	o->lbuttondown  = bin_lbuttondown;
-	o->rbuttonup    = bin_rbuttonup;
-	o->rbuttondown  = bin_rbuttondown;
+	o->keyup         = bin_keyup;
+	o->keydown       = bin_keydown;
+	o->mousemove     = bin_mousemove;
+	o->lbuttonup     = bin_lbuttonup;
+	o->lbuttondown   = bin_lbuttondown;
+	o->rbuttonup     = bin_rbuttonup;
+	o->rbuttondown   = bin_rbuttondown;
+	o->mbuttonup     = bin_mbuttonup;
+	o->mbuttondown   = bin_mbuttondown;
+	o->wheelforward  = bin_wheelforward;
+	o->wheelbackward = bin_wheelbackward;
 
-	b->next_child   = bin_next_child;
-	b->switch_focus = bin_switch_focus;
+	b->next_child    = bin_next_child;
+	b->switch_focus  = bin_switch_focus;
 }
 
 static eint bin_expose(eHandle hobj, GuiWidget *pw, GalEventExpose *expose)
@@ -233,7 +241,7 @@ static GuiWidget *grab_in_point(GuiBin *bin, eint x, eint y)
 	return 0;
 }
 
-static eint bin_lbuttondown(eHandle hobj, GalEventMouse *mevent)
+static eint bin_buttondown(eHandle hobj, GalEventMouse *mevent, esig_t sig)
 {
 	GuiBin *bin = GUI_BIN_DATA(hobj);
 	eint x = mevent->point.x;
@@ -246,7 +254,7 @@ static eint bin_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 		if (!t && WIDGET_STATUS_ACTIVE(wid))
 			egui_set_focus(OBJECT_OFFSET(wid));
 
-		ret = mouse_signal_emit(OBJECT_OFFSET(wid), SIG_LBUTTONDOWN, mevent);
+		ret = mouse_signal_emit(OBJECT_OFFSET(wid), sig, mevent);
 
 		if ((t && ret) || (!t && WIDGET_STATUS_MOUSE(wid))) {
 			bin->grab = OBJECT_OFFSET(wid);
@@ -256,27 +264,29 @@ static eint bin_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 	return 0;
 }
 
+static eint bin_lbuttondown(eHandle hobj, GalEventMouse *mevent)
+{
+	return bin_buttondown(hobj, mevent, SIG_LBUTTONDOWN);
+}
+
 static eint bin_rbuttondown(eHandle hobj, GalEventMouse *mevent)
 {
-	GuiBin *bin = GUI_BIN_DATA(hobj);
-	eint x = mevent->point.x;
-	eint y = mevent->point.y;
-	GuiWidget *wid = grab_in_point(bin, x, y);
-	if (wid) {
-		eint ret;
-		bool t = GUI_TYPE_BIN(OBJECT_OFFSET(wid));
+	return bin_buttondown(hobj, mevent, SIG_RBUTTONDOWN);
+}
 
-		if (!t && WIDGET_STATUS_ACTIVE(wid))
-			egui_set_focus(OBJECT_OFFSET(wid));
+static eint bin_mbuttondown(eHandle hobj, GalEventMouse *mevent)
+{
+	return bin_buttondown(hobj, mevent, SIG_MBUTTONDOWN);
+}
 
-		ret = mouse_signal_emit(OBJECT_OFFSET(wid), SIG_RBUTTONDOWN, mevent);
+static eint bin_wheelforward(eHandle hobj, GalEventMouse *mevent)
+{
+	return bin_buttondown(hobj, mevent, SIG_WHEELFORWARD);
+}
 
-		if ((t && ret) || (!t && WIDGET_STATUS_MOUSE(wid))) {
-			bin->grab = OBJECT_OFFSET(wid);
-			return 1;
-		}
-	}
-	return 0;
+static eint bin_wheelbackward(eHandle hobj, GalEventMouse *mevent)
+{
+	return bin_buttondown(hobj, mevent, SIG_WHEELBACKWARD);
 }
 
 static eHandle point_in_active(GuiBin *bin, eint x, eint y)
@@ -292,7 +302,7 @@ static eHandle point_in_active(GuiBin *bin, eint x, eint y)
 	return 0;
 }
 
-static eint bin_lbuttonup(eHandle hobj, GalEventMouse *mevent)
+static eint bin_buttonup(eHandle hobj, GalEventMouse *mevent, esig_t sig)
 {
 	GuiBin *bin = GUI_BIN_DATA(hobj);
 	eint x = mevent->point.x;
@@ -300,7 +310,7 @@ static eint bin_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 	eHandle grab = bin->grab;
 
 	if (grab) {
-		mouse_signal_emit(grab, SIG_LBUTTONUP, mevent);
+		mouse_signal_emit(grab, sig, mevent);
 		bin->grab = 0;
 	}
 	eHandle c = point_in_active(bin, x, y);
@@ -310,22 +320,19 @@ static eint bin_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 	return 0;
 }
 
+static eint bin_lbuttonup(eHandle hobj, GalEventMouse *mevent)
+{
+	return bin_buttonup(hobj, mevent, SIG_LBUTTONUP);
+}
+
 static eint bin_rbuttonup(eHandle hobj, GalEventMouse *mevent)
 {
-	GuiBin *bin = GUI_BIN_DATA(hobj);
-	eint x = mevent->point.x;
-	eint y = mevent->point.y;
-	eHandle grab = bin->grab;
+	return bin_buttonup(hobj, mevent, SIG_RBUTTONUP);
+}
 
-	if (grab) {
-		mouse_signal_emit(grab, SIG_RBUTTONUP, mevent);
-		bin->grab = 0;
-	}
-	eHandle c = point_in_active(bin, x, y);
-	if (c && c != grab)
-		e_signal_emit(hobj, SIG_MOUSEMOVE, mevent);
-
-	return 0;
+static eint bin_mbuttonup(eHandle hobj, GalEventMouse *mevent)
+{
+	return bin_buttonup(hobj, mevent, SIG_MBUTTONUP);
 }
 
 static eint bin_mousemove(eHandle hobj, GalEventMouse *mevent)

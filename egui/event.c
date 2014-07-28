@@ -12,6 +12,8 @@ esig_t event_signal_rbuttondown   = 0;
 esig_t event_signal_rbuttonup     = 0;
 esig_t event_signal_mbuttondown   = 0;
 esig_t event_signal_mbuttonup     = 0;
+esig_t event_signal_wheelforward  = 0;
+esig_t event_signal_wheelbackward = 0;
 esig_t event_signal_focus_in      = 0;
 esig_t event_signal_focus_out     = 0;
 esig_t event_signal_clicked       = 0;
@@ -72,6 +74,14 @@ static void event_init_gene(eGeneType new)
 	event_signal_mbuttonup = e_signal_new("mbuttonup",
 			new,
 			STRUCT_OFFSET(GuiEventOrders, mbuttonup),
+			false, 0, "%p");
+	event_signal_wheelforward = e_signal_new("wheelforward",
+			new,
+			STRUCT_OFFSET(GuiEventOrders, wheelforward),
+			false, 0, "%p");
+	event_signal_wheelbackward = e_signal_new("wheelbackward",
+			new,
+			STRUCT_OFFSET(GuiEventOrders, wheelbackward),
 			false, 0, "%p");
 	event_signal_focus_in = e_signal_new("focus_in",
 			new,

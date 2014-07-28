@@ -3,42 +3,49 @@
 
 #include <elib/types.h>
 
-typedef struct _elist_t elist_t;
+typedef struct _elistnode {
+    struct _elistnode *next;
+    struct _elistnode *prev;
+} elistnode_t;
 
-struct _elist_t {
-  ePointer data;
-  elist_t *next;
-  elist_t *prev;
-};
+typedef struct {
+	eint size;
+	eint count;
+    elistnode_t *head;
+    elistnode_t *tail;
+	eint (*sort)(elistnode_t *, elistnode_t *, void *);
+	void *data;
+} elist_t;
 
-elist_t* e_list_alloc(void);
-void e_list_free(elist_t *list);
-void e_list_free_1(elist_t *list);
-elist_t* e_list_append(elist_t *list, ePointer data);
-elist_t* e_list_prepend(elist_t *list, ePointer data);
-elist_t* e_list_insert(elist_t *list, ePointer data, eint position);
-elist_t* e_list_insert_before(elist_t *list, elist_t *sibling, ePointer data);
-elist_t * e_list_concat(elist_t *list1, elist_t *list2);
-elist_t* e_list_remove(elist_t *list, eConstPointer data);
-elist_t* e_list_remove_all(elist_t *list, eConstPointer data);
-elist_t* e_list_remove_link(elist_t *list, elist_t *link);
-elist_t* e_list_delete_link(elist_t *list, elist_t *link);
-elist_t* e_list_copy(elist_t *list);
-elist_t* e_list_reverse(elist_t *list);
-elist_t* e_list_nth(elist_t *list, euint n);
-elist_t* e_list_nth_prev(elist_t *list, euint n);
-ePointer e_list_nth_data(elist_t *list, euint n);
-elist_t* e_list_find(elist_t *list, eConstPointer data);
-elist_t* e_list_find_custom(elist_t *, eConstPointer, eCompareFunc);
-eint e_list_position(elist_t *list, elist_t *link);
-eint e_list_index(elist_t *list, eConstPointer data);
-elist_t* e_list_last(elist_t *list);
-elist_t* e_list_first(elist_t *list);
-euint e_list_length(elist_t *list);
-void e_list_foreach(elist_t *list, eFunc func, ePointer user_data);
-elist_t* e_list_insert_sorted(elist_t *, ePointer, eCompareFunc);
-elist_t* e_list_insert_sorted_with_data(elist_t  *, ePointer, eCompareDataFunc, ePointer);
-elist_t *e_list_sort(elist_t *, eCompareFunc);
-elist_t * e_list_sort_with_data(elist_t *, eCompareDataFunc, ePointer);
+elist_t *e_list_new(int size);
+void e_list_init(elist_t *elist, int size);
+void e_list_insert_head(elist_t *elist, elistnode_t *new);
+void e_list_insert_tail(elist_t *elist, elistnode_t *new);
+void e_list_insert_after(elist_t *elist, elistnode_t *node, elistnode_t *new);
+void e_list_insert_before(elist_t *elist, elistnode_t *node, elistnode_t *new);
+void e_list_remove(elist_t *elist, elistnode_t *node);
+void e_list_free_node(elist_t *elist, elistnode_t *node);
+void e_list_empty(elist_t *elist);
+void e_list_reverse(elist_t *elist);
+void e_list_insert_data_before(elist_t *elist, elistnode_t *node, void *data);
+void e_list_insert_data_after(elist_t *elist, elistnode_t *node, void *data);
+
+elist_t *e_list_copy(elist_t *src, elist_t *dst);
+elist_t *e_list_reverse_copy(elist_t *src, elist_t *dst);
+
+void e_list_push_data(elist_t *elist, void *data);
+void e_list_pop_data(elist_t *elist, void *data);
+
+void e_list_add_data(elist_t *elist, void *data);
+void e_list_add_data_by_sort(elist_t *elist, void *data);
+void e_list_set_func(elist_t *elist, int (*sort)(elistnode_t *, elistnode_t *, void *), void *data);
+
+elistnode_t *e_list_alloc_node(int size);
+void *e_list_get_data(elistnode_t *node);
+void *e_list_get_index_data(elist_t *elist, int index);
+void *e_list_next_data(elist_t *elist, void *data);
+void *e_list_prev_data(elist_t *elist, void *data);
+void  e_list_free_data(elist_t *elist, void *data);
 
 #endif
+

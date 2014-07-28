@@ -86,8 +86,8 @@ eTree* e_tree_new_with_data(eCompareDataFunc key_compare_func, ePointer key_comp
 	return e_tree_new_full(key_compare_func, key_compare_data, NULL, NULL);
 }
 
-eTree *
-e_tree_new_full(eCompareDataFunc key_compare_func,
+eTree * e_tree_new_full(
+		eCompareDataFunc key_compare_func,
 		ePointer         key_compare_data,
 		eDestroyNotify   key_destroy_func,
 		eDestroyNotify   value_destroy_func)
@@ -186,8 +186,8 @@ void e_tree_replace(eTree *tree, ePointer key, ePointer value)
 	e_tree_insert_internal(tree, key, value, true);
 }
 
-static void
-e_tree_insert_internal(eTree *tree,
+static void e_tree_insert_internal(
+		eTree *tree,
 		ePointer  key,
 		ePointer  value,
 		bool  replace)
@@ -197,7 +197,6 @@ e_tree_insert_internal(eTree *tree,
 	int idx;
 
 	e_return_if_fail(tree != NULL);
-
 
 	if (!tree->root) {
 		tree->root = e_tree_node_new(key, value);
@@ -271,8 +270,7 @@ e_tree_insert_internal(eTree *tree,
 		}
 	}
 
-	while (1)
-	{
+	while (1) {
 		eTreeNode *bparent = path[--idx];
 		bool left_node = (bparent && node == bparent->left);
 		e_assert(!bparent || bparent->left == node || bparent->right == node);

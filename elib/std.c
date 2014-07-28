@@ -85,12 +85,12 @@ char *e_strrchr(const char *s, int c)
 
 echar** e_strsplit(const echar *str, const echar *delimiter, eint max)
 {
-	elist_t *list;
-	elist_t *head = NULL;
+	elist_t list = {sizeof(echar *), 0, NULL, NULL};
 
 	echar **str_array, *s;
 	euint n = 0;
 	const echar *remain;
+	echar *new;
 
 	e_return_val_if_fail(str != NULL, NULL);
 	e_return_val_if_fail(delimiter != NULL, NULL);
@@ -106,13 +106,12 @@ echar** e_strsplit(const echar *str, const echar *delimiter, eint max)
 
 		while (--max && s) {
 			eint   len;     
-			echar *new;
 
 			len = s - remain;
 			new = e_malloc(len + 1);
 			e_strncpy(new, remain, len);
 			new[len] = 0;
-			head = e_list_prepend(head, new);
+			e_list_push_data(&list, &new);
 			n++;
 			remain = s + delimiter_len;
 			s = e_strstr(remain, delimiter);
@@ -120,17 +119,17 @@ echar** e_strsplit(const echar *str, const echar *delimiter, eint max)
 	}
 
 	if (*str) {
+		new = e_strdup(remain);
 		n++;
-		head = e_list_prepend(head, e_strdup(remain));
+		e_list_push_data(&list, &new);
 	}
 
 	str_array = e_calloc(sizeof(echar *), n + 1);
 
 	str_array[n--] = NULL;
-	for (list = head; list; list = list->next)
-		str_array[n--] = list->data;
-
-	e_list_free(head);
+	while (list.head) {
+		e_list_pop_data(&list, &str_array[n--]);
+	}
 
 	return str_array;
 }

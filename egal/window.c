@@ -3,6 +3,11 @@
 static GalWindowManager _gwm = {NULL, NULL, NULL, NULL, NULL};
 static GalPB default_pbs[GalPBset + 1];
 
+void egal_warp_pointer(GalWindow window, int sx, int sy, int sw, int sh, int dx, int dy)
+{
+	GAL_WINDOW_ORDERS(window)->warp_pointer(window, sx, sy, sw, sh, dx, dy);
+}
+
 void egal_get_pointer(GalWindow window, eint *rootx, eint *rooty, eint *winx, eint *winy, GalModifierType *mask)
 {
 	GAL_WINDOW_ORDERS(window)->get_pointer(window, rootx, rooty, winx, winy, mask);
@@ -407,7 +412,9 @@ eint egal_window_init(void)
 		for (i = 0; i < GalPBset+1; i++) {
 			GalPBAttr  attribute;
 			attribute.func = i;
+#ifdef _GAL_SUPPORT_CAIRO
 			attribute.use_cairo = true;
+#endif
 			default_pbs[i] = egal_pb_new(0, &attribute);
 		}
 		return 0;

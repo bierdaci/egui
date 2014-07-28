@@ -17,6 +17,8 @@
 #define SIG_RBUTTONUP					event_signal_rbuttonup
 #define SIG_MBUTTONDOWN					event_signal_mbuttondown
 #define SIG_MBUTTONUP					event_signal_mbuttonup
+#define SIG_WHEELFORWARD				event_signal_wheelforward
+#define SIG_WHEELBACKWARD				event_signal_wheelbackward
 #define SIG_FOCUS_IN					event_signal_focus_in
 #define SIG_FOCUS_OUT					event_signal_focus_out
 #define SIG_ENTER						event_signal_enter
@@ -27,28 +29,31 @@
 typedef struct _GuiEventOrders		GuiEventOrders;
 
 struct _GuiEventOrders {
-	eint (*keydown)    (eHandle, GalEventKey *);
-	eint (*keyup)      (eHandle, GalEventKey *);
+	eint (*keydown)      (eHandle, GalEventKey *);
+	eint (*keyup)        (eHandle, GalEventKey *);
 
-	eint (*mousemove)  (eHandle, GalEventMouse *);
+	eint (*mousemove)    (eHandle, GalEventMouse *);
 
-	eint (*lbuttondown)(eHandle, GalEventMouse *);
-	eint (*lbuttonup)  (eHandle, GalEventMouse *);
+	eint (*lbuttondown)  (eHandle, GalEventMouse *);
+	eint (*lbuttonup)    (eHandle, GalEventMouse *);
 
-	eint (*rbuttondown)(eHandle, GalEventMouse *);
-	eint (*rbuttonup)  (eHandle, GalEventMouse *);
+	eint (*rbuttondown)  (eHandle, GalEventMouse *);
+	eint (*rbuttonup)    (eHandle, GalEventMouse *);
 
-	eint (*mbuttondown)(eHandle, GalEventMouse *);
-	eint (*mbuttonup)  (eHandle, GalEventMouse *);
+	eint (*mbuttondown)  (eHandle, GalEventMouse *);
+	eint (*mbuttonup)    (eHandle, GalEventMouse *);
 
-	eint (*enter)      (eHandle, eint, eint);
-	eint (*leave)      (eHandle);
+	eint (*wheelforward) (eHandle, GalEventMouse *);
+	eint (*wheelbackward)(eHandle, GalEventMouse *);
 
-	eint (*focus_in)   (eHandle);
-	eint (*focus_out)  (eHandle);
+	eint (*enter)        (eHandle, eint, eint);
+	eint (*leave)        (eHandle);
 
-	eint (*clicked)    (eHandle, ePointer);
-	eint (*dbclicked)  (eHandle, ePointer);
+	eint (*focus_in)     (eHandle);
+	eint (*focus_out)    (eHandle);
+
+	eint (*clicked)      (eHandle, ePointer);
+	eint (*dbclicked)    (eHandle, ePointer);
 
 };
 
@@ -61,6 +66,8 @@ extern esig_t event_signal_rbuttondown;
 extern esig_t event_signal_rbuttonup;
 extern esig_t event_signal_mbuttondown;
 extern esig_t event_signal_mbuttonup;
+extern esig_t event_signal_wheelforward;
+extern esig_t event_signal_wheelbackward;
 extern esig_t event_signal_focus_in;
 extern esig_t event_signal_focus_out;
 extern esig_t event_signal_enter;

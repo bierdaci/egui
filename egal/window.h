@@ -223,6 +223,7 @@ struct _GalWindowOrders {
 	eint (*set_attr)(GalWindow, GalWindowAttr *);
 	eint (*get_attr)(GalWindow, GalWindowAttr *);
 
+	void (*warp_pointer)(GalWindow, int, int, int, int, int, int); 
 	GalGrabStatus (*grab_pointer)(GalWindow, bool, GalCursor);
 	GalGrabStatus (*ungrab_pointer)(GalWindow);
 	GalGrabStatus (*grab_keyboard)(GalWindow, bool);
@@ -362,6 +363,10 @@ typedef enum {
 	GAL_ET_LBUTTONUP,
 	GAL_ET_RBUTTONDOWN,
 	GAL_ET_RBUTTONUP,
+	GAL_ET_MBUTTONDOWN,
+	GAL_ET_MBUTTONUP,
+	GAL_ET_WHEELFORWARD,
+	GAL_ET_WHEELBACKWARD,
 	GAL_ET_ENTER,
 	GAL_ET_LEAVE,
 	GAL_ET_FOCUS_IN,
@@ -459,6 +464,7 @@ eint egal_window_resize(GalWindow, eint, eint);
 eint egal_window_move_resize(GalWindow, eint, eint, eint, eint);
 eint egal_window_set_name(GalWindow, const echar *);
 
+void egal_warp_pointer(GalWindow window, int sx, int sy, int sw, int sh, int dx, int dy);
 GalGrabStatus egal_grab_pointer(GalWindow, bool, GalCursor);
 GalGrabStatus egal_ungrab_pointer(GalWindow);
 GalGrabStatus egal_grab_keyboard(GalWindow, bool);
@@ -511,5 +517,6 @@ GalWindow egal_window_wait_event(GalEvent *);
 eint egal_window_init(void);
 
 void egal_window_make_GL(GalWindow);
+void GalSwapBuffers(void);
 
 #endif

@@ -12,5 +12,6 @@
 #include <elib/object.h>
 #include <elib/esignal.h>
 #include <elib/timer.h>
+#include <elib/dlist.h>
 
 #endif

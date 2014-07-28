@@ -134,11 +134,12 @@ struct _GalColormapX11 {
 #ifdef _GAL_SUPPORT_OPENGL
 typedef struct _GalGLXContext GalGLXContext;
 struct _GalGLXContext {
+	Window  xid;
 	GLXContext    context;
 	GalWindowX11 *current;
 };
-//static GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
-static GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, None};
+static GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
+//static GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, None};
 static GalGLXContext *x11_glc;
 #endif
 static GalWindow      root_window;
@@ -458,12 +459,19 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			XButtonEvent *e = &event->xbutton;
 			if (e->button == Button1)
 				ent->type = GAL_ET_LBUTTONDOWN;
+			else if (e->button == Button2)
+				ent->type = GAL_ET_MBUTTONDOWN;
 			else if (e->button == Button3)
 				ent->type = GAL_ET_RBUTTONDOWN;
+			else if (e->button == Button4)
+				ent->type = GAL_ET_WHEELFORWARD;
+			else if (e->button == Button5)
+				ent->type = GAL_ET_WHEELBACKWARD;
 			ent->e.mouse.point.x = e->x;
 			ent->e.mouse.point.y = e->y;
 			ent->e.mouse.root_x  = e->x_root;
 			ent->e.mouse.root_y  = e->y_root;
+			ent->e.mouse.state   = e->state;
 			ent->e.mouse.time    = e->time;
 			return true;
 		}
@@ -472,12 +480,20 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			XButtonEvent *e = &event->xbutton;
 			if (e->button == Button1)
 				ent->type = GAL_ET_LBUTTONUP;
+			else if (e->button == Button2)
+				ent->type = GAL_ET_MBUTTONUP;
 			else if (e->button == Button3)
 				ent->type = GAL_ET_RBUTTONUP;
+			else if (e->button == Button4)
+				return false;
+			else if (e->button == Button5)
+				return false;
+				
 			ent->e.mouse.point.x = e->x;
 			ent->e.mouse.point.y = e->y;
 			ent->e.mouse.root_x  = e->x_root;
 			ent->e.mouse.root_y  = e->y_root;
+			ent->e.mouse.state   = e->state;
 			ent->e.mouse.time    = e->time;
 			return true;
 		}
@@ -489,6 +505,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.mouse.point.y = e->y;
 			ent->e.mouse.root_x  = e->x_root;
 			ent->e.mouse.root_y  = e->y_root;
+			ent->e.mouse.state   = e->state;
 			return true;
 		}
 		case FocusIn:
@@ -663,8 +680,10 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 			&xattribs);
 
 #ifdef _GAL_SUPPORT_OPENGL
-	if (x11_glc->current == child)
+	if (x11_glc->current == child) {
 		glXMakeCurrent(x11_dpy, child->xid, x11_glc->context);
+		x11_glc->xid = child->xid;
+	}
 #endif
 
 	if (child->attr.type == GalWindowTop || child->attr.type == GalWindowDialog) {
@@ -999,6 +1018,13 @@ static void x11_window_set_geometry_hints(GalWindow window, GalGeometry *geometr
 	}
 
 	XSetWMNormalHints(x11_dpy, xwin->xid, &size_hints);
+}
+
+static void x11_warp_pointer(GalWindow window, int sx, int sy, int sw, int sh, int dx, int dy)
+{
+	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
+	if (xwin->xid)
+		XWarpPointer(x11_dpy, None, xwin->xid, sx, sy, sw, sh, dx, dy);
 }
 
 #define MOUSE_MASK  (ButtonPressMask \
@@ -1379,8 +1405,10 @@ static void x11_window_make_GL(GalWindow window)
 {
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
 	x11_glc->current   = xwin;
-	if (xwin->xid)
+	if (xwin->xid) {
 		glXMakeCurrent(x11_dpy, xwin->xid, x11_glc->context);
+		x11_glc->xid = xwin->xid;
+	}
 }
 #endif
 
@@ -1427,6 +1455,7 @@ static void x11_window_init_orders(eGeneType new, ePointer this)
 	win->get_pointer     = x11_get_pointer;
 	win->grab_pointer    = x11_grab_pointer;
 	win->ungrab_pointer  = x11_ungrab_pointer;
+	win->warp_pointer    = x11_warp_pointer;
 	//win->set_font        = x11_set_font;
 
 	win->set_name        = x11_window_set_name;
@@ -1621,7 +1650,9 @@ static eint x11_pb_init(eHandle hobj, GalDrawable drawable, GalPBAttr *attr)
 		xpb->values.function   = x11_func_convert(attr->func);
 		xpb->values.foreground = attr->foreground;
 		xpb->values.background = attr->background;
+#ifdef _GAL_SUPPORT_CAIRO
 		xpb->attr.use_cairo    = attr->use_cairo;
+#endif
 		xpb->attr.func         = attr->func;
 	}
 	else {
@@ -2178,4 +2209,12 @@ static GalCursor x11_cursor_new(GalCursorType type)
 	xcursor->type = type;
 
 	return cursor;
+}
+
+void GalSwapBuffers(void)
+{
+#ifdef _GAL_SUPPORT_OPENGL
+	if (x11_glc->xid)
+		glXSwapBuffers(x11_dpy, x11_glc->xid);
+#endif
 }

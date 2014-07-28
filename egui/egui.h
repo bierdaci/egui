@@ -25,5 +25,6 @@
 #include <egui/notebook.h>
 #include <egui/filesel.h>
 #include <egui/ddlist.h>
+#include <egui/drawable.h>
 
 #endif

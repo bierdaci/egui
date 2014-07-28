@@ -99,6 +99,18 @@ static esig_t event_to_signal(GalEvent *event)
 		case GAL_ET_RBUTTONUP:
 			signal = SIG_RBUTTONUP;
 			break;
+		case GAL_ET_MBUTTONDOWN:
+			signal = SIG_MBUTTONDOWN;
+			break;
+		case GAL_ET_MBUTTONUP:
+			signal = SIG_MBUTTONUP;
+			break;
+		case GAL_ET_WHEELFORWARD:
+			signal = SIG_WHEELFORWARD;
+			break;
+		case GAL_ET_WHEELBACKWARD:
+			signal = SIG_WHEELBACKWARD;
+			break;
 		case GAL_ET_ENTER:
 			signal = SIG_ENTER;
 			break;
@@ -723,8 +735,11 @@ void egui_request_resize(eHandle hobj, eint w, eint h)
 
 	if (wid->parent)
 		egui_request_layout_async(wid->parent, hobj, w, h, false, false);
-	else
+	else {
+		wid->min_w = w;
+		wid->min_h = h;
 		GUI_WIDGET_ORDERS(hobj)->request_resize(hobj, w, h);
+	}
 }
 
 void egui_move_resize(eHandle hobj, eint x, eint y, eint w, eint h)

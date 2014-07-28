@@ -11,6 +11,7 @@
 
 ePointer e_slice_alloc(euint size);
 void e_slice_free1(euint size, ePointer mem);
+void e_slice_set_level(euint size, euint level);
 
 
 ePointer e_heap_malloc(elong, bool);

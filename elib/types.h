@@ -8,7 +8,11 @@
 
 #undef  MIN
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+
+#ifndef __ELIB_BOOL
+#define __ELIB_BOOL
 typedef enum {false = 0, true = 1} bool;
+#endif
 
 #ifndef __ELIB_STD_H__
 #endif
