@@ -17,7 +17,11 @@ struct _TimerData {
 
 static TimerData *timer_head        = ENULL;
 static TimerData *add_timer_head    = ENULL;
+#ifdef WIN32
+static e_pthread_mutex_t timer_lock = {0};
+#else
 static e_pthread_mutex_t timer_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 static void timer_del(TimerData *timer)
 {

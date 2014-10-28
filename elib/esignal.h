@@ -51,7 +51,7 @@ struct _eSignalSlot {
 };
 
 esig_t e_signal_new(const char *, eGeneType, euint32, bool, eSignalType, const char *, ...);
-esig_t e_signal_new1(const char *, eGeneType, const char *, ...);
+esig_t e_signal_new_label(const char *, eGeneType, const char *, ...);
 bool e_signal_connect (eHandle, esig_t, eSignalFunc);
 bool e_signal_connect1(eHandle, esig_t, eSignalFunc, ePointer);
 bool e_signal_connect2(eHandle, esig_t, eSignalFunc, ePointer, ePointer);
@@ -70,4 +70,5 @@ ePointer     e_signal_get_data2(eHandle, esig_t);
 ePointer     e_signal_get_data3(eHandle, esig_t);
 ePointer     e_signal_get_data4(eHandle, esig_t);
 
+void e_signal_init(void);
 #endif

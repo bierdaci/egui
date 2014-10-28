@@ -5,9 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
+
+#ifdef WIN32
+
+#include <windows.h>
+#include <io.h>
+#else
 #include <pthread.h>
 #include <semaphore.h>
-#include <assert.h>
+#endif
 
 #include <elib/types.h>
 #include <elib/memory.h>
@@ -21,11 +28,27 @@ typedef va_list				eValist;
 #define e_va_arg(ap, t)		va_arg(ap, t)
 #define e_va_end(ap)		va_end(ap)
 
+#ifdef WIN32
+typedef struct {
+	HANDLE handle;
+	LONG value;
+} handle_sem_t;
+
+#define e_pthread_mutexattr_t	ePointer
+#define e_pthread_mutex_t		CRITICAL_SECTION
+#define e_pthread_cond_t		CRITICAL_SECTION
+#define e_pthread_condattr_t    CRITICAL_SECTION
+#define e_sem_t					handle_sem_t
+
+#else
+
 #define e_pthread_mutexattr_t	pthread_mutexattr_t
 #define e_pthread_mutex_t		pthread_mutex_t
 #define e_pthread_cond_t		pthread_cond_t
 #define e_pthread_condattr_t    pthread_condattr_t
 #define e_sem_t					sem_t
+
+#endif
 
 eint e_pthread_mutex_init(e_pthread_mutex_t *mutex, const e_pthread_mutexattr_t *mutexattr);
 eint e_pthread_mutex_lock(e_pthread_mutex_t *mutex);
@@ -36,7 +59,7 @@ eint e_pthread_cond_init(e_pthread_cond_t *, e_pthread_condattr_t *);
 eint e_pthread_cond_broadcast(e_pthread_cond_t *);
 eint e_pthread_cond_wait(e_pthread_cond_t *, e_pthread_mutex_t *);
 eint e_sem_init(e_sem_t *sem, euint value);
-eint e_sem_destroy(sem_t *sem);
+eint e_sem_destroy(e_sem_t *sem);
 eint e_sem_post(e_sem_t *sem);
 eint e_sem_wait(e_sem_t *sem);
 eint e_sem_trywait(e_sem_t *sem);
@@ -62,14 +85,14 @@ void e_strfreev(echar **str_array);
 #define e_renew(type, ptr, nmemb)  e_realloc(ptr, sizeof(type) * nmemb)
 #define ALIGN_WORD(size) ((size + sizeof(elong) - 1) & ~(sizeof(elong) - 1))
 
-static inline ePointer e_malloc(euint size)
+static INLINE ePointer e_malloc(euint size)
 {
 	if (!size)
 		return NULL;
 	return e_heap_malloc(ALIGN_WORD(size), false);
 }
 
-static inline ePointer e_realloc(ePointer ptr, euint size)
+static INLINE ePointer e_realloc(ePointer ptr, euint size)
 {
 	if (!size) {
 		e_heap_free(ptr);
@@ -80,7 +103,7 @@ static inline ePointer e_realloc(ePointer ptr, euint size)
 	return e_heap_malloc(ALIGN_WORD(size), false);
 }
 
-static inline ePointer e_calloc(euint nmemb, euint size)
+static INLINE ePointer e_calloc(euint nmemb, euint size)
 {
 	eint    nsize = ALIGN_WORD(size) * nmemb;
 	ePointer addr = e_heap_malloc(nsize, false);
@@ -88,79 +111,87 @@ static inline ePointer e_calloc(euint nmemb, euint size)
 	return addr;
 }
 
-static inline void e_free(ePointer ptr)
+static INLINE void e_free(ePointer ptr)
 {
 	e_heap_free(ptr);
 }
 
-static inline eint e_strlen(const echar *s)
+static INLINE eint e_strlen(const echar *s)
 {
 	return strlen((const char *)s);
 }
 
-static inline echar *e_strncpy(echar *dest, const echar *src, size_t n)
+static INLINE echar *e_strncpy(echar *dest, const echar *src, size_t n)
 {
 	return (echar *)strncpy((char *)dest, (const char *)src, n);
 }
 
-static inline echar *e_strcat(echar *dest, const echar *src)
+static INLINE echar *e_strcat(echar *dest, const echar *src)
 {
 	return (echar *)strcat((char *)dest, (const char *)src);
 }
 
-static inline echar *e_strncat(echar *dest, const echar *src, eint n)
+static INLINE echar *e_strncat(echar *dest, const echar *src, eint n)
 {
 	return (echar *)strncat((char *)dest, (const char *)src, n);
 }
 
-static inline echar *e_strstr(const echar *s1, const echar *s2)
+static INLINE echar *e_strstr(const echar *s1, const echar *s2)
 {
 	return (echar *)strstr((const char *)s1, (const char *)s2);
 }
 
-static inline echar *e_strrchr(const echar *s, int c)
+static INLINE echar *e_strrchr(const echar *s, int c)
 {
 	return (echar *)strrchr((const char *)s, c);
 }
 
-static inline echar *e_strchr(const echar *s, int c)
+static INLINE echar *e_strchr(const echar *s, int c)
 {
 	return (echar *)strchr((const char *)s, c);
 }
 
-static inline echar *e_strcpy(echar *s1, const echar *s2)
+static INLINE echar *e_strcpy(echar *s1, const echar *s2)
 {
 	return (echar *)strcpy((char *)s1, (const char *)s2);
 }
 
-static inline int e_strcmp(const echar *s1, const echar *s2)
+static INLINE int e_strcmp(const echar *s1, const echar *s2)
 {
 	return strcmp((const char *)s1, (const char *)s2);
 }
 
-static inline eint e_strncmp(const echar *s1, const echar *s2, eint n)
+static INLINE eint e_strncmp(const echar *s1, const echar *s2, eint n)
 {
 	return strncmp((const char *)s1, (const char *)s2, n);
 }
 
-static inline int e_strcasecmp(const echar *s1, const echar *s2)
+static INLINE int e_strcasecmp(const echar *s1, const echar *s2)
 {
+#ifdef WIN32
+	return stricmp((const char *)s1, (const char *)s2);
+#else
 	return strcasecmp((const char *)s1, (const char *)s2);
+#endif
 }
 
-static inline int e_strncasecmp(const echar *s1, const echar *s2, size_t n)
+static INLINE int e_strncasecmp(const echar *s1, const echar *s2, size_t n)
 {
+#ifdef WIN32
+	return strnicmp((const char *)s1, (const char *)s2, n);
+#else
 	return strncasecmp((const char *)s1, (const char *)s2, n);
+#endif
 }
 
-static inline echar *e_strdup(const echar *s)
+static INLINE echar *e_strdup(const echar *s)
 {
 	echar *dst = e_malloc(e_strlen(s) + 1);
 	e_strcpy(dst, s);
 	return  dst;
 }
 
-static inline echar *e_strndup(const echar *s, size_t n)
+static INLINE echar *e_strndup(const echar *s, size_t n)
 {
 	echar *dst = e_malloc(n + 1);
 	e_memcpy(dst, s, n);
@@ -168,17 +199,17 @@ static inline echar *e_strndup(const echar *s, size_t n)
 	return  dst;
 }
 
-static inline FILE *e_fopen(const echar *path, const echar *mode)
+static INLINE FILE *e_fopen(const echar *path, const echar *mode)
 {
 	return fopen((const char *)path, (const char *)mode);
 }
 
-static inline echar *e_fgets(echar *s, int size, FILE *stream)
+static INLINE echar *e_fgets(echar *s, int size, FILE *stream)
 {
 	return (echar *)fgets((char *)s, size, stream);
 }
 
-static inline eint e_printf(const echar *format, ...)
+static INLINE eint e_printf(const echar *format, ...)
 {
 	eint ret;
 	va_list ap;
@@ -188,7 +219,7 @@ static inline eint e_printf(const echar *format, ...)
 	return ret;
 }
 
-static inline eint e_sprintf(echar *str, const echar *format, ...)
+static INLINE eint e_sprintf(echar *str, const echar *format, ...)
 {
 	eint ret;
 	va_list ap;
@@ -198,17 +229,17 @@ static inline eint e_sprintf(echar *str, const echar *format, ...)
 	return ret;
 }
 
-static inline eint e_atoi(const echar *nptr)
+static INLINE eint e_atoi(const echar *nptr)
 {
 	return (eint)atoi((const char *)nptr);
 }
 
-static inline elong e_atol(const echar *nptr)
+static INLINE elong e_atol(const echar *nptr)
 {
 	return (elong)atol((const char *)nptr);
 }
 
-static inline edouble e_atof(const echar *nptr)
+static INLINE edouble e_atof(const echar *nptr)
 {
 	return (edouble)atof((const char *)nptr);
 }

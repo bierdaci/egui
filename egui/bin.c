@@ -626,7 +626,7 @@ do { \
 		return 0; \
 } while (1)
 
-static inline eHandle GET_NEXT_CHILD(GuiBin *bin, eHandle cobj, eint dir, eint axis)
+static INLINE eHandle GET_NEXT_CHILD(GuiBin *bin, eHandle cobj, eint dir, eint axis)
 {
 	GuiBinOrders *bs = GUI_BIN_ORDERS(OBJECT_OFFSET(bin));
 	return bs->next_child(bin, cobj, dir, axis);

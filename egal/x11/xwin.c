@@ -1085,7 +1085,7 @@ static GalGrabStatus x11_ungrab_keyboard(GalWindow window)
 	return XUngrabKeyboard(x11_dpy, 0);
 }
 
-static inline bool xpb_init_gc(GalPBX11 *xpb)
+static INLINE bool xpb_init_gc(GalPBX11 *xpb)
 {
 	if (xpb->xwin->xid == 0)
 		return false;

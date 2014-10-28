@@ -107,7 +107,7 @@ eTree * e_tree_new_full(
 	return tree;
 }
 
-static inline eTreeNode * e_tree_first_node(eTree *tree)
+static INLINE eTreeNode * e_tree_first_node(eTree *tree)
 {
 	eTreeNode *tmp;
 
@@ -122,7 +122,7 @@ static inline eTreeNode * e_tree_first_node(eTree *tree)
 	return tmp;
 }
 
-static inline eTreeNode * e_tree_node_previous(eTreeNode *node)
+static INLINE eTreeNode * e_tree_node_previous(eTreeNode *node)
 {
 	eTreeNode *tmp;
 
@@ -135,7 +135,7 @@ static inline eTreeNode * e_tree_node_previous(eTreeNode *node)
 	return tmp;
 }
 
-static inline eTreeNode *e_tree_node_next(eTreeNode *node)
+static INLINE eTreeNode *e_tree_node_next(eTreeNode *node)
 {
 	eTreeNode *tmp;
 

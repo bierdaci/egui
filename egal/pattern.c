@@ -55,12 +55,12 @@ static void fc_make_pattern(GalPattern *gpn)
 		FcPatternAddDouble(fcp, FC_PIXEL_SIZE, gpn->size / 10.);
 
 	if (gpn->foundry)
-		FcPatternAddString(fcp, FC_FOUNDRY, gpn->foundry);
+		FcPatternAddString(fcp, FC_FOUNDRY, (euchar *)gpn->foundry);
 
 	if (gpn->family) {
 		families = e_strsplit(gpn->family, _(","), -1);
 		for (i = 0; families[i]; i++)
-			FcPatternAddString(fcp, FC_FAMILY, families[i]);
+			FcPatternAddString(fcp, FC_FAMILY, (euchar *)families[i]);
 		e_strfreev(families);
 	}
 

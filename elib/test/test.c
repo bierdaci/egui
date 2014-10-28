@@ -182,7 +182,7 @@ int main(void)
 	//		GTYPE_SCROLLWIN,
 	//		STRUCT_OFFSET(MenuScrollOrders, set_font),
 	//		true, 0, "%n %n %n %p %d %d %d %d");
-	esig_t sig = e_signal_new1("aaaa", GTYPE_SCROLLWIN, "%n %n %n %p %d %d %d %d");
+	esig_t sig = e_signal_new_label("aaaa", GTYPE_SCROLLWIN, "%n %n %n %p %d %d %d %d");
 
 
 	e_signal_connect(obj1, sig, test_cb);

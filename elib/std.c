@@ -1,6 +1,98 @@
 #include "std.h"
 #include "elist.h"
 
+
+#ifdef WIN32
+
+eint e_pthread_mutex_init(e_pthread_mutex_t *mutex, const e_pthread_mutexattr_t *mutexattr)
+{
+	InitializeCriticalSection(mutex);
+	return 0;
+}
+
+eint e_pthread_mutex_lock(e_pthread_mutex_t *mutex)
+{
+	EnterCriticalSection(mutex);
+	return 0;
+}
+
+eint e_pthread_mutex_trylock(e_pthread_mutex_t *mutex)
+{
+	return -1;
+}
+
+eint e_pthread_mutex_unlock(e_pthread_mutex_t *mutex)
+{
+	LeaveCriticalSection(mutex);
+	return 0;
+}
+
+eint e_pthread_mutex_destroy(e_pthread_mutex_t *mutex)
+{
+	DeleteCriticalSection(mutex);
+	return 0;
+}
+
+eint e_pthread_cond_init(e_pthread_cond_t *cond, e_pthread_condattr_t *attr)
+{
+	return -1;
+}
+
+eint e_pthread_cond_broadcast(e_pthread_cond_t *cond)
+{
+	return -1;
+}
+
+eint e_pthread_cond_wait(e_pthread_cond_t *cond, e_pthread_mutex_t *mutex)
+{
+	return -1;
+}
+
+eint e_sem_init(e_sem_t *sem, euint value)
+{
+	sem->handle = CreateSemaphore(NULL, value, 1000, NULL);
+	sem->value  = value;
+	return 0;
+}
+
+eint e_sem_destroy(e_sem_t *sem)
+{
+	CloseHandle(sem->handle);
+	return 0;
+}
+
+eint e_sem_post(e_sem_t *sem)
+{
+	ReleaseSemaphore(sem->handle, 1, NULL);
+	sem->value++;
+	return 0;
+}
+
+eint e_sem_wait(e_sem_t *sem)
+{
+	sem->value--;
+	WaitForSingleObject(sem->handle, INFINITE);
+	return 0;
+}
+
+eint e_sem_trywait(e_sem_t *sem)
+{
+	return -1;
+}
+
+eint e_sem_timedwait(e_sem_t *sem, const struct timespec *abs_timeout)
+{
+	return -1;
+}
+
+eint e_sem_getvalue(e_sem_t *sem, eint *val)
+{
+	*val = sem->value;
+	return 0;
+}
+
+#else
+
 eint e_pthread_mutex_init(e_pthread_mutex_t *mutex, const e_pthread_mutexattr_t *mutexattr)
 {
 	return pthread_mutex_init(mutex, mutexattr);
@@ -46,7 +138,7 @@ eint e_sem_init(e_sem_t *sem, euint value)
 	return sem_init(sem, 0, value);
 }
 
-eint e_sem_destroy(sem_t *sem)
+eint e_sem_destroy(e_sem_t *sem)
 {
 	return sem_destroy(sem);
 }
@@ -75,6 +167,8 @@ eint e_sem_getvalue(e_sem_t *sem, eint *val)
 {
 	return sem_getvalue(sem, val);
 }
+
+#endif
 
 #if 0
 char *e_strrchr(const char *s, int c)

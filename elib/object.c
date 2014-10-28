@@ -28,7 +28,11 @@ static eDnaList *dna_list_which_contain(eDnaList *, eDnaList *);
 static eHandle object_new_valist(eGene *, eValist);
 
 static eGene *__genetype_library[1];
+#ifdef WIN32
+static e_pthread_mutex_t object_lock = {0};
+#elif  linux
 static e_pthread_mutex_t object_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 static eDnaList *__dna_list_which_contain(eDnaList *list1, eDnaList *list2)
 {
@@ -405,7 +409,7 @@ static eDnaList* dna_node_to_list(eDnaNode *nodes, eint node_num)
 
 		if (node->branch_num != 0) {
 			euchar      *base  = (euchar *)&node->index[node->branch_num];
-			eBranchList *btail = NULL;;
+			eBranchList *btail = NULL;
 
 			eint j;
 			for (j = 0; j < list->branch_num; j++) {
@@ -742,7 +746,7 @@ static eDnaNode *__dnode_find_subset(eDnaNode *nodes, eint n1, eDnaNode *type, e
 	return p1;
 }
 
-static inline eDnaNode *dnode_find_subset(eDnaNode *nodes, eint n1, eDnaNode *type, eint n2)
+static eDnaNode *dnode_find_subset(eDnaNode *nodes, eint n1, eDnaNode *type, eint n2)
 {
 	eDnaNode *node = __dnode_find_subset(nodes, n1, type, n2);
 	if (node && (eulong)node > BRANCH_NUM_MAX)
@@ -1037,3 +1041,17 @@ ePointer e_object_type_orders(eHandle hobj, eGeneType type)
 	return e_genetype_orders((eGeneType)((eObject *)hobj)->gene, type);
 }
 
+void e_object_init(void)
+{
+#ifdef WIN32
+	e_pthread_mutex_init(&object_lock, NULL);
+#endif
+}
+
+bool e_init(void)
+{
+	e_memory_init();
+	e_object_init();
+	e_signal_init();
+	return true;
+}

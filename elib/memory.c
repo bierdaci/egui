@@ -52,8 +52,13 @@ struct _MemoryHeap {
 
 static MemoryChain *chain_head = NULL;
 static HeapNode    *cache_head = NULL;
+#ifdef WIN32
+static e_pthread_mutex_t memory_lock = {0};
+static e_pthread_mutex_t slice_lock  = {0};
+#else
 static e_pthread_mutex_t memory_lock = PTHREAD_MUTEX_INITIALIZER;
 static e_pthread_mutex_t slice_lock  = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 static ePointer e_sys_malloc(euint size);
 static void free_node_merge(MemoryHeap *heap, HeapNode *node);
@@ -61,9 +66,9 @@ static void slice_free_release(bool);
 
 static void cache_node_add(void)
 {
+	eint i;
 	HeapNode *node;
 	cache_head = __calloc(CACHE_NUM, sizeof(HeapNode));
-	elong i;
 	
 	node = cache_head;
 	for (i = 0; i < CACHE_NUM - 1; i++) {
@@ -88,12 +93,12 @@ static void cache_node_free(HeapNode *node)
 	cache_head = node;
 }
 
-static inline void heap_all_node_insert_after(MemoryHeap *heap, HeapNode *node, HeapNode *new)
+static INLINE void heap_all_node_insert_after(MemoryHeap *heap, HeapNode *node, HeapNode *new)
 {
 	STRUCT_LIST_INSERT_AFTER(HeapNode, heap->all_head, heap->all_tail, node, new, all_prev, all_next);
 }
 
-static inline void heap_all_node_insert_before(MemoryHeap *heap, HeapNode *node, HeapNode *new)
+static INLINE void heap_all_node_insert_before(MemoryHeap *heap, HeapNode *node, HeapNode *new)
 {
 	STRUCT_LIST_INSERT_BEFORE(HeapNode, heap->all_head, heap->all_tail, node, new, all_prev, all_next);
 }
@@ -298,7 +303,7 @@ static MemoryHeap *memory_heap_new(void)
 	return heap;
 }
 
-static bool e_memory_init(void)
+static bool memory_chain_init(void)
 {
 	MemoryChain *chain = (MemoryChain *)memory_heap_new();
 	chain->next = chain_head;
@@ -314,7 +319,7 @@ while (chain) { \
 		break; \
 	chain = chain->next; \
 }
-static HeapNode *heap_get_free_node(elong size, bool is_slice)
+static HeapNode *heap_get_free_node(eulong size, bool is_slice)
 {
 	MemoryChain *chain;
 	MemoryHeap  *heap = NULL;
@@ -360,7 +365,7 @@ ePointer e_heap_malloc(elong size, bool is_slice)
 	ePointer  addr = NULL;
 
 	e_pthread_mutex_lock(&memory_lock);
-	if (!chain_head && !e_memory_init()) {
+	if (!chain_head && !memory_chain_init()) {
 		e_pthread_mutex_unlock(&memory_lock);
 		return NULL;
 	}
@@ -609,7 +614,7 @@ static ePointer slice_free_alloc(SliceHead *head)
 	return addr;
 }
 
-static inline SliceHead *slice_head_new(euint type, euint level)
+static SliceHead *slice_head_new(euint type, euint level)
 {
 	SliceHead *head = e_heap_malloc(sizeof(SliceHead), true);
 	head->num  = 8 << (level > 5 ? 5 : level);
@@ -712,8 +717,16 @@ void e_slice_free1(euint size, ePointer addr)
 		}
 	}
 
-	node->map[index] = node->index;
+	node->map[index] = (euchar)node->index;
 	node->index = index;
 
 	e_pthread_mutex_unlock(&slice_lock);
+}
+
+void e_memory_init(void)
+{
+#ifdef WIN32
+	e_pthread_mutex_init(&memory_lock, NULL);
+	e_pthread_mutex_init(&slice_lock, NULL);
+#endif
 }

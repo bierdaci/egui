@@ -194,7 +194,7 @@ static eint text_lbuttonup(eHandle hobj, GalEventMouse *ent)
 	return 0;
 }
 
-static inline void ioffset_to_coor(GuiText *text, TextLine *line, eint ioff, eint *x, eint *y, eint *b)
+static INLINE void ioffset_to_coor(GuiText *text, TextLine *line, eint ioff, eint *x, eint *y, eint *b)
 {
 	TextWrap *wrap = ioffset_to_wrap(line, ioff);
 	eint i, w = 0;
@@ -479,7 +479,7 @@ static void text_init_orders(eGeneType new, ePointer this)
 	o->init           = text_init;
 }
 
-static inline eint get_space_width(GalFont font)
+static INLINE eint get_space_width(GalFont font)
 {
 	GalGlyph glyph;
 	egal_get_glyph(font, e_utf8_get_char((echar *)" "), &glyph);
@@ -643,7 +643,7 @@ static void cursor_move_right(eHandle hobj, GuiText *text)
 	text_set_cursor(hobj, text, line, NULL, ioff, true);
 }
 
-static inline void text_cancel_select(eHandle hobj, GuiText *text)
+static INLINE void text_cancel_select(eHandle hobj, GuiText *text)
 {
 	if (text->is_sel) {
 		text->is_sel = false;
@@ -1646,13 +1646,13 @@ static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *char
 		e_free(node_head);
 }
 
-static inline void __del_line_list(TextLine *prev, TextLine *next)
+static INLINE void __del_line_list(TextLine *prev, TextLine *next)
 {
 	if (prev) prev->next = next;
 	if (next) next->prev = prev;
 }
 
-static inline void del_line_list(TextLine *line)
+static INLINE void del_line_list(TextLine *line)
 {
 	__del_line_list(line->prev, line->next);
 }
@@ -1871,7 +1871,7 @@ static void text_show_cursor(eHandle hobj, GuiText *text, TextLine *line, TextWr
 		egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, false);
 }
 
-static inline void text_hide_cursor(eHandle hobj, GuiText *text)
+static INLINE void text_hide_cursor(eHandle hobj, GuiText *text)
 {
 	egui_hide_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor);
 }

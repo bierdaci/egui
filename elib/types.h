@@ -1,7 +1,9 @@
 #ifndef __ELIB_TYPES_H__
 #define __ELIB_TYPES_H__
 
+#ifdef linux
 #include <econfig.h>
+#endif
 
 #undef  MAX
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
@@ -21,17 +23,32 @@ typedef long				elong;
 typedef short				eint16;
 typedef int					eint;
 typedef int					eint32;
-typedef long long			eint64;
-typedef long long			ellong;
+
 typedef char				echar;
 typedef unsigned char		euchar;
 typedef char				eint8;
 typedef unsigned char		euint8;
 typedef unsigned short		euint16;
 typedef unsigned int 		euint32;
-typedef unsigned long long	euint64;
 typedef unsigned long		eulong;
+
+#ifdef WIN32
+
+#define INLINE
+
+typedef __int64				eint64;
+typedef __int64				ellong;
+typedef unsigned __int64	euint64;
+typedef unsigned __int64	eullong;
+#elif linux
+
+#define INLINE inline
+typedef long long			eint64;
+typedef long long			ellong;
+typedef unsigned long long	euint64;
 typedef unsigned long long	eullong;
+#endif
+
 typedef unsigned int		euint;
 typedef float				efloat;
 typedef double				edouble;

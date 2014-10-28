@@ -8,7 +8,7 @@
 #include <egui/bin.h>
 
 #define GUI_TYPE_WINDOW(hobj)					(e_object_type_check(hobj, GTYPE_WINDOW))
-static inline bool GUI_TYPE_BIN(eHandle hobj)
+static INLINE bool GUI_TYPE_BIN(eHandle hobj)
 {
 	GuiBin *b = GUI_BIN_DATA(hobj);
 	if (b && b->is_bin)
@@ -66,27 +66,27 @@ struct _GuiStringsOrders {
 	const echar *(*get_strings)(eHandle);
 };
 
-static inline void egui_set_status(eHandle hobj, GuiStatus flag)
+static INLINE void egui_set_status(eHandle hobj, GuiStatus flag)
 {
 	widget_set_status(GUI_WIDGET_DATA(hobj), flag);
 }
 
-static inline void egui_unset_status(eHandle hobj, GuiStatus flag)
+static INLINE void egui_unset_status(eHandle hobj, GuiStatus flag)
 {
 	widget_unset_status(GUI_WIDGET_DATA(hobj), flag);
 }
 
-static inline void egui_set_extra_data(eHandle hobj, ePointer data)
+static INLINE void egui_set_extra_data(eHandle hobj, ePointer data)
 {
 	widget_set_extra_data(GUI_WIDGET_DATA(hobj), data);
 }
 
-static inline ePointer egui_get_extra_data(eHandle hobj)
+static INLINE ePointer egui_get_extra_data(eHandle hobj)
 {
 	return widget_get_extra_data(GUI_WIDGET_DATA(hobj));
 }
 
-static inline eHandle egui_get_top(eHandle hobj)
+static INLINE eHandle egui_get_top(eHandle hobj)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	while (wid->parent)

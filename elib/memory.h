@@ -3,6 +3,8 @@
 
 #include <elib/types.h>
 
+void e_memory_init(void);
+
 #define e_slice_new(type) \
 	((type *)e_slice_alloc(sizeof(type)))
 

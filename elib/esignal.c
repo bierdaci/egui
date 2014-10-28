@@ -3,7 +3,11 @@
 #include "list.h"
 
 static eTree *signal_tree = NULL;
+#ifdef WIN32
+static e_pthread_mutex_t signal_lock = {0};
+#else
 static e_pthread_mutex_t signal_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 eint __signal_call_marshal(eObject *, eVoidFunc, eValist, struct _argsnode *, eint, eint);
 eint __signal_call_marshal_1(eObject *, eVoidFunc, ePointer, eValist, struct _argsnode *, eint, eint);
@@ -321,7 +325,7 @@ esig_t e_signal_new(const char *name, eGeneType gtype,
 	return __signal_new(name, gtype, offset, prefix, stype, fmstr, 0);
 }
 
-esig_t e_signal_new1(const char *name, eGeneType gtype, const char *fmstr, ...)
+esig_t e_signal_new_label(const char *name, eGeneType gtype, const char *fmstr, ...)
 {
 	if (fmstr) {
 		eValist vp;
@@ -500,4 +504,12 @@ void e_signal_unlock(eHandle hobj, esig_t sig)
 	}
 
 	e_pthread_mutex_unlock(&obj->slot_lock);
+}
+
+
+void e_signal_init(void)
+{
+#ifdef WIN32
+	e_pthread_mutex_init(&signal_lock, NULL);
+#endif
 }

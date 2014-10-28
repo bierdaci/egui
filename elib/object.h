@@ -93,6 +93,9 @@ struct _eGeneInfo {
 };
 
 struct _eCell {
+#ifdef WIN32
+	int a;
+#endif
 };
 
 struct _eCellOrders {
@@ -119,5 +122,7 @@ eDnaNode *e_genetype_node(eGene *, eGeneType);
 
 eGeneType e_register_genetype(eGeneInfo *, eGeneType, ...);
 bool e_object_valid(eObject *);
+
+void e_object_init(void);
 
 #endif

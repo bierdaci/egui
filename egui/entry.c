@@ -1010,7 +1010,7 @@ static void entry_show_cursor(GalDrawable draw, GuiEntry *entry, bool show)
 	}
 }
 
-static inline void entry_hide_cursor(eHandle draw, GuiEntry *entry)
+static INLINE void entry_hide_cursor(eHandle draw, GuiEntry *entry)
 {
 	if (entry->is_show) {
 		eint x = entry->offsets[entry->s_ioff].x - entry->offset_x;

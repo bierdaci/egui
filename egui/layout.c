@@ -464,7 +464,7 @@ static eint layout_wrap(GuiLayout *layout, LayoutLine *line)
 	return line->nwrap * layout->hline;
 }
 
-static inline eint get_space_width(GalFont font)
+static INLINE eint get_space_width(GalFont font)
 {
 	GalGlyph glyph;
 	egal_get_glyph(font, e_utf8_get_char((echar *)" "), &glyph);

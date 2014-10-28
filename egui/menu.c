@@ -1548,7 +1548,7 @@ eHandle egui_menu_item_new_with_label(const echar *label)
 	return e_object_new(GTYPE_MENU_ITEM, label);
 }
 
-static inline GuiMenuRadio *egui_menu_radio_new(eHandle hobj)
+static INLINE GuiMenuRadio *egui_menu_radio_new(eHandle hobj)
 {
 	GuiMenuRadio *radio = e_malloc(sizeof(GuiMenuRadio));
 	radio->selected = hobj;

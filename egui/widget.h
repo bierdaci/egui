@@ -119,22 +119,22 @@ eGeneType egui_genetype_widget(void);
 eGeneType egui_genetype_font(void);
 void egui_create_window(eHandle, eint, eint);
 
-static inline void widget_set_status(GuiWidget *data, GuiStatus flag)
+static INLINE void widget_set_status(GuiWidget *data, GuiStatus flag)
 {
 	data->status |= flag;
 }
 
-static inline void widget_unset_status(GuiWidget *data, GuiStatus flag)
+static INLINE void widget_unset_status(GuiWidget *data, GuiStatus flag)
 {
 	data->status &= ~flag; 
 }
 
-static inline void widget_set_extra_data(GuiWidget *widget, ePointer data)
+static INLINE void widget_set_extra_data(GuiWidget *widget, ePointer data)
 {
 	widget->extra_data = data;
 }
 
-static inline ePointer widget_get_extra_data(GuiWidget *widget)
+static INLINE ePointer widget_get_extra_data(GuiWidget *widget)
 {
 	return widget->extra_data;
 }

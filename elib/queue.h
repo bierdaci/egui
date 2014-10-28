@@ -1,6 +1,8 @@
 #ifndef __ELIB_QUEUE_H_
 #define __ELIB_QUEUE_H_
+#include <elib/types.h>
 #include <elib/std.h>
+
 
 typedef struct _Queue Queue;
 
@@ -13,17 +15,17 @@ struct _Queue {
     echar data[0];
 };
 
-inline static eint e_queue_size(Queue *queue)
+static INLINE eint e_queue_size(Queue *queue)
 {
 	return queue->len;
 }
 
-inline static eint e_queue_space(Queue *queue)
+static INLINE eint e_queue_space(Queue *queue)
 {
 	return queue->size - queue->len;
 }
 
-inline static eint e_queue_empty(Queue *queue)
+static INLINE eint e_queue_empty(Queue *queue)
 {
 	return (queue->len == 0);
 }

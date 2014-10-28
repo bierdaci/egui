@@ -42,7 +42,7 @@ static GalPixbufModule pixbuf_modules[] = {
 	_a = (_a * quota_y) >> SCALE_SHIFT; \
 }
 
-static inline void set_pixel32(euchar *pixels, euint8 r, euint8 g, euint8 b, euint8 a)
+static INLINE void set_pixel32(euchar *pixels, euint8 r, euint8 g, euint8 b, euint8 a)
 {
 	pixels[0] += r;
 	pixels[1] += g;
@@ -50,7 +50,7 @@ static inline void set_pixel32(euchar *pixels, euint8 r, euint8 g, euint8 b, eui
 	pixels[3] += a;
 }
 
-static inline void set_pixel24(euchar *pixels, euint8 r, euint8 g, euint8 b, euint8 a)
+static INLINE void set_pixel24(euchar *pixels, euint8 r, euint8 g, euint8 b, euint8 a)
 {
 	pixels[0] += r;
 	pixels[1] += g;
@@ -333,7 +333,7 @@ GalPixbuf *egal_pixbuf_new_from_file(const echar *filename, efloat x_scale, eflo
 bool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf)
 {
 	FILE *f;
-	euchar buffer[4096];
+	echar buffer[4096];
 	GalPixbufModule *pixbuf_module;
 	echar *format_name;
 

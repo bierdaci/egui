@@ -14,4 +14,6 @@
 #include <elib/timer.h>
 #include <elib/dlist.h>
 
+bool e_init(void);
+
 #endif

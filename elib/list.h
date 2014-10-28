@@ -1,6 +1,8 @@
 #ifndef _ELIB_LIST_H__
 #define _ELIB_LIST_H__
 
+#include <elib/types.h>
+
 struct list_head {
     struct list_head * next;
     struct list_head * prev;
@@ -17,7 +19,7 @@ typedef struct list_head list_t;
     (ptr)->next = (ptr); (ptr)->prev = (ptr); \
 } while (0)
 
-static inline void __list_add(struct list_head * node,
+static INLINE void __list_add(struct list_head * node,
     struct list_head * prev,
     struct list_head * next)
 {
@@ -27,33 +29,33 @@ static inline void __list_add(struct list_head * node,
     prev->next = node;
 }
 
-static inline void list_add(struct list_head *node, struct list_head *head)
+static INLINE void list_add(struct list_head *node, struct list_head *head)
 {
     __list_add(node, head, head->next);
 }
 
-static inline void list_add_tail(struct list_head *node, struct list_head *head)
+static INLINE void list_add_tail(struct list_head *node, struct list_head *head)
 {
     __list_add(node, head->prev, head);
 }
 
-static inline void __list_del(struct list_head * prev, struct list_head * next)
+static INLINE void __list_del(struct list_head * prev, struct list_head * next)
 {
     next->prev = prev;
     prev->next = next;
 }
 
-static inline void list_del(struct list_head *entry)
+static INLINE void list_del(struct list_head *entry)
 {
     __list_del(entry->prev, entry->next);
 }
 
-static inline int list_empty(struct list_head *head)
+static INLINE int list_empty(struct list_head *head)
 {
     return head->next == head;
 }
 
-static inline int list_no_empty(struct list_head *head)
+static INLINE int list_no_empty(struct list_head *head)
 {
     return head->next != head;
 }
