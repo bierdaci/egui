@@ -144,7 +144,7 @@ static bool is_accel_key(eHandle hobj, GalEventKey *event)
 	if (code >= 'A' && code <= 'Z')
 		code -= 'A' - 'a';
 
-	e_pthread_mutex_lock(&win->lock);
+	e_thread_mutex_lock(&win->lock);
 	hook = win->head;
 	while (hook) {
 		if (!(hook->state ^ event->state) && hook->code == code) {
@@ -153,7 +153,7 @@ static bool is_accel_key(eHandle hobj, GalEventKey *event)
 		}
 		hook = hook->next;
 	}
-	e_pthread_mutex_unlock(&win->lock);
+	e_thread_mutex_unlock(&win->lock);
 
 	if (cb && cb(hobj, hook->data) >= 0)
 		return true;
@@ -410,7 +410,7 @@ void egui_accelkey_connect(eHandle hobj, const echar *accelkey, AccelKeyCB cb, e
 		len -= n;
 	}
 
-	e_pthread_mutex_lock(&win->lock);
+	e_thread_mutex_lock(&win->lock);
 	hook = win->head;
 	while (hook) {
 		if (!(hook->state ^ state) && hook->code == code)
@@ -425,7 +425,7 @@ void egui_accelkey_connect(eHandle hobj, const echar *accelkey, AccelKeyCB cb, e
 		hook->next  = win->head;
 		win->head   = hook;
 	}
-	e_pthread_mutex_unlock(&win->lock);
+	e_thread_mutex_unlock(&win->lock);
 
 	hook->cb   = cb;
 	hook->data = data;

@@ -88,7 +88,7 @@ struct _GalWindowX11 {
 
 	list_t list;
 	list_t child_head;
-	e_pthread_mutex_t lock;
+	e_thread_mutex_t lock;
 
 	eHandle attachmen;
 };
@@ -149,7 +149,7 @@ static GalWindowX11  *x11_root;
 static XVisualInfo   *x11_vinfo;
 static Display       *x11_dpy;
 static eTree         *x11_tree;
-static e_pthread_mutex_t tree_lock;
+static e_thread_mutex_t tree_lock;
 static const cairo_user_data_key_t x11_cairo_key;
 static struct {
 	eint xkey;
@@ -316,7 +316,7 @@ int x11_wmananger_init(GalWindowManager *wm)
 
 	XInitThreads();
 	x11_tree = e_tree_new(x11_compare_func);
-	e_pthread_mutex_init(&tree_lock, NULL);
+	e_thread_mutex_init(&tree_lock, NULL);
 
 	if (!(x11_dpy = XOpenDisplay(0))) {
 		printf("Could not open display [%s]\n", getenv("DISPLAY"));
@@ -378,9 +378,9 @@ static GalWindow x11_find_gwin(Window xwin)
 {
 	GalWindow window;
 
-	e_pthread_mutex_lock(&tree_lock);
+	e_thread_mutex_lock(&tree_lock);
 	window = (GalWindow)e_tree_lookup(x11_tree, (eConstPointer)xwin);
-	e_pthread_mutex_unlock(&tree_lock);
+	e_thread_mutex_unlock(&tree_lock);
 
 	return window;
 }
@@ -578,18 +578,18 @@ static GalWindow x11_wait_event(GalEvent *gent)
 static bool x11_create_child_window(GalWindowX11 *);
 static void x11_list_add(GalWindowX11 *parent, GalWindowX11 *child)
 {
-	e_pthread_mutex_lock(&parent->lock);
+	e_thread_mutex_lock(&parent->lock);
 	list_add_tail(&child->list, &parent->child_head);
-	e_pthread_mutex_unlock(&parent->lock);
+	e_thread_mutex_unlock(&parent->lock);
 }
 
 static void x11_list_del(GalWindowX11 *xwin)
 {
 	GalWindowX11 *parent = xwin->parent;
 	if (parent) {
-		e_pthread_mutex_lock(&parent->lock);
+		e_thread_mutex_lock(&parent->lock);
 		list_del(&xwin->list);
-		e_pthread_mutex_unlock(&parent->lock);
+		e_thread_mutex_unlock(&parent->lock);
 	}
 }
 
@@ -693,9 +693,9 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 
 	//XStoreName(x11_dpy, child->xid, "egui");
 
-	e_pthread_mutex_lock(&tree_lock);
+	e_thread_mutex_lock(&tree_lock);
 	e_tree_insert(x11_tree, (ePointer)child->xid, (ePointer)window);
-	e_pthread_mutex_unlock(&tree_lock);
+	e_thread_mutex_unlock(&tree_lock);
 
 	x11_create_child_window(child);
 
@@ -733,9 +733,9 @@ static void x11_destory_window(GalWindowX11 *xwin)
 	//	x11_destory_window(child);
 	//}
 
-	e_pthread_mutex_lock(&tree_lock);
+	e_thread_mutex_lock(&tree_lock);
 	e_tree_remove(x11_tree, (ePointer)xwin->xid);
-	e_pthread_mutex_unlock(&tree_lock);
+	e_thread_mutex_unlock(&tree_lock);
 
 	if (xwin->xid)
 		XDestroyWindow(x11_dpy, xwin->xid);
@@ -1500,7 +1500,7 @@ static eint x11_window_init(eHandle hobj, GalWindowAttr *attr)
 		xwin->h  = xwin->attr.height;
 	}
 	INIT_LIST_HEAD(&xwin->child_head);
-	e_pthread_mutex_init(&xwin->lock, NULL);
+	e_thread_mutex_init(&xwin->lock, NULL);
 
 	if (xwin->attr.type == GalWindowTop
 			|| xwin->attr.type == GalWindowDialog

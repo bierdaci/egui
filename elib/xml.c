@@ -66,7 +66,7 @@ static struct {
 	{_("&quot;"),	'\"'}
 };
 
-static inline bool is_matching(echar c, const echar *pattern)
+static INLINE bool is_matching(echar c, const echar *pattern)
 {
 	echar b;
 	int i = 0;
@@ -127,14 +127,14 @@ static echar *m_strdup(const echar *src, bool (*match)(echar))
 	return e_strdup(buf);
 }
 
-static inline void root_add_element(Xml *xml, XmlElement *elm)
+static INLINE void root_add_element(Xml *xml, XmlElement *elm)
 {
 	if (XML_IS_NODE(elm))
 		xml->root = elm;
 	list_add_tail(&elm->list, &xml->root_head);
 }
 
-static inline void add_element(XmlElementNode *parent, XmlElement *base)
+static INLINE void add_element(XmlElementNode *parent, XmlElement *base)
 {
 	if (base->host)
 		list_del(&base->list);
@@ -142,43 +142,43 @@ static inline void add_element(XmlElementNode *parent, XmlElement *base)
 	list_add_tail(&base->list, &parent->child);
 }
 
-static inline void element_add_declare(XmlElementNode *parent, XmlElementDeclare *elm)
+static INLINE void element_add_declare(XmlElementNode *parent, XmlElementDeclare *elm)
 {
 	add_element(parent, &elm->base);
 }
 
-static inline void element_add_comment(XmlElementNode *elm, XmlElementComment *com)
+static INLINE void element_add_comment(XmlElementNode *elm, XmlElementComment *com)
 {
 	add_element(elm, &com->base);
 }
 
-static inline void element_add_node(XmlElementNode *parent, XmlElementNode *elm)
+static INLINE void element_add_node(XmlElementNode *parent, XmlElementNode *elm)
 {
 	add_element(parent, &elm->base);
 }
 
-static inline void element_add_leaf(XmlElementNode *elm, XmlElementLeaf *eval)
+static INLINE void element_add_leaf(XmlElementNode *elm, XmlElementLeaf *eval)
 {
 	add_element(elm, &eval->base);
 }
 
-static inline void node_add_attribute(XmlElement *elm, XmlAttribute *attrib)
+static INLINE void node_add_attribute(XmlElement *elm, XmlAttribute *attrib)
 {
 	XmlElementNode *node = (XmlElementNode *)elm;
 	list_add_tail(&attrib->list, &node->attribute);
 }
 
-static inline void declare_add_attribute(XmlElement *elm, XmlAttribute *attrib)
+static INLINE void declare_add_attribute(XmlElement *elm, XmlAttribute *attrib)
 {
 	list_add_tail(&attrib->list, &((XmlElementDeclare *)elm)->attribute);
 }
 
-static inline XmlAttribute *create_attribute(void)
+static INLINE XmlAttribute *create_attribute(void)
 {
 	return (XmlAttribute *)e_calloc(1, sizeof(XmlAttribute));
 }
 
-static inline void release_attribute(XmlAttribute *attrib)
+static INLINE void release_attribute(XmlAttribute *attrib)
 {
 	if (!attrib) return;
 	if (attrib->type) e_free(attrib->type);

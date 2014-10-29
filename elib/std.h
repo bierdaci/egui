@@ -34,30 +34,33 @@ typedef struct {
 	LONG value;
 } handle_sem_t;
 
-#define e_pthread_mutexattr_t	ePointer
-#define e_pthread_mutex_t		CRITICAL_SECTION
-#define e_pthread_cond_t		CRITICAL_SECTION
-#define e_pthread_condattr_t    CRITICAL_SECTION
+#define e_thread_t				HANDLE
+#define e_thread_mutexattr_t	ePointer
+#define e_thread_mutex_t		CRITICAL_SECTION
+#define e_thread_cond_t		CRITICAL_SECTION
+#define e_thread_condattr_t    CRITICAL_SECTION
 #define e_sem_t					handle_sem_t
 
 #else
 
-#define e_pthread_mutexattr_t	pthread_mutexattr_t
-#define e_pthread_mutex_t		pthread_mutex_t
-#define e_pthread_cond_t		pthread_cond_t
-#define e_pthread_condattr_t    pthread_condattr_t
+#define e_thread_t				pthread_t
+#define e_thread_mutexattr_t	pthread_mutexattr_t
+#define e_thread_mutex_t		pthread_mutex_t
+#define e_thread_cond_t		pthread_cond_t
+#define e_thread_condattr_t    pthread_condattr_t
 #define e_sem_t					sem_t
 
 #endif
 
-eint e_pthread_mutex_init(e_pthread_mutex_t *mutex, const e_pthread_mutexattr_t *mutexattr);
-eint e_pthread_mutex_lock(e_pthread_mutex_t *mutex);
-eint e_pthread_mutex_trylock(e_pthread_mutex_t *mutex);
-eint e_pthread_mutex_unlock(e_pthread_mutex_t *mutex);
-eint e_pthread_mutex_destroy(e_pthread_mutex_t *mutex);
-eint e_pthread_cond_init(e_pthread_cond_t *, e_pthread_condattr_t *);
-eint e_pthread_cond_broadcast(e_pthread_cond_t *);
-eint e_pthread_cond_wait(e_pthread_cond_t *, e_pthread_mutex_t *);
+eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg);
+eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr);
+eint e_thread_mutex_lock(e_thread_mutex_t *mutex);
+eint e_thread_mutex_trylock(e_thread_mutex_t *mutex);
+eint e_thread_mutex_unlock(e_thread_mutex_t *mutex);
+eint e_thread_mutex_destroy(e_thread_mutex_t *mutex);
+eint e_thread_cond_init(e_thread_cond_t *, e_thread_condattr_t *);
+eint e_thread_cond_broadcast(e_thread_cond_t *);
+eint e_thread_cond_wait(e_thread_cond_t *, e_thread_mutex_t *);
 eint e_sem_init(e_sem_t *sem, euint value);
 eint e_sem_destroy(e_sem_t *sem);
 eint e_sem_post(e_sem_t *sem);

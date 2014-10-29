@@ -9,7 +9,7 @@ static struct EventList {
 static struct EventList *free_event_list = NULL;
 static struct EventList *wait_event_head = NULL;
 static struct EventList *wait_event_tail = NULL;
-static e_pthread_mutex_t event_list_lock;
+static e_thread_mutex_t event_list_lock;
 static e_sem_t event_list_sem;
 static Queue  *event_queue = NULL;
 
@@ -26,18 +26,19 @@ static ePointer wait_event_handler(ePointer data)
 static ePointer wait_add_async_event(ePointer data)
 {
 	GalEvent event;
+	struct EventList *tmp;
 
 	while (1) {
 		e_sem_wait(&event_list_sem);
 
 		while (wait_event_head) {
-			e_pthread_mutex_lock(&event_list_lock);
-			struct EventList *tmp = wait_event_head;
+			e_thread_mutex_lock(&event_list_lock);
+			tmp = wait_event_head;
 			wait_event_head = tmp->next;
 			tmp->next = free_event_list;
 			free_event_list = tmp;
 			event = tmp->event;
-			e_pthread_mutex_unlock(&event_list_lock);
+			e_thread_mutex_unlock(&event_list_lock);
 
 			egal_add_event_to_queue(&event);
 		}
@@ -47,11 +48,11 @@ static ePointer wait_add_async_event(ePointer data)
 
 eint egal_init(eint argc, char *const args[])
 {
-	pthread_t pid;
+	e_thread_t pid;
 	eint i;
 
 	e_sem_init(&event_list_sem, 0);
-	e_pthread_mutex_init(&event_list_lock,  NULL);
+	e_thread_mutex_init(&event_list_lock,  NULL);
 
 	event_queue = e_queue_new(sizeof(GalEvent) * EVENT_QUEUE_MAX);
 	if (!event_queue)
@@ -62,7 +63,7 @@ eint egal_init(eint argc, char *const args[])
 		free_event_list = event_list_buf + i;
 	}
 
-	if (pthread_create(&pid, NULL, wait_add_async_event, NULL) < 0)
+	if (e_thread_create(&pid, wait_add_async_event, NULL) < 0)
 		return -1;
 
 	if (egal_window_init() < 0)
@@ -73,9 +74,9 @@ eint egal_init(eint argc, char *const args[])
 
 eint egal_event_init(void)
 {
-	pthread_t pid;
+	e_thread_t pid;
 
-	if (pthread_create(&pid, NULL, wait_event_handler, NULL) < 0)
+	if (e_thread_create(&pid, wait_event_handler, NULL) < 0)
 		return -1;
 
 	return 0;
@@ -107,7 +108,7 @@ void egal_add_async_event_to_queue(GalEvent *event)
 {
 	eint semval;
 
-	e_pthread_mutex_lock(&event_list_lock);
+	e_thread_mutex_lock(&event_list_lock);
 	if (free_event_list) {
 		struct EventList *tmp = free_event_list;
 		free_event_list = tmp->next;
@@ -122,7 +123,7 @@ void egal_add_async_event_to_queue(GalEvent *event)
 			wait_event_tail = tmp;
 		}
 	}
-	e_pthread_mutex_unlock(&event_list_lock);
+	e_thread_mutex_unlock(&event_list_lock);
 
 	e_sem_getvalue(&event_list_sem, &semval);
 	if (semval < 1)

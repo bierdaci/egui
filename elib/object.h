@@ -70,14 +70,14 @@ struct _eGene {
 	euint32 orders_size;
 	eorder_t orders_base;
 	struct _eGene **child_index;
-	e_pthread_mutex_t lock;
+	e_thread_mutex_t lock;
 };
 
 struct _eObject {
 	eGene    *gene;
 	ePointer *slot_head;
 	ePointer *slot_tail;
-	e_pthread_mutex_t slot_lock;
+	e_thread_mutex_t slot_lock;
 	eint ref_count;
 };
 

@@ -18,7 +18,7 @@ typedef struct _GuiWindow GuiWindow;
 
 struct _GuiWindow {
 	GuiWindowType type;
-	e_pthread_mutex_t lock;
+	e_thread_mutex_t lock;
 	GuiAccelKey *head;
 };
 

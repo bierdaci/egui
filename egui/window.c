@@ -179,7 +179,7 @@ static eint __window_init(eHandle hobj, GalWindowType type, GuiWindowType win_ty
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	GalWindowAttr attr = {0};
 
-	e_pthread_mutex_init(&GUI_WINDOW_DATA(hobj)->lock, NULL);
+	e_thread_mutex_init(&GUI_WINDOW_DATA(hobj)->lock, NULL);
 
 	wid->min_w  = 1;
 	wid->min_h  = 1;

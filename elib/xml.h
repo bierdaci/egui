@@ -73,7 +73,7 @@ typedef struct _Xml {
 int xml_load(Xml *xml, const echar *path);
 Xml *xml_create(int maxbuf);
 void xml_release(Xml *xml);
-static inline XmlElement *xml_get_root_node(Xml *xml) {return xml->root;}
+static INLINE XmlElement *xml_get_root_node(Xml *xml) {return xml->root;}
 
 XmlElement *xml_create_comment(const echar *comment);
 XmlElement *xml_create_node(const echar *name);

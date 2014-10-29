@@ -10,7 +10,7 @@ struct _Queue {
     eint pos;
     eint len;
     eint size;
-	e_pthread_mutex_t lock;
+	e_thread_mutex_t lock;
 	e_sem_t r_sem, w_sem;
     echar data[0];
 };

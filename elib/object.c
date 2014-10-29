@@ -29,9 +29,9 @@ static eHandle object_new_valist(eGene *, eValist);
 
 static eGene *__genetype_library[1];
 #ifdef WIN32
-static e_pthread_mutex_t object_lock = {0};
+static e_thread_mutex_t object_lock = {0};
 #elif  linux
-static e_pthread_mutex_t object_lock = PTHREAD_MUTEX_INITIALIZER;
+static e_thread_mutex_t object_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 static eDnaList *__dna_list_which_contain(eDnaList *list1, eDnaList *list2)
@@ -617,7 +617,7 @@ static eGeneType register_genetype_with_dnalist(eGeneInfo *geinfo, eDnaList *dna
 	new->orders_size = orders_size + geinfo->orders_size;
 	new->object_size = object_size + geinfo->object_size + sizeof(ePointer);
 	new->child_index = NULL;
-	e_pthread_mutex_init(&new->lock, NULL);
+	e_thread_mutex_init(&new->lock, NULL);
 
 	dna_list_to_node(new->nodes, dnalist, &orders_offset, &object_offset);
 
@@ -679,7 +679,7 @@ eGeneType e_register_genetype(eGeneInfo *geinfo, eGeneType gtype, ...)
 
 static void gene_add_to_library(eGene *parent, eGene *new)
 {
-	e_pthread_mutex_lock(&object_lock);
+	e_thread_mutex_lock(&object_lock);
 
 	if (!parent->child_index)
 		parent->child_index = e_malloc(sizeof(eGene *));
@@ -688,7 +688,7 @@ static void gene_add_to_library(eGene *parent, eGene *new)
 
 	parent->child_index[new->last_node->id] = new;
 
-	e_pthread_mutex_unlock(&object_lock);
+	e_thread_mutex_unlock(&object_lock);
 
 	return;
 }
@@ -972,7 +972,7 @@ static eHandle object_new_valist(eGene *gene, eValist vp)
 
 	obj = e_calloc(sizeof(eObject) + gene->object_size, 1);
 	obj->gene = gene;
-	e_pthread_mutex_init(&obj->slot_lock, NULL);
+	e_thread_mutex_init(&obj->slot_lock, NULL);
 
 	object_set_offset(gene, (euchar *)obj);
 
@@ -1044,7 +1044,7 @@ ePointer e_object_type_orders(eHandle hobj, eGeneType type)
 void e_object_init(void)
 {
 #ifdef WIN32
-	e_pthread_mutex_init(&object_lock, NULL);
+	e_thread_mutex_init(&object_lock, NULL);
 #endif
 }
 

@@ -4,46 +4,54 @@
 
 #ifdef WIN32
 
-eint e_pthread_mutex_init(e_pthread_mutex_t *mutex, const e_pthread_mutexattr_t *mutexattr)
+eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
+{
+	*thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)routine, arg, 0, NULL);
+	if (*thread == 0)
+		return -1;
+	return 0;
+}
+
+eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr)
 {
 	InitializeCriticalSection(mutex);
 	return 0;
 }
 
-eint e_pthread_mutex_lock(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_lock(e_thread_mutex_t *mutex)
 {
 	EnterCriticalSection(mutex);
 	return 0;
 }
 
-eint e_pthread_mutex_trylock(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_trylock(e_thread_mutex_t *mutex)
 {
 	return -1;
 }
 
-eint e_pthread_mutex_unlock(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_unlock(e_thread_mutex_t *mutex)
 {
 	LeaveCriticalSection(mutex);
 	return 0;
 }
 
-eint e_pthread_mutex_destroy(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_destroy(e_thread_mutex_t *mutex)
 {
 	DeleteCriticalSection(mutex);
 	return 0;
 }
 
-eint e_pthread_cond_init(e_pthread_cond_t *cond, e_pthread_condattr_t *attr)
+eint e_thread_cond_init(e_thread_cond_t *cond, e_thread_condattr_t *attr)
 {
 	return -1;
 }
 
-eint e_pthread_cond_broadcast(e_pthread_cond_t *cond)
+eint e_thread_cond_broadcast(e_thread_cond_t *cond)
 {
 	return -1;
 }
 
-eint e_pthread_cond_wait(e_pthread_cond_t *cond, e_pthread_mutex_t *mutex)
+eint e_thread_cond_wait(e_thread_cond_t *cond, e_thread_mutex_t *mutex)
 {
 	return -1;
 }
@@ -93,42 +101,47 @@ eint e_sem_getvalue(e_sem_t *sem, eint *val)
 
 #else
 
-eint e_pthread_mutex_init(e_pthread_mutex_t *mutex, const e_pthread_mutexattr_t *mutexattr)
+eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
+{
+	return pthread_create(thread, NULL, routine, arg);
+}
+
+eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr)
 {
 	return pthread_mutex_init(mutex, mutexattr);
 }
 
-eint e_pthread_mutex_lock(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_lock(e_thread_mutex_t *mutex)
 {
 	return pthread_mutex_lock(mutex);
 }
 
-eint e_pthread_mutex_trylock(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_trylock(e_thread_mutex_t *mutex)
 {
 	return pthread_mutex_trylock(mutex);
 }
 
-eint e_pthread_mutex_unlock(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_unlock(e_thread_mutex_t *mutex)
 {
 	return pthread_mutex_unlock(mutex);
 }
 
-eint e_pthread_mutex_destroy(e_pthread_mutex_t *mutex)
+eint e_thread_mutex_destroy(e_thread_mutex_t *mutex)
 {
 	return pthread_mutex_destroy(mutex);
 }
 
-eint e_pthread_cond_init(e_pthread_cond_t *cond, e_pthread_condattr_t *attr)
+eint e_thread_cond_init(e_thread_cond_t *cond, e_thread_condattr_t *attr)
 {
-	return e_pthread_cond_init(cond, attr);
+	return e_thread_cond_init(cond, attr);
 }
 
-eint e_pthread_cond_broadcast(e_pthread_cond_t *cond)
+eint e_thread_cond_broadcast(e_thread_cond_t *cond)
 {
 	return pthread_cond_broadcast(cond);
 }
 
-eint e_pthread_cond_wait(e_pthread_cond_t *cond, e_pthread_mutex_t *mutex)
+eint e_thread_cond_wait(e_thread_cond_t *cond, e_thread_mutex_t *mutex)
 {
 	return pthread_cond_wait(cond, mutex);
 }

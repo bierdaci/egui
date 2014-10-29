@@ -53,11 +53,11 @@ struct _MemoryHeap {
 static MemoryChain *chain_head = NULL;
 static HeapNode    *cache_head = NULL;
 #ifdef WIN32
-static e_pthread_mutex_t memory_lock = {0};
-static e_pthread_mutex_t slice_lock  = {0};
+static e_thread_mutex_t memory_lock = {0};
+static e_thread_mutex_t slice_lock  = {0};
 #else
-static e_pthread_mutex_t memory_lock = PTHREAD_MUTEX_INITIALIZER;
-static e_pthread_mutex_t slice_lock  = PTHREAD_MUTEX_INITIALIZER;
+static e_thread_mutex_t memory_lock = PTHREAD_MUTEX_INITIALIZER;
+static e_thread_mutex_t slice_lock  = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 static ePointer e_sys_malloc(euint size);
@@ -364,9 +364,9 @@ ePointer e_heap_malloc(elong size, bool is_slice)
 	HeapNode *node;
 	ePointer  addr = NULL;
 
-	e_pthread_mutex_lock(&memory_lock);
+	e_thread_mutex_lock(&memory_lock);
 	if (!chain_head && !memory_chain_init()) {
-		e_pthread_mutex_unlock(&memory_lock);
+		e_thread_mutex_unlock(&memory_lock);
 		return NULL;
 	}
 
@@ -378,7 +378,7 @@ ePointer e_heap_malloc(elong size, bool is_slice)
 			addr = node->addr;
 	}
 
-	e_pthread_mutex_unlock(&memory_lock);
+	e_thread_mutex_unlock(&memory_lock);
 	return addr;
 }
 
@@ -390,7 +390,7 @@ ePointer e_heap_realloc(ePointer addr, euint size)
 
 	if (!addr) return NULL;
 
-	e_pthread_mutex_lock(&memory_lock);
+	e_thread_mutex_lock(&memory_lock);
 	while (chain) {
 		offset = (echar *)addr - (echar *)chain->addr;
 		if (offset < chain->size)
@@ -458,7 +458,7 @@ ePointer e_heap_realloc(ePointer addr, euint size)
 		}
 		addr = node->addr;
 	}
-	e_pthread_mutex_unlock(&memory_lock);
+	e_thread_mutex_unlock(&memory_lock);
 
 	return addr;
 }
@@ -481,7 +481,7 @@ void e_heap_free(ePointer addr)
 	HeapNode    *node;
 	euint        offset = 0;
 
-	e_pthread_mutex_lock(&memory_lock);
+	e_thread_mutex_lock(&memory_lock);
 	while (chain) {
 		offset = (echar *)addr - (echar *)chain->addr;
 		if (offset < chain->size)
@@ -501,7 +501,7 @@ void e_heap_free(ePointer addr)
 	}
 	else abort();
 
-	e_pthread_mutex_unlock(&memory_lock);
+	e_thread_mutex_unlock(&memory_lock);
 }
 
 static ePointer e_sys_malloc(euint size)
@@ -544,7 +544,7 @@ static void slice_free_release(bool is_slice)
 	elong i;
 
 	if (!is_slice)
-		e_pthread_mutex_lock(&slice_lock);
+		e_thread_mutex_lock(&slice_lock);
 
 	for (i = 0; i < SLICE_TABLES_NUM; i++) {
 		if (!slice_tables[i])
@@ -558,7 +558,7 @@ static void slice_free_release(bool is_slice)
 	}
 
 	if (!is_slice)
-		e_pthread_mutex_unlock(&slice_lock);
+		e_thread_mutex_unlock(&slice_lock);
 }
 
 static void half_add_tail(SliceHead *head, SliceNode *node)
@@ -631,9 +631,9 @@ void e_slice_set_level(euint type, euint level)
 	if (type > SLICE_TABLES_NUM || slice_tables[type])
 		return;
 
-	e_pthread_mutex_lock(&slice_lock);
+	e_thread_mutex_lock(&slice_lock);
 	slice_tables[type] = slice_head_new(type, level);
-	e_pthread_mutex_unlock(&slice_lock);
+	e_thread_mutex_unlock(&slice_lock);
 }
 
 ePointer e_slice_alloc(euint size)
@@ -645,7 +645,7 @@ ePointer e_slice_alloc(euint size)
 	if (type > SLICE_TABLES_NUM)
 		return e_malloc(size);
 
-	e_pthread_mutex_lock(&slice_lock);
+	e_thread_mutex_lock(&slice_lock);
 
 	if (!slice_tables[type])
 		slice_tables[type] = slice_head_new(type, 5);
@@ -655,7 +655,7 @@ ePointer e_slice_alloc(euint size)
 	if (!addr)
 		addr = slice_free_alloc(head);
 
-	e_pthread_mutex_unlock(&slice_lock);
+	e_thread_mutex_unlock(&slice_lock);
 	return addr;
 }
 
@@ -672,7 +672,7 @@ void e_slice_free1(euint size, ePointer addr)
 		return;
 	}
 
-	e_pthread_mutex_lock(&slice_lock);
+	e_thread_mutex_lock(&slice_lock);
 
 	head = slice_tables[type];
 	pp   = &head->fill;
@@ -720,13 +720,13 @@ void e_slice_free1(euint size, ePointer addr)
 	node->map[index] = (euchar)node->index;
 	node->index = index;
 
-	e_pthread_mutex_unlock(&slice_lock);
+	e_thread_mutex_unlock(&slice_lock);
 }
 
 void e_memory_init(void)
 {
 #ifdef WIN32
-	e_pthread_mutex_init(&memory_lock, NULL);
-	e_pthread_mutex_init(&slice_lock, NULL);
+	e_thread_mutex_init(&memory_lock, NULL);
+	e_thread_mutex_init(&slice_lock, NULL);
 #endif
 }

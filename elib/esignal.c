@@ -4,9 +4,9 @@
 
 static eTree *signal_tree = NULL;
 #ifdef WIN32
-static e_pthread_mutex_t signal_lock = {0};
+static e_thread_mutex_t signal_lock = {0};
 #else
-static e_pthread_mutex_t signal_lock = PTHREAD_MUTEX_INITIALIZER;
+static e_thread_mutex_t signal_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 eint __signal_call_marshal(eObject *, eVoidFunc, eValist, struct _argsnode *, eint, eint);
@@ -70,7 +70,7 @@ static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func
 {
 	eSignalSlot *slot;
 
-	e_pthread_mutex_lock(&obj->slot_lock);
+	e_thread_mutex_lock(&obj->slot_lock);
 
 	slot = (eSignalSlot *)obj->slot_head;
 	while (slot) {
@@ -94,7 +94,7 @@ static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func
 		}
 	}
 	else if (slot->lock) {
-		e_pthread_mutex_unlock(&obj->slot_lock);
+		e_thread_mutex_unlock(&obj->slot_lock);
 		return false;
 	}
 
@@ -103,7 +103,7 @@ static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func
 	slot->data2 = data2;
 	slot->data3 = data3;
 	slot->data4 = data4;
-	e_pthread_mutex_unlock(&obj->slot_lock);
+	e_thread_mutex_unlock(&obj->slot_lock);
 
 	return true;
 }
@@ -112,12 +112,12 @@ static ePointer e_signal_slot_get_data(eObject *obj, esig_t sig, eint slot_type)
 {
 	eSignalSlot *slot;
 
-	e_pthread_mutex_lock(&obj->slot_lock);
+	e_thread_mutex_lock(&obj->slot_lock);
 
 	slot = (eSignalSlot *)obj->slot_head;
 	while (slot) {
 		if (slot->sig == sig) {
-			e_pthread_mutex_unlock(&obj->slot_lock);
+			e_thread_mutex_unlock(&obj->slot_lock);
 			if (slot_type == SLOT)
 				return slot;
 			else if (slot_type == SLOT_FUNC)
@@ -134,7 +134,7 @@ static ePointer e_signal_slot_get_data(eObject *obj, esig_t sig, eint slot_type)
 		slot = slot->next;
 	}
 
-	e_pthread_mutex_unlock(&obj->slot_lock);
+	e_thread_mutex_unlock(&obj->slot_lock);
 	return NULL;
 }
 
@@ -278,10 +278,10 @@ static esig_t __signal_new(const char *name, eGeneType gtype,
 	eSignal *new;
 	struct _argsnode tmp[256];
 
-	e_pthread_mutex_lock(&signal_lock);
+	e_thread_mutex_lock(&signal_lock);
 
 	if (e_signal_check_name((const echar *)name)) {
-		e_pthread_mutex_unlock(&signal_lock);
+		e_thread_mutex_unlock(&signal_lock);
 		return 0;
 	}
 
@@ -309,7 +309,7 @@ static esig_t __signal_new(const char *name, eGeneType gtype,
 
 	e_signal_register(new);
 
-	e_pthread_mutex_unlock(&signal_lock);
+	e_thread_mutex_unlock(&signal_lock);
 
 	return (esig_t)new;
 }
@@ -457,7 +457,7 @@ void e_signal_lock(eHandle hobj, esig_t sig)
 	eObject *obj = (eObject *)hobj;
 	eSignalSlot *slot;
 
-	e_pthread_mutex_lock(&obj->slot_lock);
+	e_thread_mutex_lock(&obj->slot_lock);
 
 	slot = (eSignalSlot *)obj->slot_head;
 	while (slot) {
@@ -484,7 +484,7 @@ void e_signal_lock(eHandle hobj, esig_t sig)
 	}
 	slot->lock = true;
 
-	e_pthread_mutex_unlock(&obj->slot_lock);
+	e_thread_mutex_unlock(&obj->slot_lock);
 }
 
 void e_signal_unlock(eHandle hobj, esig_t sig)
@@ -492,7 +492,7 @@ void e_signal_unlock(eHandle hobj, esig_t sig)
 	eObject *obj = (eObject *)hobj;
 	eSignalSlot *slot;
 
-	e_pthread_mutex_lock(&obj->slot_lock);
+	e_thread_mutex_lock(&obj->slot_lock);
 
 	slot = (eSignalSlot *)obj->slot_head;
 	while (slot) {
@@ -503,13 +503,13 @@ void e_signal_unlock(eHandle hobj, esig_t sig)
 		slot = slot->next;
 	}
 
-	e_pthread_mutex_unlock(&obj->slot_lock);
+	e_thread_mutex_unlock(&obj->slot_lock);
 }
 
 
 void e_signal_init(void)
 {
 #ifdef WIN32
-	e_pthread_mutex_init(&signal_lock, NULL);
+	e_thread_mutex_init(&signal_lock, NULL);
 #endif
 }
