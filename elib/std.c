@@ -1,6 +1,6 @@
+#include <time.h>
 #include "std.h"
 #include "elist.h"
-#include <time.h>
 
 #ifdef WIN32
 
@@ -240,7 +240,7 @@ echar** e_strsplit(const echar *str, const echar *delimiter, eint max)
 			new = e_malloc(len + 1);
 			e_strncpy(new, remain, len);
 			new[len] = 0;
-			e_list_push_data(&list, &new);
+			e_list_add_data_to_head(&list, &new);
 			n++;
 			remain = s + delimiter_len;
 			s = e_strstr(remain, delimiter);
@@ -250,14 +250,14 @@ echar** e_strsplit(const echar *str, const echar *delimiter, eint max)
 	if (*str) {
 		new = e_strdup(remain);
 		n++;
-		e_list_push_data(&list, &new);
+		e_list_add_data_to_head(&list, &new);
 	}
 
 	str_array = e_calloc(sizeof(echar *), n + 1);
 
 	str_array[n--] = NULL;
 	while (list.head) {
-		e_list_pop_data(&list, &str_array[n--]);
+		e_list_out_data_from_head(&list, &str_array[n--]);
 	}
 
 	return str_array;
