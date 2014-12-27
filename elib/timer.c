@@ -1,5 +1,3 @@
-#include <sys/time.h>
-
 #include "std.h"
 #include "timer.h"
 
@@ -69,14 +67,14 @@ static void dispense_usec(euint sec, euint usec)
 
 static void add_timer(void)
 {
-	pthread_mutex_lock(&timer_lock);
+	e_thread_mutex_lock(&timer_lock);
 	while (add_timer_head) {
 		TimerData *new = add_timer_head;
 		add_timer_head = add_timer_head->next;
 		new->next      = timer_head;
 		timer_head     = new;
 	}
-	pthread_mutex_unlock(&timer_lock);
+	e_thread_mutex_unlock(&timer_lock);
 }
 
 void e_timer_loop(void)
@@ -126,10 +124,10 @@ eTimer e_timer_add(euint interval, eTimerFunc func, ePointer args)
 	timer->func      = func;
 	timer->status    = TimerDoing;
 
-	pthread_mutex_lock(&timer_lock);
+	e_thread_mutex_lock(&timer_lock);
 	timer->next      = add_timer_head;
 	add_timer_head   = timer;
-	pthread_mutex_unlock(&timer_lock);
+	e_thread_mutex_unlock(&timer_lock);
 
 	return (eTimer)timer;
 }
@@ -138,4 +136,11 @@ void e_timer_del(eTimer timer)
 {
 	TimerData *t = (TimerData *)timer;
 	t->status    = TimerDel;
+}
+
+void e_timer_init(void)
+{
+#ifdef WIN32
+	e_thread_mutex_init(&timer_lock, NULL);
+#endif
 }

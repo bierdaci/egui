@@ -1,4 +1,4 @@
-#include "eutf8.h"
+#include "unichar.h"
 
 #define UTF8_COMPUTE(Char, Mask, Len)		\
 if (Char < 128)								\
@@ -47,7 +47,7 @@ for ((Count) = 1; (Count) < (Len); ++(Count))				\
     (Result) |= ((Chars)[(Count)] & 0x3f);					\
 }
 
-static const echar utf8_skip_data[256] = {
+static const euchar utf8_skip_data[256] = {
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -58,13 +58,13 @@ static const echar utf8_skip_data[256] = {
     3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,6,6,1,1
 };
                    
-const echar * const e_utf8_skip = utf8_skip_data;
+const euchar * const e_utf8_skip = utf8_skip_data;
 
-eunichar e_utf8_get_char(const echar *p)
+eunichar e_utf8_get_char(const euchar *p)
 {
     int i, mask = 0, len;
     eunichar result;
-    euchar c = (euchar)*p;
+    euchar c = *p;
 
     UTF8_COMPUTE(c, mask, len);
     if (len == -1)
@@ -74,17 +74,17 @@ eunichar e_utf8_get_char(const echar *p)
     return result;
 }
 
-elong e_utf8_strlen(const echar *p, essize max)
+eint e_utf8_strlen(const euchar *p, essize max)
 {
     elong len = 0;
-    const echar *start = p;
+    const euchar *start = p;
 
     if (!p) return 0;
 
     if (max < 0)
 	{
         while (*p) {
-            p = e_utf8_next_char(p);
+            p = e_uni_next_char(p);
             ++len;
         }
     }
@@ -93,11 +93,11 @@ elong e_utf8_strlen(const echar *p, essize max)
         if (max == 0 || !*p)
             return 0;
 
-        p = e_utf8_next_char(p);
+        p = e_uni_next_char(p);
 
         while (p - start < max && *p) {
             ++len;
-            p = e_utf8_next_char(p);
+            p = e_uni_next_char(p);
         }
 
         if (p - start <= max)

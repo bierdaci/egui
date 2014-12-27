@@ -8,12 +8,17 @@
 #include <assert.h>
 
 #ifdef WIN32
-
+#define _WIN32_WINNT	0x0500
 #include <windows.h>
 #include <io.h>
+
 #else
+
+#include <unistd.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include <semaphore.h>
+
 #endif
 
 #include <elib/types.h>
@@ -29,16 +34,24 @@ typedef va_list				eValist;
 #define e_va_end(ap)		va_end(ap)
 
 #ifdef WIN32
+
+struct timezone {
+	int tz_minuteswest;
+	int tz_dsttime;
+};
+
 typedef struct {
 	HANDLE handle;
 	LONG value;
 } handle_sem_t;
 
+int gettimeofday(struct timeval *tp, void *tzp);
+
 #define e_thread_t				HANDLE
 #define e_thread_mutexattr_t	ePointer
-#define e_thread_mutex_t		CRITICAL_SECTION
-#define e_thread_cond_t		CRITICAL_SECTION
-#define e_thread_condattr_t    CRITICAL_SECTION
+#define e_thread_mutex_t		handle_sem_t
+#define e_thread_cond_t			CRITICAL_SECTION
+#define e_thread_condattr_t		CRITICAL_SECTION
 #define e_sem_t					handle_sem_t
 
 #else
@@ -68,6 +81,7 @@ eint e_sem_wait(e_sem_t *sem);
 eint e_sem_trywait(e_sem_t *sem);
 eint e_sem_timedwait(e_sem_t *sem, const struct timespec *abs_timeout);
 eint e_sem_getvalue(e_sem_t *sem, eint *val);
+echar *e_strcasestr(const echar *s1, const echar *s2);
 
 echar** e_strsplit(const echar *str, const echar *delimiter, eint max);
 void e_strfreev(echar **str_array);

@@ -7,7 +7,7 @@
 #include <elib/elist.h>
 #include <elib/conf.h>
 #include <elib/etree.h>
-#include <elib/eutf8.h>
+#include <elib/unichar.h>
 #include <elib/queue.h>
 #include <elib/object.h>
 #include <elib/esignal.h>

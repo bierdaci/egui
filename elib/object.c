@@ -1048,10 +1048,12 @@ void e_object_init(void)
 #endif
 }
 
+void e_timer_init(void);
 bool e_init(void)
 {
 	e_memory_init();
 	e_object_init();
 	e_signal_init();
+	e_timer_init();
 	return true;
 }

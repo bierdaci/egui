@@ -119,3 +119,102 @@ eint e_queue_read_wait(Queue *queue, ePointer buf, eint size)
 
 	return retval;
 }
+
+eint e_queue_write_try(Queue *queue, ePointer buf, eint size)
+{
+	eint retval;
+
+	e_thread_mutex_lock(&queue->lock);
+	if (e_queue_space(queue) < size)
+		retval = 0;
+	else
+		retval = e_queue_write(queue, buf, size);
+	e_thread_mutex_unlock(&queue->lock);
+
+	return retval;
+}
+
+eint e_queue_read_try(Queue *queue, ePointer buf, eint size)
+{
+	eint retval;
+
+	e_thread_mutex_lock(&queue->lock);
+	if (e_queue_size(queue) < size)
+		retval = 0;
+	else
+		retval = e_queue_read(queue, buf, size);
+	e_thread_mutex_unlock(&queue->lock);
+
+	return retval;
+}
+
+static eint __queue_peek(Queue *queue, ePointer buf, eint size)
+{
+	echar *t = (echar *)buf;
+	eint pos = queue->pos;
+
+	if (pos + size > queue->size) {
+		eint n = queue->size - pos;
+		e_memcpy(t, queue->data + pos, n);
+		pos   = 0;
+		size -= n;
+		t    += n;
+	}
+
+	e_memcpy(t, queue->data + pos, size);
+	t += size;
+
+	return (eint)(t - (echar *)buf);
+}
+
+eint e_queue_peek(Queue *queue, ePointer buf, eint size)
+{
+	eint retval;
+
+	e_thread_mutex_lock(&queue->lock);
+	if (e_queue_size(queue) < size)
+		retval = 0;
+	else
+		retval = __queue_peek(queue, buf, size);
+	e_thread_mutex_unlock(&queue->lock);
+
+	return retval;
+}
+
+static eint __queue_seek(Queue *queue, ePointer buf, eint offset, eint size)
+{
+	echar *t = (echar *)buf;
+	eint pos = queue->pos;
+
+	if (pos + offset > queue->size)
+		pos = pos + offset - queue->size;
+	else
+		pos = pos + offset;
+
+	if (pos + size > queue->size) {
+		eint n = queue->size - pos;
+		e_memcpy(t, queue->data + pos, n);
+		pos   = 0;
+		size -= n;
+		t    += n;
+	}
+
+	e_memcpy(t, queue->data + pos, size);
+	t += size;
+
+	return (eint)(t - (echar *)buf);
+}
+
+eint e_queue_seek(Queue *queue, ePointer buf, eint offset, eint size)
+{
+	eint retval;
+
+	e_thread_mutex_lock(&queue->lock);
+	if (e_queue_size(queue) < size + offset)
+		retval = 0;
+	else
+		retval = __queue_seek(queue, buf, offset, size);
+	e_thread_mutex_unlock(&queue->lock);
+
+	return retval;
+}

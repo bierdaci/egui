@@ -1,8 +1,27 @@
 #include "std.h"
 #include "elist.h"
-
+#include <time.h>
 
 #ifdef WIN32
+
+int gettimeofday(struct timeval *tp, void *tzp)
+{
+    time_t clock;
+    struct tm tm;
+    SYSTEMTIME wtm;
+    GetLocalTime(&wtm);
+    tm.tm_year = wtm.wYear - 1900;
+    tm.tm_mon  = wtm.wMonth - 1;
+    tm.tm_mday = wtm.wDay;
+    tm.tm_hour = wtm.wHour;
+    tm.tm_min  = wtm.wMinute;
+    tm.tm_sec  = wtm.wSecond;
+    tm.tm_isdst = -1;
+    clock = mktime(&tm);
+    tp->tv_sec = clock;
+    tp->tv_usec = wtm.wMilliseconds * 1000;
+    return 0;
+}
 
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
 {
@@ -14,13 +33,15 @@ eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
 
 eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr)
 {
-	InitializeCriticalSection(mutex);
+	mutex->handle = CreateMutex(NULL, FALSE, NULL);
+	mutex->value  = 1;
 	return 0;
 }
 
 eint e_thread_mutex_lock(e_thread_mutex_t *mutex)
 {
-	EnterCriticalSection(mutex);
+	mutex->value--;
+	WaitForSingleObject(mutex->handle, INFINITE);
 	return 0;
 }
 
@@ -31,13 +52,14 @@ eint e_thread_mutex_trylock(e_thread_mutex_t *mutex)
 
 eint e_thread_mutex_unlock(e_thread_mutex_t *mutex)
 {
-	LeaveCriticalSection(mutex);
+	mutex->value++;
+	ReleaseMutex(mutex->handle);
 	return 0;
 }
 
 eint e_thread_mutex_destroy(e_thread_mutex_t *mutex)
 {
-	DeleteCriticalSection(mutex);
+	CloseHandle(mutex->handle);
 	return 0;
 }
 
@@ -251,3 +273,25 @@ void e_strfreev(echar **str_array)
 	}
 }
 
+echar *e_strcasestr(const echar *s1, const echar *s2)
+{
+#ifdef WIN32
+	echar c, sc;
+	size_t len;
+
+	if ((c = *s2++) != 0) {
+		c = tolower((euchar)c);
+		len = e_strlen(s2);
+		do {
+			do {
+				if ((sc = *s1++) == 0)
+					return NULL;
+			} while ((echar)tolower((euchar)sc) != c);
+		} while (e_strncasecmp(s1, s2, len) != 0);
+		s1--;
+	}
+	return (echar *)s1;
+#else
+	return (echar *)strcasestr(s1, s2);
+#endif
+}

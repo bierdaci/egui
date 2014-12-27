@@ -506,7 +506,6 @@ void e_signal_unlock(eHandle hobj, esig_t sig)
 	e_thread_mutex_unlock(&obj->slot_lock);
 }
 
-
 void e_signal_init(void)
 {
 #ifdef WIN32
