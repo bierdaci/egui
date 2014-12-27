@@ -138,10 +138,17 @@ static eint decode_header(const euchar *BFH, const euchar *BIH, struct bmp_conte
 
 	if (header->height < 0) {
 		header->height = -header->height;
+#ifdef WIN32
+		header->negative = 1;
+	}
+	else
+		header->negative = 0;
+#else
 		header->negative = 0;
 	}
 	else
 		header->negative = 1;
+#endif
 
 	if (header->negative
 			&& context->compressed != BI_RGB 
@@ -214,7 +221,7 @@ static bool bmp_load_header(GalPixbuf *pixbuf, ePointer data, euint size)
 	struct bmp_context_state context;
 
 	context.request_size = size;
-	if (decode_header(data, (char *)data + 14, &context) != 0)
+	if (decode_header(data, (euchar *)data + 14, &context) != 0)
 		return false;
 	pixbuf->w = context.header.width;
 	pixbuf->h = context.header.height;
