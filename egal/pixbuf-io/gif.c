@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "../pixbuf-io.h"
+#include <egal/pixbuf-io.h>
 
 #define MAXCOLORMAPSIZE		256
 #define MAX_LZW_BITS		12
@@ -46,7 +46,7 @@ struct _GifContext {
 	bool has_global_cmap;
 
 	CMap  global_color_map;
-	eint  global_colormap_size;
+	euint  global_colormap_size;
 	euint global_bit_pixel;
 	euint global_color_resolution;
 	euint background_index;
@@ -54,7 +54,7 @@ struct _GifContext {
 
 	bool  frame_cmap_active;
 	CMap  frame_color_map;
-	eint  frame_colormap_size;
+	euint frame_colormap_size;
 	euint frame_bit_pixel;
 
 	bool  is_anim;
@@ -601,7 +601,7 @@ static int pixbuf_anim_process(GifContext *context)
 			break;
 	}
 
-	context->frame->bg_transparent = (context->gif89.transparent == context->background_index);
+	context->frame->bg_transparent = (context->gif89.transparent == (eint)context->background_index);
 
 	context->anim->n_frames++;
 	anim_frame_append(context->anim, context->frame);

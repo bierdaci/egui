@@ -41,6 +41,7 @@ typedef struct _GalGeometry			GalGeometry;
 typedef struct _GalVisualInfo		GalVisualInfo;
 typedef struct _GalPBAttr			GalPBAttr;
 typedef struct _GalEvent			GalEvent;
+typedef struct _GalPattern			GalPattern;
 
 typedef enum {
 	GalGrabSuccess         = 0, 
@@ -70,7 +71,8 @@ typedef enum {
 } GalPBFunc;
 
 struct _GalWindowManager {
-	GalWindow   (*wait_event)(GalEvent *);
+	GalWindow   (*wait_event)(GalEvent *, bool);
+	void        (*get_event)(GalEvent *);
 	GalWindow   (*window_new)(GalWindowAttr *);
 	GalDrawable (*drawable_new)(eint, eint, bool);
 	GalImage*   (*image_new)(eint, eint, bool);
@@ -79,6 +81,7 @@ struct _GalWindowManager {
 	GalCursor   (*cursor_new)(GalCursorType);
 	GalCursor   (*cursor_new_name)(const echar *);
 	GalCursor   (*cursor_new_pixbuf)(GalPixbuf *, eint, eint);
+	GalFont		(*create_font)(GalPattern *);
 	GalWindow   root_window;
 };
 
@@ -134,6 +137,7 @@ typedef enum {
 	GAL_WA_WMCLASS   = 1 << 7,
 	GAL_WA_NOREDIR   = 1 << 8,
 	GAL_WA_TYPE_HINT = 1 << 9,
+	GAL_WA_TOPMOST   = 1 << 10,
 } GalWindowAttributesMask;
 
 typedef enum {
@@ -239,7 +243,7 @@ struct _GalWindowOrders {
 };
 
 struct _GalDrawableOrders {
-	void (*draw_drawable)(GalDrawable, GalPB, eint, eint, GalDrawable, eint, eint, eint, eint);
+	void (*draw_drawable)(GalDrawable, GalPB, eint, eint, GalDrawable, GalPB, eint, eint, eint, eint);
 	void (*draw_image)(GalDrawable, GalPB, eint, eint, GalImage *, eint, eint, eint, eint);
 	void (*draw_point)(GalDrawable, GalPB, eint, eint);
 	void (*draw_line)(GalDrawable, GalPB, eint, eint, eint, eint);
@@ -248,8 +252,8 @@ struct _GalDrawableOrders {
 	void (*fill_rect)(GalDrawable, GalPB, eint, eint, eint, eint);
 	void (*fill_arc)(GalDrawable, GalPB, eint, eint, euint, euint, eint, eint);
 
-	void (*composite)(GalDrawable, eint, eint, GalDrawable, eint, eint, eint, eint);
-	void (*composite_image)(GalDrawable, eint, eint, GalImage *, eint, eint, eint, eint);
+	void (*composite)(GalDrawable, GalPB, eint, eint, GalDrawable, GalPB, eint, eint, eint, eint);
+	void (*composite_image)(GalDrawable, GalPB, eint, eint, GalImage *, eint, eint, eint, eint);
 	void (*composite_subwindow)(GalDrawable, eint, eint, eint, eint);
 
 	eint (*get_mark)       (GalDrawable);
@@ -269,6 +273,9 @@ struct _GalDrawableOrders {
 };
 
 struct _GalCursorOrders {
+#ifdef WIN32
+	int a;
+#endif
 };
 
 struct _GalImage {
@@ -276,6 +283,7 @@ struct _GalImage {
     eint depth;
     eint pixelbytes;
     eint rowbytes;
+	eint negative;
 	bool alpha;
     euchar *pixels;
 };
@@ -301,6 +309,9 @@ struct _GalVisual {
 };
 
 struct _GalScreen {
+#ifdef WIN32
+	int a;
+#endif
 };
 
 struct _GalVisualInfo {
@@ -324,8 +335,8 @@ struct _GalColormap {
 
 struct _GalPBAttr {
 	GalPBFunc func;
-	eulong foreground;
-	eulong background;
+	euint foreground;
+	euint background;
 	eint line_width;
 	eint line_style;
 	eint fill_style;
@@ -337,13 +348,15 @@ struct _GalPBAttr {
 };
 
 struct _GalPBOrders {
-	eint (*set_attr)(GalPB, GalPBAttr *);
-	eint (*get_attr)(GalPB, GalPBAttr *);
-	eulong (*get_background)(GalPB);
-	eulong (*get_foreground)(GalPB);
-	eint (*set_foreground)(GalPB, eulong color);
-	eint (*set_background)(GalPB, eulong color);
-	eint (*set_font)(GalPB, GalFont);
+	eint  (*set_attr)(GalPB, GalPBAttr *);
+	eint  (*get_attr)(GalPB, GalPBAttr *);
+	euint (*get_background)(GalPB);
+	euint (*get_foreground)(GalPB);
+	eint  (*set_foreground)(GalPB, euint);
+	eint  (*set_background)(GalPB, euint);
+	eint  (*set_font)(GalPB, GalFont);
+	euint (*set_color)(GalPB, euint);
+	euint (*get_color)(GalPB);
 };
 
 struct _GalSurface {
@@ -430,6 +443,8 @@ struct _GalEvent {
 	} e;
 };
 
+extern GalWindowManager _gwm;
+
 eGeneType egal_genetype(void);
 eGeneType egal_genetype_pb(void);
 eGeneType egal_genetype_drawable(void);
@@ -480,12 +495,14 @@ void egal_window_get_geometry_hints(GalWindow, GalGeometry *, GalWindowHints *);
 
 GalPB egal_default_pb(void);
 void egal_pb_set_attr(GalPB, GalPBAttr *);
-void egal_set_foreground(GalPB, eulong);
-void egal_set_background(GalPB, eulong);
-eulong egal_get_foreground(GalPB);
-eulong egal_get_background(GalPB);
+euint egal_set_foreground(GalPB, euint);
+euint egal_set_background(GalPB, euint);
+euint egal_get_foreground(GalPB);
+euint egal_get_background(GalPB);
+euint egal_set_font_color(GalPB, euint);
+euint egal_get_font_color(GalPB pb);
 
-void egal_draw_drawable(GalDrawable, GalPB, eint, eint, GalDrawable, eint, eint, eint, eint);
+void egal_draw_drawable(GalDrawable, GalPB, eint, eint, GalDrawable, GalPB, eint, eint, eint, eint);
 void egal_draw_image(GalDrawable, GalPB, eint, eint, GalImage *, eint, eint, eint, eint);
 void egal_draw_point(GalDrawable, GalPB, eint, eint);
 void egal_draw_line(GalDrawable, GalPB, eint, eint, eint, eint);
@@ -502,18 +519,19 @@ eint       egal_drawable_get_mark(GalDrawable);
 GalSurface egal_refer_surface(GalDrawable);
 ePointer egal_surface_private(GalDrawable);
 
-void egal_composite(GalDrawable, GalPB, eint, eint, GalDrawable, eint, eint, eint, eint);
+void egal_composite(GalDrawable, GalPB, eint, eint, GalDrawable, GalPB, eint, eint, eint, eint);
 void egal_composite_image(GalDrawable, GalPB, eint, eint, GalImage *, eint, eint, eint, eint);
 void egal_composite_subwindow(GalDrawable, eint, eint, eint, eint);
 
-eint egal_window_set_cursor(GalWindow, GalCursor);
-GalCursor egal_window_get_cursor(GalWindow);
+eint egal_set_cursor(GalWindow, GalCursor);
+GalCursor egal_get_cursor(GalWindow);
 
 void egal_window_set_attr(GalWindow, GalWindowAttr *);
 void egal_window_get_attr(GalWindow, GalWindowAttr *);
 void egal_window_get_origin(GalWindow, eint *, eint *);
 
-GalWindow egal_window_wait_event(GalEvent *);
+GalWindow egal_window_wait_event(GalEvent *, bool);
+void egal_window_get_event(GalEvent *event);
 eint egal_window_init(void);
 
 void egal_window_make_GL(GalWindow);

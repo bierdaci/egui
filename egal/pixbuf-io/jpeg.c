@@ -5,7 +5,7 @@
 #include <jpeglib.h>
 #include <jerror.h>
 
-#include <pixbuf-io.h>
+#include <egal/pixbuf-io.h>
 
 #define JPEG_PROG_BUF_SIZE 65536
 
@@ -17,7 +17,9 @@ typedef struct {
 
 struct error_handler_data {
 	struct jpeg_error_mgr pub;
+#ifdef linux
 	sigjmp_buf setjmp_buffer;
+#endif
 };
 
 typedef struct {
@@ -45,8 +47,9 @@ static void fatal_error_handler(j_common_ptr cinfo)
 	errmgr = (struct error_handler_data *)cinfo->err;
 
 	cinfo->err->format_message(cinfo, buffer);
-
+#ifdef linux
 	siglongjmp(errmgr->setjmp_buffer, 1);
+#endif
 }
 
 static void output_message_handler(j_common_ptr cinfo)
@@ -74,7 +77,7 @@ static void skip_input_data(j_decompress_ptr cinfo, elong num_bytes)
 	elong   num_can_do;
 
 	if (num_bytes > 0) {
-		num_can_do = MIN(src->pub.bytes_in_buffer, num_bytes);
+		num_can_do = MIN((elong)src->pub.bytes_in_buffer, num_bytes);
 		src->pub.next_input_byte += (size_t)num_can_do;
 		src->pub.bytes_in_buffer -= (size_t)num_can_do;
 		src->skip_next = num_bytes - num_can_do;
@@ -126,10 +129,11 @@ static GalPixbuf *jpeg_load_end(ePointer data)
 	GalPixbuf *pixbuf = context->context.pixbuf;
 
 	if (!context) return NULL;
-
+#ifdef linux
 	if (sigsetjmp(context->jerr.setjmp_buffer, 1))
 		context->error = true;
 	else
+#endif
 		jpeg_finish_decompress(&context->cinfo);
 
 	jpeg_destroy_decompress(&context->cinfo);
@@ -219,7 +223,7 @@ static void convert_cmyk_to_rgb(JpegProgContext *context, euchar **lines, eint n
 		if (!con->set_y(con, -1))
 			continue;
 
-		for (j = 0; j < cinfo->output_width; j++) {
+		for (j = 0; j < (eint)cinfo->output_width; j++) {
 			eint c, m, y, k;
 			c = p[0];
 			m = p[1];
@@ -289,14 +293,14 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 	src = (my_source_mgr *)context->cinfo.src;
 
 	cinfo = &context->cinfo;
-
+#ifdef linux
 	if (sigsetjmp(context->jerr.setjmp_buffer, 1)) {
 		context->error = true;
 		return false;
 	}
-
+#endif
 	if (context->src_initialized && src->skip_next) {
-		if (src->skip_next > size) {
+		if (src->skip_next > (eint)size) {
 			src->skip_next -= size;
 			return true;
 		}
@@ -351,8 +355,9 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 			eint rc, i;
 			euchar *rowptr;
 			PixbufContext *con = (PixbufContext *)context;
-
+#ifdef linux
 			jpeg_save_markers(cinfo, EXIF_JPEG_MARKER, 0xffff);
+#endif
 			rc = jpeg_read_header(cinfo, true);
 			context->src_initialized = true;
 
@@ -373,7 +378,11 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 			}
 			jpeg_calc_output_dimensions(cinfo);
 
+#ifdef WIN32
 			con->init(con, cinfo->output_width, cinfo->output_height, 3, 1);
+#else
+			con->init(con, cinfo->output_width, cinfo->output_height, 3, 0);
+#endif
 
 			//if (is_otag) {
 			//	e_snprintf(otag_str, sizeof (otag_str), "%d", is_otag);
@@ -413,9 +422,11 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 		else {
 			while (!jpeg_input_complete(cinfo)) {
 				if (!context->in_output) {
+#ifdef linux
 					if (jpeg_start_output(cinfo, cinfo->input_scan_number))
 						context->in_output = true;
 					else
+#endif
 						break;
 				}
 
@@ -423,8 +434,11 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 					context->error = true;
 					return false;
 				}
-
+#ifdef WIN32
+				if (cinfo->output_scanline >= cinfo->output_height)
+#else
 				if (cinfo->output_scanline >= cinfo->output_height && jpeg_finish_output(cinfo))
+#endif
 					context->in_output = false;
 				else
 					break;
@@ -459,8 +473,9 @@ static bool jpeg_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 	de.err = jpeg_std_error(&jerr);
 	jerr.error_exit = fatal_error_handler;
 	jerr.output_message = output_message_handler;
-
+#ifdef linux
 	jpeg_save_markers(&de, EXIF_JPEG_MARKER, 0xffff);
+#endif
 	jpeg_read_header(&de, true);
 
 	jpeg_calc_output_dimensions(&de);
@@ -688,7 +703,9 @@ static void to_callback_do_write(j_compress_ptr cinfo, gsize length)
 					GDK_PIXBUF_ERROR_CORRUPT_IMAGE,
 					"write function failed");
 		}
+#ifdef linux
 		siglongjmp(errmgr->setjmp_buffer, 1);
+#endif
 		//g_assert_not_reached ();
 	}
 }
@@ -816,13 +833,14 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 	jerr.error = error;
 
 	cinfo.err = jpeg_std_error(&(jerr.pub));
+#ifdef linux
 	if (sigsetjmp(jerr.setjmp_buffer, 1)) {
 		jpeg_destroy_compress(&cinfo);
 		e_free(buf);
 		e_free(to_callback_destmgr.buffer);
 		return false;
 	}
-
+#endif
 	/* setup compress params */
 	jpeg_create_compress(&cinfo);
 	if (to_callback) {

@@ -64,7 +64,7 @@ static void cairo_get_extents(GalFont font, eunichar ichar, GalRect *rect)
 	FT_Load_Glyph(face, index, FT_LOAD_DEFAULT);
 
 	gm = &face->glyph->metrics;
-	
+
 	rect->w = gm->horiAdvance / 64;
 	rect->h = crfont->metrics.height;
 
@@ -177,7 +177,7 @@ static eGeneType egal_genetype_cairo(void)
 	return etype;
 }
 
-GalFont cairo_font_load(GalPattern *pattern)
+GalFont cairo_create_font(GalPattern *pattern)
 {
 	return e_object_new(GTYPE_FONT_CAIRO, pattern);
 }

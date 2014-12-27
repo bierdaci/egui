@@ -91,8 +91,8 @@ pixops_scale_nearest(euchar        *dest_buf,
 {
 	int i;
 	int x;
-	int x_step = (1 << SCALE_SHIFT) / scale_x;
-	int y_step = (1 << SCALE_SHIFT) / scale_y;
+	int x_step = (int)((1 << SCALE_SHIFT) / scale_x);
+	int y_step = (int)((1 << SCALE_SHIFT) / scale_y);
 	int xmax, xstart, xstop, x_pos, y_pos;
 	const euchar *p;
 
@@ -172,8 +172,8 @@ pixops_composite_nearest(euchar        *dest_buf,
 {
 	int i;
 	int x;
-	int x_step = (1 << SCALE_SHIFT) / scale_x;
-	int y_step = (1 << SCALE_SHIFT) / scale_y;
+	int x_step = (int)((1 << SCALE_SHIFT) / scale_x);
+	int y_step = (int)((1 << SCALE_SHIFT) / scale_y);
 	int xmax, xstart, xstop, x_pos, y_pos;
 	const euchar *p;
 	unsigned int  a0;
@@ -257,8 +257,8 @@ pixops_composite_color_nearest(euchar        *dest_buf,
 {
 	int i, j;
 	int x;
-	int x_step = (1 << SCALE_SHIFT) / scale_x;
-	int y_step = (1 << SCALE_SHIFT) / scale_y;
+	int x_step = (int)((1 << SCALE_SHIFT) / scale_x);
+	int y_step = (int)((1 << SCALE_SHIFT) / scale_y);
 	int r1, g1, b1, r2, g2, b2;
 	int check_shift = get_check_shift(check_size);
 	int xmax, xstart, xstop, x_pos, y_pos;
@@ -881,7 +881,7 @@ static int *make_filter_table(PixopsFilter *filter)
 
 					total += (int)weight;
 
-					*(pixel_weights + n_x * i + j) = weight;
+					*(pixel_weights + n_x * i + j) = (int)weight;
 				}
 
 			correct_total(pixel_weights, n_x, n_y, total, filter->overall_alpha);
@@ -922,12 +922,12 @@ pixops_process(euchar         *dest_buf,
 	euchar **line_bufs = e_calloc(sizeof(euchar *), filter->y.n);
 	int *filter_weights = make_filter_table(filter);
 
-	int x_step = (1 << SCALE_SHIFT) / scale_x;
-	int y_step = (1 << SCALE_SHIFT) / scale_y;
+	int x_step = (int)((1 << SCALE_SHIFT) / scale_x);
+	int y_step = (int)((1 << SCALE_SHIFT) / scale_y);
 
 	int check_shift = check_size ? get_check_shift(check_size) : 0;
 
-	int scaled_x_offset = floor(filter->x.offset * (1 << SCALE_SHIFT));
+	int scaled_x_offset = (int)floor(filter->x.offset * (1 << SCALE_SHIFT));
 
 #define MYDIV(a,b) ((a) > 0 ? (a) / (b) : ((a) - (b) + 1) / (b))
 
@@ -935,7 +935,7 @@ pixops_process(euchar         *dest_buf,
 	int run_end_index = MYDIV(run_end_x + x_step - 1, x_step) - render_x0;
 	run_end_index = MIN(run_end_index, render_x1 - render_x0);
 
-	y = render_y0 * y_step + floor(filter->y.offset * (1 << SCALE_SHIFT));
+	y = (int)(render_y0 * y_step + floor(filter->y.offset * (1 << SCALE_SHIFT)));
 	for (i = 0; i < (render_y1 - render_y0); i++) {
 		int dest_x;
 		int y_start = y >> SCALE_SHIFT;
@@ -1024,7 +1024,7 @@ pixops_process(euchar         *dest_buf,
 
 static void tile_make_weights(PixopsFilterDimension *dim, double scale)
 {
-	int n = ceil(1 / scale + 1);
+	int n = (int)ceil(1 / scale + 1);
 	double *pixel_weights = e_calloc(sizeof(double), SUBSAMPLE * n);
 	int offset;
 	int i;
@@ -1067,7 +1067,7 @@ bilinear_magnify_make_weights(PixopsFilterDimension *dim, double scale)
 		dim->offset = 0.5 * (1 / scale - 1);
 	}
 	else {
-		n = ceil (1.0 + 1.0 / scale);
+		n = (int)ceil(1.0 + 1.0 / scale);
 		dim->offset = 0.0;
 	}
 
@@ -1135,7 +1135,7 @@ static double linear_box_half(double b0, double b1)
 static void
 bilinear_box_make_weights(PixopsFilterDimension *dim, double scale)
 {
-	int n = ceil (1 / scale + 3.0);
+	int n = (int)ceil (1 / scale + 3.0);
 	double *pixel_weights = e_calloc(sizeof(double), SUBSAMPLE * n);
 	double w;
 	int offset, i;
@@ -1292,10 +1292,10 @@ void _pixops_composite_color(euchar       *dest_buf,
 	}
 
 	new_dest_buf = dest_buf + dest_y * dest_rowstride + dest_x * dest_channels;
-	render_x0 = dest_x - offset_x;
-	render_y0 = dest_y - offset_y;
-	render_x1 = dest_x + dest_region_width  - offset_x;
-	render_y1 = dest_y + dest_region_height - offset_y;
+	render_x0 = (int)(dest_x - offset_x);
+	render_y0 = (int)(dest_y - offset_y);
+	render_x1 = (int)(dest_x + dest_region_width  - offset_x);
+	render_y1 = (int)(dest_y + dest_region_height - offset_y);
 
 	_pixops_composite_color_real(new_dest_buf, render_x0, render_y0, render_x1,
 			render_y1, dest_rowstride, dest_channels,
@@ -1410,10 +1410,10 @@ _pixops_composite(euchar     *dest_buf,
 	}
 
 	new_dest_buf = dest_buf + dest_y * dest_rowstride + dest_x * dest_channels;
-	render_x0 = offset_x;
-	render_y0 = offset_y;
-	render_x1 = dest_region_width  + offset_x;
-	render_y1 = dest_region_height + offset_y;
+	render_x0 = (int)offset_x;
+	render_y0 = (int)offset_y;
+	render_x1 = (int)(dest_region_width  + offset_x);
+	render_y1 = (int)(dest_region_height + offset_y);
 
 	_pixops_composite_real(new_dest_buf, render_x0, render_y0, render_x1,
 			render_y1, dest_rowstride, dest_channels,
@@ -1512,10 +1512,10 @@ _pixops_scale(euchar          *dest_buf,
 	int render_y1;
 
 	new_dest_buf = dest_buf + dest_y * dest_rowstride + dest_x * dest_channels;
-	render_x0    = offset_x;
-	render_y0    = offset_y;
-	render_x1    = dest_region_width  + offset_x;
-	render_y1    = dest_region_height + offset_y;
+	render_x0    = (int)offset_x;
+	render_y0    = (int)offset_y;
+	render_x1    = (int)(dest_region_width  + offset_x);
+	render_y1    = (int)(dest_region_height + offset_y);
 
 	_pixops_scale_real(new_dest_buf, render_x0, render_y0, render_x1,
 			render_y1, dest_rowstride, dest_channels,

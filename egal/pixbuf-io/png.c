@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef WIN32
+#include <setjmp.h>
+#endif
 #include <png.h>
 
-#include <pixbuf-io.h>
+#include <egal/pixbuf-io.h>
 
 static void png_error_callback(png_structp png_read_ptr, png_const_charp error_msg);
 
@@ -218,6 +221,7 @@ static void
 png_info_callback(png_structp png_read_ptr, png_infop png_info_ptr)
 {
 	PNGContext *lc;
+	PixbufContext *con;
 	bool have_alpha = false;
 
 	lc = png_get_progressive_ptr(png_read_ptr);
@@ -233,8 +237,12 @@ png_info_callback(png_structp png_read_ptr, png_infop png_info_ptr)
 	if (lc->color_type & PNG_COLOR_MASK_ALPHA)
 		have_alpha = true;
 
-	PixbufContext *con = (PixbufContext *)lc;
+	con = (PixbufContext *)lc;
+#ifdef WIN32
 	con->init(con, lc->width, lc->height, lc->channels, 1);
+#else
+	con->init(con, lc->width, lc->height, lc->channels, 0);
+#endif
 
 	return;
 }
@@ -244,7 +252,7 @@ png_row_callback(png_structp png_read_ptr, png_bytep new_row, png_uint_32 row_nu
 {
 	PNGContext *lc;
 	euint8 *p = new_row;
-	int i;
+	euint i;
 	PixbufContext *con;
 
 	lc = png_get_progressive_ptr(png_read_ptr);

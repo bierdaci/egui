@@ -82,13 +82,24 @@ static void image8_copy_from_pixbuf(GalImage *image,
 		eint w, eint h)
 {
     eint x, y;
-    euint8 *dst_buf = image->pixels + image->rowbytes * dy + dx * image->pixelbytes;
+    euint8 *p;
 
-    for (y = 0; y < h; y++) {
-        for (x = 0; x < w; x++)
-            dst_buf[x] = pixbuf_read_pixel8(pixbuf, x + sx, y + sy);
-        dst_buf += image->w;
-    }
+	if (image->negative) {
+		p = image->pixels + image->rowbytes * (dy + h - 1) + dx * image->pixelbytes;
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++)
+				p[x] = pixbuf_read_pixel8(pixbuf, x + sx, y + sy);
+			p -= image->w;
+		}
+	}
+	else {
+		p = image->pixels + image->rowbytes * dy + dx * image->pixelbytes;
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++)
+				p[x] = pixbuf_read_pixel8(pixbuf, x + sx, y + sy);
+			p += image->w;
+		}
+	}
 }
 
 static void image16_copy_from_pixbuf(GalImage *image,
@@ -98,13 +109,59 @@ static void image16_copy_from_pixbuf(GalImage *image,
 		eint w, eint h)
 {
     eint x, y;
-    euint16 *dst_buf = (euint16 *)(image->pixels + image->rowbytes * dy + dx * image->pixelbytes);
+    euint16 *p;
 
-    for (y = 0; y < h; y++) {
-        for (x = 0; x < w; x++)
-            dst_buf[x] = pixbuf_read_pixel16(pixbuf, x + sx, y + sy);
-        dst_buf += image->w;
-    }
+	if (image->negative) {
+		p = (euint16 *)(image->pixels + image->rowbytes * (dy + h - 1) + dx * image->pixelbytes);
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++)
+				p[x] = pixbuf_read_pixel16(pixbuf, x + sx, y + sy);
+			p -= image->w;
+		}
+	}
+	else {
+		p = (euint16 *)(image->pixels + image->rowbytes * dy + dx * image->pixelbytes);
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++)
+				p[x] = pixbuf_read_pixel16(pixbuf, x + sx, y + sy);
+			p += image->w;
+		}
+	}
+}
+
+static void image24_copy_from_pixbuf(GalImage *image,
+		eint dx, eint dy,
+		GalPixbuf *pixbuf,
+		eint sx, eint sy,
+		eint w, eint h)
+{
+    eint x, y;
+    euint8 *p;
+
+	if (image->negative) {
+		p = image->pixels + image->rowbytes * (dy + h - 1) + dx * image->pixelbytes;
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++) {
+				euint32 u = pixbuf_read_pixel32(pixbuf, x + sx, y + sy);
+				p[x * 3 + 0] = (0xff & u);
+				p[x * 3 + 1] = (0xff00 & u) >> 8;
+				p[x * 3 + 2] = (0xff0000 & u) >> 16;
+			}
+			p -= image->rowbytes;
+		}
+	}
+	else {
+		p = image->pixels + image->rowbytes * dy + dx * image->pixelbytes;
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++) {
+				euint32 u = pixbuf_read_pixel32(pixbuf, x + sx, y + sy);
+				p[x * 3 + 0] = (0xff & u);
+				p[x * 3 + 1] = (0xff00 & u) >> 8;
+				p[x * 3 + 2] = (0xff0000 & u) >> 16;
+			}
+			p += image->rowbytes;
+		}
+	}
 }
 
 static void image32_copy_from_pixbuf(GalImage *image,
@@ -114,13 +171,24 @@ static void image32_copy_from_pixbuf(GalImage *image,
 		eint w, eint h)
 {
     eint x, y;
-    euint32 *p = (euint32 *)(image->pixels + image->rowbytes * dy + dx * image->pixelbytes);
+    euint32 *p;
 
-    for (y = 0; y < h; y++) {
-        for (x = 0; x < w; x++)
-            p[x] = pixbuf_read_pixel32(pixbuf, x + sx, y + sy);
-        p += image->w;
-    }
+	if (image->negative) {
+		p = (euint32 *)(image->pixels + image->rowbytes * (dy + h - 1) + dx * image->pixelbytes);
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++)
+				p[x] = pixbuf_read_pixel32(pixbuf, x + sx, y + sy);
+			p -= image->w;
+		}
+	}
+	else {
+		p = (euint32 *)(image->pixels + image->rowbytes * dy + dx * image->pixelbytes);
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++)
+				p[x] = pixbuf_read_pixel32(pixbuf, x + sx, y + sy);
+			p += image->w;
+		}
+	}
 }
 
 void egal_image_copy_from_pixbuf(GalImage *image,
@@ -152,6 +220,8 @@ void egal_image_copy_from_pixbuf(GalImage *image,
         image8_copy_from_pixbuf(image, dx, dy, pixbuf, sx, sy, w, h);
 	else if (image->pixelbytes == 2)
         image16_copy_from_pixbuf(image, dx, dy, pixbuf, sx, sy, w, h);
+	else if (image->pixelbytes == 3)
+		image24_copy_from_pixbuf(image, dx, dy, pixbuf, sx, sy, w, h);
     else if (image->pixelbytes == 4)
         image32_copy_from_pixbuf(image, dx, dy, pixbuf, sx, sy, w, h);
 }

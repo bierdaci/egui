@@ -21,7 +21,6 @@ typedef eulong						GalFace;
 typedef struct _GalFontOrders		GalFontOrders;
 typedef struct _GalGlyph			GalGlyph;
 typedef struct _GalMetrics			GalMetrics;
-typedef struct _GalPattern			GalPattern;
 
 struct _GalGlyph {
 	eGlyph glyph;
@@ -37,6 +36,7 @@ struct _GalMetrics {
 
 struct _GalFontOrders {
 	void (*get_glyph  )(GalFont, eunichar, GalGlyph *);
+	eint (*load_glyphs)(GalFont, GalGlyph *, eunichar *, eint);
 	void (*get_extents)(GalFont, eunichar, GalRect  *);
 	void (*draw_glyphs)(GalDrawable, GalPB, GalFont, GalRect *, eint, eint, GalGlyph *, eint);
 	GalMetrics *(*get_metrics)(GalFont);

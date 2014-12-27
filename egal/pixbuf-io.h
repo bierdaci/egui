@@ -1,7 +1,7 @@
 #ifndef __GAL_PIXMAP_IO_H
 #define __GAL_PIXMAP_IO_H
 
-#include <pixbuf.h>
+#include <egal/pixbuf.h>
 
 #define SCALE_SHIFT				16
 #define SCALE_MASK				0xffff

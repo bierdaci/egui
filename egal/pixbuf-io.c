@@ -2,7 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <pixbuf-io.h>
+#include <egal/pixbuf-io.h>
+#include "types.h"
 
 void _gal_pixbuf_bmp_fill_vtable(GalPixbufModule *module);
 void _gal_pixbuf_gif_fill_vtable(GalPixbufModule *module);
@@ -31,15 +32,15 @@ static GalPixbufModule pixbuf_modules[] = {
 
 #define QUOTA_RGB(r, g, b, a, quota_x, quota_y) \
 { \
-	_r = ( r * quota_x) >> SCALE_SHIFT; \
-	_g = ( g * quota_x) >> SCALE_SHIFT; \
-	_b = ( b * quota_x) >> SCALE_SHIFT; \
-	_a = ( a * quota_x) >> SCALE_SHIFT; \
+	_r = (euint8)(( r * quota_x) >> SCALE_SHIFT); \
+	_g = (euint8)(( g * quota_x) >> SCALE_SHIFT); \
+	_b = (euint8)(( b * quota_x) >> SCALE_SHIFT); \
+	_a = (euint8)(( a * quota_x) >> SCALE_SHIFT); \
 \
-	_r = (_r * quota_y) >> SCALE_SHIFT; \
-	_g = (_g * quota_y) >> SCALE_SHIFT; \
-	_b = (_b * quota_y) >> SCALE_SHIFT; \
-	_a = (_a * quota_y) >> SCALE_SHIFT; \
+	_r = (euint8)((_r * quota_y) >> SCALE_SHIFT); \
+	_g = (euint8)((_g * quota_y) >> SCALE_SHIFT); \
+	_b = (euint8)((_b * quota_y) >> SCALE_SHIFT); \
+	_a = (euint8)((_a * quota_y) >> SCALE_SHIFT); \
 }
 
 static INLINE void set_pixel32(euchar *pixels, euint8 r, euint8 g, euint8 b, euint8 a)
@@ -63,7 +64,7 @@ static void _pixbuf_io_set_pixels(
 		euint8 r, euint8 g, euint8 b, euint8 a, eint w,
 		euint32 dx, euint32 x_step, euint32 quota_y)
 {
-	euint32 _r, _g, _b, _a;
+	euint8 _r, _g, _b, _a;
 	euint32 quota_x, over_x, _dx;
 	eint n;
 
@@ -82,7 +83,7 @@ static void _pixbuf_io_set_pixels(
 		quota_x = x_step;
 	}
 
-	if (n + (_dx >> SCALE_SHIFT) >= w - 1) {
+	if (n + (eint)(_dx >> SCALE_SHIFT) >= w - 1) {
 		n = w - 1 - (_dx >> SCALE_SHIFT);
 		if (n < 0)
 			n = 0;
@@ -184,7 +185,7 @@ static bool pixbuf_io_set_y(PixbufContext *context, eint y)
 			context->quota_y = context->y_step;
 		}
 		context->y = _dy >> SCALE_SHIFT;
-		if (context->y + context->ny >= pixbuf->h - 1) {
+		if (context->y + context->ny >= (euint)pixbuf->h - 1) {
 			context->ny = pixbuf->h - 1 - context->y;
 			context->over_y = 0;
 		}
@@ -212,7 +213,7 @@ static eint pixbuf_io_init(PixbufContext *context, eint w, eint h, eint channels
 		context->x_step  = 1 << SCALE_SHIFT;
 	}
 	else {
-		context->x_step  = context->x_scale * (1 << SCALE_SHIFT);
+		context->x_step  = (euint)(context->x_scale * (1 << SCALE_SHIFT));
 		context->shift_w = context->x_step * w;
 	}
 
@@ -221,7 +222,7 @@ static eint pixbuf_io_init(PixbufContext *context, eint w, eint h, eint channels
 		context->y_step  = 1 << SCALE_SHIFT;
 	}
 	else {
-		context->y_step  = context->y_scale * (1 << SCALE_SHIFT);
+		context->y_step  = (euint)(context->y_scale * (1 << SCALE_SHIFT));
 		context->shift_h = context->x_step * h;
 	}
 

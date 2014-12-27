@@ -1,13 +1,18 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 
-#include <pixbuf-io.h>
+#ifdef linux
+#include <unistd.h>
+#endif
 
+#include <egal/pixbuf-io.h>
+
+#ifndef BI_RGB
 #define BI_RGB 0
 #define BI_RLE8 1
 #define BI_RLE4 2
 #define BI_BITFIELDS 3
+#endif
 
 typedef enum {
 	READ_STATE_HEADERS,
@@ -71,7 +76,7 @@ static ePointer bmp_load_begin(void);
 static GalPixbuf* bmp_load_end(ePointer data);
 static bool bmp_increment_load(ePointer data, const euchar *buf, size_t);
 
-static eint lsb_32(const euchar *src)
+static euint lsb_32(const euchar *src)
 {
 	return src[0] | (src[1] << 8) | (src[2] << 16) | (src[3] << 24);
 }
@@ -126,7 +131,7 @@ static eint decode_header(const euchar *BFH, const euchar *BIH, struct bmp_conte
 	else
 		header->n_colors = (1 << header->depth);
 
-	if (header->n_colors > (1 << header->depth))
+	if ((eint)header->n_colors > (1 << header->depth))
 		return -1;
 
 	context->type = header->depth;
@@ -209,7 +214,7 @@ static bool bmp_load_header(GalPixbuf *pixbuf, ePointer data, euint size)
 	struct bmp_context_state context;
 
 	context.request_size = size;
-	if (decode_header(data, data + 14, &context) != 0)
+	if (decode_header(data, (char *)data + 14, &context) != 0)
 		return false;
 	pixbuf->w = context.header.width;
 	pixbuf->h = context.header.height;
@@ -218,7 +223,7 @@ static bool bmp_load_header(GalPixbuf *pixbuf, ePointer data, euint size)
 
 static eint decode_colormap(const euchar *buff, struct bmp_context_state *context)
 {
-	eint i;
+	euint i;
 	eint samples;
 
 	if (context->read_state != READ_STATE_PALETTE)
@@ -398,7 +403,7 @@ static void one_line32(const euchar *src, struct bmp_context_state *context)
 		eint g_lshift, g_rshift;
 		eint b_lshift, b_rshift;
 		eint a_lshift, a_rshift;
-		eint v, r, g, b, a;
+		euint8 v, r, g, b, a;
 
 		r_lshift = 8 - context->r_bits;
 		g_lshift = 8 - context->g_bits;
@@ -428,7 +433,7 @@ static void one_line32(const euchar *src, struct bmp_context_state *context)
 		}
 	}
 	else {
-		eint r, g, b;
+		euint8 r, g, b;
 		for (x = 0; x < context->header.width; x++, src += 4) {
 			r = src[0];
 			g = src[1];
@@ -442,7 +447,7 @@ static void one_line32(const euchar *src, struct bmp_context_state *context)
 
 static void one_line24(const euchar *buf, struct bmp_context_state *context)
 {
-	euint x;
+	eint x;
 
 	PixbufContext *con = (PixbufContext *)context;
 	for (x = 0; x < context->header.width; x++) {
@@ -474,7 +479,7 @@ static void one_line16(const euchar *src, struct bmp_context_state *context)
 		b_rshift = context->b_bits - b_lshift;
 
 		for (x = 0; x < context->header.width; x++) {
-			eint v, r, g, b;
+			euint8 v, r, g, b;
 
 			v = (eint)src[0] | ((eint)src[1] << 8);
 
@@ -492,7 +497,7 @@ static void one_line16(const euchar *src, struct bmp_context_state *context)
 	}
 	else {
 		for (x = 0; x < context->header.width; x++) {
-			eint v, r, g, b;
+			euint8 v, r, g, b;
 
 			v = src[0] | (src[1] << 8);
 
@@ -574,7 +579,7 @@ static void one_line1(const euchar *buf, struct bmp_context_state *context)
 #define ESCAPE        2   
 #define DELTA_X       3
 #define DELTA_Y       4
-#define ABSOLUTE      5
+#define ABSOLUT       5
 #define SKIP          6
 
 #define END_OF_LINE   0
@@ -653,7 +658,7 @@ static void do_compressed(const euchar *buf, struct bmp_context_state *context)
 				default:
 					context->compr.run = c;
 					context->compr.count = 0;
-					context->compr.phase = ABSOLUTE;
+					context->compr.phase = ABSOLUT;
 					context->request_size = c;
 					break;
 				}
@@ -669,7 +674,7 @@ static void do_compressed(const euchar *buf, struct bmp_context_state *context)
 				context->compr.phase = NEUTRAL;
 				context->request_size = 1;
 				break;
-			case ABSOLUTE:
+			case ABSOLUT:
 				if (context->compressed == BI_RLE8) {
 					idx = c;
 
@@ -750,7 +755,7 @@ static void one_line(const euchar *buf, struct bmp_context_state *context)
 
 	context->lines++;
 
-	if (context->lines == context->header.height)
+	if ((eint)context->lines == context->header.height)
 		context->read_state = READ_STATE_DONE;
 }
 

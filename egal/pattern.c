@@ -1,9 +1,13 @@
+#ifdef linux
 #include <fontconfig/fontconfig.h>
+#endif
+
 #include <egal/font.h>
 
 #define GTYPE_GAL_PATTERN				(egal_genetype_pattern())
 #define GAL_PATTERN_DATA(hobj)			((GalPatternData *)e_object_type_orders(hobj, GTYPE_GAL_PATTERN))
 
+#ifdef linux
 static int fc_convert_slant(GalFontSlant slant)
 {
 	switch (slant) {
@@ -38,8 +42,11 @@ static int fc_convert_weight(GalFontWeight weight)
 		return FC_WEIGHT_BLACK;
 }
 
+#endif
+
 static void fc_make_pattern(GalPattern *gpn)
 {
+#ifdef linux
 	FcPattern *fcp;
 	FcFontSet *font_patterns;
 	echar    **families;
@@ -110,14 +117,17 @@ static void fc_make_pattern(GalPattern *gpn)
 	gpn->private = font_patterns->fonts[0];
 	FcFontSetSortDestroy(font_patterns);
 	FcPatternDestroy(fcp);
+#endif
 }
 
 const char *egal_pattern_get_file(const GalPattern *gpn)
 {
+#ifdef linux
 	FcPattern *fcp = (FcPattern *)gpn->private;
 	FcChar8   *filename;
 	if (FcPatternGetString(fcp, FC_FILE, 0, &filename) == FcResultMatch)
 		return (const char *)filename;
+#endif
 	return NULL;
 }
 

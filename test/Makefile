@@ -59,4 +59,4 @@ fixed: fixed.c
 	$(CC) $(CFLAGS) -o fixed $^ $(LDFLAGS)
 
 clean:
-	rm label text button clist anim box frame entry notebook menu menu_entrys scrollwin fixed ddlist filesel
+	rm label text button clist anim box frame entry notebook menu menu_entrys scrollwin fixed ddlist filesel hello

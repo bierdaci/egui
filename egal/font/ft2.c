@@ -86,7 +86,7 @@ static void ft2_bitmap_to_image(FT_Bitmap *bitmap, GalImage *image, eint x, eint
 	}
 }
 
-static void ft2_draw_glyphs(GalDrawable drawable, GalPB pb, GalFont obj, 
+static void ft2_draw_glyphs(GalDrawable drawable, GalPB pb, GalFont obj,
 		GalRect *area, eint x, eint y, GalGlyph *glyphs, eint len)
 {
 	Ft2Font *ft2font = FT2_FONT_DATA(obj);
@@ -188,7 +188,7 @@ static eGeneType egal_genetype_ft2(void)
 	return gtype;
 }
 
-GalFont ft2_font_load(GalPattern *pattern)
+GalFont ft2_create_font(GalPattern *pattern)
 {
 	return e_object_new(GTYPE_FONT_FT2, pattern);
 }

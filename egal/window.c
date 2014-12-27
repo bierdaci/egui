@@ -1,6 +1,6 @@
 #include "window.h"
 
-static GalWindowManager _gwm = {NULL, NULL, NULL, NULL, NULL};
+GalWindowManager _gwm = {NULL, NULL, NULL, NULL, NULL};
 static GalPB default_pbs[GalPBset + 1];
 
 void egal_warp_pointer(GalWindow window, int sx, int sy, int sw, int sh, int dx, int dy)
@@ -118,12 +118,12 @@ void egal_window_get_origin(GalWindow window, eint *x, eint *y)
 	GAL_WINDOW_ORDERS(window)->get_origin(window, x, y);
 }
 
-eint egal_window_set_cursor(GalWindow window, GalCursor cursor)
+eint egal_set_cursor(GalWindow window, GalCursor cursor)
 {
 	return GAL_WINDOW_ORDERS(window)->set_cursor(window, cursor);
 }
 
-GalCursor egal_window_get_cursor(GalWindow window)
+GalCursor egal_get_cursor(GalWindow window)
 {
 	return GAL_WINDOW_ORDERS(window)->get_cursor(window);
 }
@@ -143,22 +143,32 @@ void egal_pb_set_attr(GalPB pb, GalPBAttr *attr)
 	GAL_PB_ORDERS(pb)->set_attr(pb, attr);
 }
 
-void egal_set_foreground(GalPB pb, eulong color)
+euint egal_set_font_color(GalPB pb, euint color)
 {
-	GAL_PB_ORDERS(pb)->set_foreground(pb, color);
+	return GAL_PB_ORDERS(pb)->set_color(pb, color);
 }
 
-void egal_set_background(GalPB pb, eulong color)
+euint egal_get_font_color(GalPB pb)
 {
-	GAL_PB_ORDERS(pb)->set_background(pb, color);
+	return GAL_PB_ORDERS(pb)->get_color(pb);
 }
 
-eulong egal_get_foreground(GalPB pb)
+euint egal_set_foreground(GalPB pb, euint color)
+{
+	return GAL_PB_ORDERS(pb)->set_foreground(pb, color);
+}
+
+euint egal_set_background(GalPB pb, euint color)
+{
+	return GAL_PB_ORDERS(pb)->set_background(pb, color);
+}
+
+euint egal_get_foreground(GalPB pb)
 {
 	return GAL_PB_ORDERS(pb)->get_foreground(pb);
 }
 
-eulong egal_get_background(GalPB pb)
+euint egal_get_background(GalPB pb)
 {
 	return GAL_PB_ORDERS(pb)->get_background(pb);
 }
@@ -168,14 +178,14 @@ eint egal_get_depth(GalDrawable drawable)
 	return GAL_DRAWABLE_ORDERS(drawable)->get_depth(drawable);
 }
 
-void egal_composite(GalDrawable dst, GalPB pb, int dx, int dy, GalDrawable src, int sx, int sy, int w, int h)
+void egal_composite(GalDrawable dst, GalPB pb, int dx, int dy, GalDrawable src, GalPB pb2, int sx, int sy, int w, int h)
 {
-	GAL_DRAWABLE_ORDERS(dst)->composite(dst, dx, dy, src, sx, sy, w, h);
+	GAL_DRAWABLE_ORDERS(dst)->composite(dst, pb, dx, dy, src, pb2, sx, sy, w, h);
 }
 
 void egal_composite_image(GalDrawable drawable, GalPB pb, int dx, int dy, GalImage *image, int sx, int sy, int w, int h)
 {
-	GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, dx, dy, image, sx, sy, w, h);
+	GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, pb, dx, dy, image, sx, sy, w, h);
 }
 
 void egal_composite_subwindow(GalDrawable drawable, int x, int y, int w, int h)
@@ -183,15 +193,15 @@ void egal_composite_subwindow(GalDrawable drawable, int x, int y, int w, int h)
 	GAL_DRAWABLE_ORDERS(drawable)->composite_subwindow(drawable, x, y, w, h);
 }
 
-void egal_draw_drawable(GalDrawable drawable, GalPB pb, int dx, int dy, GalDrawable src, int sx, int sy, int w, int h)
+void egal_draw_drawable(GalDrawable drawable, GalPB pb, int dx, int dy, GalDrawable src, GalPB spb, int sx, int sy, int w, int h)
 {
-	GAL_DRAWABLE_ORDERS(drawable)->draw_drawable(drawable, pb, dx, dy, src, sx, sy, w, h);
+	GAL_DRAWABLE_ORDERS(drawable)->draw_drawable(drawable, pb, dx, dy, src, spb, sx, sy, w, h);
 }
 
 void egal_draw_image(GalDrawable drawable, GalPB pb, int dx, int dy, GalImage *image, int sx, int sy, int w, int h)
 {
 	if (image->alpha)
-		GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, dx, dy, image, sx, sy, w, h);
+		GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, pb, dx, dy, image, sx, sy, w, h);
 	else
 		GAL_DRAWABLE_ORDERS(drawable)->draw_image(drawable, pb, dx, dy, image, sx, sy, w, h);
 }
@@ -395,28 +405,44 @@ GalCursor egal_cursor_new_pixbuf(GalPixbuf *pixbuf, eint x, eint y)
 	return 0;
 }
 
-GalWindow egal_window_wait_event(GalEvent *event)
+GalWindow egal_window_wait_event(GalEvent *event, bool recv)
 {
 	if (_gwm.wait_event)
-		return _gwm.wait_event(event);
+		return _gwm.wait_event(event, recv);
 	return 0;
 }
 
+void egal_window_get_event(GalEvent *event)
+{
+	if (_gwm.get_event)
+		_gwm.get_event(event);
+}
+
+#ifdef linux
 int x11_wmananger_init(GalWindowManager *);
+#elif WIN32
+int w32_wmananger_init(GalWindowManager *);
+#endif
 eint egal_window_init(void)
 {
+#ifdef linux
 	eint (*window_init)(GalWindowManager *) = x11_wmananger_init;
+#elif WIN32
+	eint (*window_init)(GalWindowManager *) = w32_wmananger_init;
+#endif
 
 	if (window_init && !window_init(&_gwm)) {
+#ifdef linux
 		eint i;
 		for (i = 0; i < GalPBset+1; i++) {
-			GalPBAttr  attribute;
+			GalPBAttr attribute;
 			attribute.func = i;
 #ifdef _GAL_SUPPORT_CAIRO
 			attribute.use_cairo = true;
 #endif
 			default_pbs[i] = egal_pb_new(0, &attribute);
 		}
+#endif
 		return 0;
 	}
 

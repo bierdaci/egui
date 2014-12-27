@@ -40,6 +40,14 @@ static euint32 pixbuf_read_pixel(GalPixbuf *pixbuf, eint x, eint y)
 		((euchar *)&pixel)[3] = 0xff;
 		return pixel;
 	}
+	else if (pixbuf->pixelbytes == 4) {
+		euint32 pixel;
+		((euchar *)&pixel)[0] = (line + x * 4)[0];
+		((euchar *)&pixel)[1] = (line + x * 4)[1];
+		((euchar *)&pixel)[2] = (line + x * 4)[2];
+		((euchar *)&pixel)[3] = (line + x * 4)[3];
+		return pixel;
+	}
 	return ((euint32 *)line)[x];
 }
 
