@@ -113,7 +113,7 @@ static eint layout_vadjust_update(eHandle hobj, efloat value)
 {
 	eHandle       obj = GUI_ADJUST_DATA(hobj)->owner;
 	GuiLayout *layout = GUI_LAYOUT_DATA(obj);
-	layout->scroll_y  = value;
+	layout->scroll_y  = (eint)value;
 	layout->top = y_offset_to_line(layout);
 	egui_update(obj);
     return 0;
@@ -123,7 +123,7 @@ static eint layout_hadjust_update(eHandle hobj, efloat value)
 {
 	eHandle       obj = GUI_ADJUST_DATA(hobj)->owner;
 	GuiLayout *layout = GUI_LAYOUT_DATA(obj);
-	layout->scroll_x  = value;
+	layout->scroll_x  = (eint)value;
 	egui_update(obj);
     return 0;
 }
@@ -215,8 +215,9 @@ static eint latin_word_width(LayoutLine *line, eint o, eint *j, eint max_w)
 
 static void line_load_glyphs(LayoutLine *line, GalFont font)
 {
-	eint nchar, ichar, i, n;
+	eint nchar, i, n;
 	const echar *p;
+	eunichar ichar;
 
 	if (line->nichar == 0 || line->load_nichar == line->nichar)
 		return;
@@ -239,8 +240,8 @@ static void line_load_glyphs(LayoutLine *line, GalFont font)
 	nchar = line->load_nchar;
 	for ( ; i < n; i++) {
 		line->coffsets[i] = nchar;
-		ichar  = e_utf8_get_char(p + nchar);
-		nchar += e_utf8_char_len(p + nchar);
+		ichar  = e_uni_get_char(p + nchar);
+		nchar += e_uni_char_len(p + nchar);
 		egal_get_glyph(font, ichar, &line->glyphs[i]);
 	}
 
@@ -408,7 +409,7 @@ static eint layout_line_insert(GuiLayout *layout, const echar *text, eint clen)
 		goto finish;
 
 	do {
-		eint l = e_utf8_char_len(p + len);
+		eint l = e_uni_char_len(p + len);
 		if (len + l > clen) {
 			line->lack = len + l - clen;
 			line->over = l - line->lack;
@@ -467,7 +468,7 @@ static eint layout_wrap(GuiLayout *layout, LayoutLine *line)
 static INLINE eint get_space_width(GalFont font)
 {
 	GalGlyph glyph;
-	egal_get_glyph(font, e_utf8_get_char((echar *)" "), &glyph);
+	egal_get_glyph(font, e_uni_get_char((echar *)" "), &glyph);
 	return glyph.w;
 }
 
@@ -520,8 +521,8 @@ static void layout_configure(GuiLayout *layout)
 			if (layout->max_w - layout->scroll_x < layout->w)
 				layout->scroll_x = layout->max_w - layout->w;
 			egui_adjust_reset_hook(layout->hadj,
-				layout->scroll_x, layout->w,
-				layout->max_w, 1, 0);
+				(efloat)layout->scroll_x, (efloat)layout->w,
+				(efloat)layout->max_w, 1, 0);
 		}
 		else
 			egui_adjust_reset_hook(layout->hadj, 0, 1, 1, 0, 0);
@@ -531,8 +532,8 @@ static void layout_configure(GuiLayout *layout)
 			if (total_h - layout->scroll_y < layout->h)
 				layout->scroll_y = total_h - layout->h;
 			egui_adjust_reset_hook(layout->vadj,
-				layout->scroll_y, layout->h,
-				total_h, layout->hline, 0);
+				(efloat)layout->scroll_y, (efloat)layout->h,
+				(efloat)total_h, (efloat)layout->hline, 0);
 		}
 		else
 			egui_adjust_reset_hook(layout->vadj, 0, 1, 1, 0, 0);
@@ -669,9 +670,9 @@ static void layout_draw_wrap(GalDrawable drawable, GalPB pb,
 		egal_draw_glyphs(drawable, pb, layout->font, prc,
 				w - layout->scroll_x, offset_y, glyphs, wrap->nichar);
 
-		i   = 0;
+		i = 0;
 		x = w - layout->scroll_x;
-		w   = 0;
+		w = 0;
 		len = wrap->nichar;
 		while (len > 0 && underlines[i] == 0) {
 			x += glyphs[i].w;

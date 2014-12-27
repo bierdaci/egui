@@ -44,16 +44,16 @@ static void scrollwin_reset_adjust(eHandle hobj, GuiWidget *cw)
 
 	if (cw->rect.w > pw->rect.w) {
 		egui_adjust_reset_hook(scr->hadj,
-				scr->offset_x, pw->rect.w,
-				cw->rect.w, 10, 0);
+				(efloat)scr->offset_x, (efloat)pw->rect.w,
+				(efloat)cw->rect.w, 10, 0);
 	}
 	else
 		egui_adjust_reset_hook(scr->hadj, 0, 1, 1, 0, 0);
 
 	if (cw->rect.h > pw->rect.h) {
 		egui_adjust_reset_hook(scr->vadj,
-				scr->offset_y, pw->rect.h,
-				cw->rect.h, 10, 0);
+				(efloat)scr->offset_y, (efloat)pw->rect.h,
+				(efloat)cw->rect.h, 10, 0);
 	}
 	else
 		egui_adjust_reset_hook(scr->vadj, 0, 1, 1, 0, 0);
@@ -132,7 +132,7 @@ static eint scrollwin_vadjust_update(eHandle hobj, efloat value)
 	GuiScrollWin *scr = GUI_SCROLLWIN_DATA(own);
 	GuiBin       *bin = GUI_BIN_DATA(own);
 
-	scr->offset_y = value;
+	scr->offset_y = (eint)value;
 
 	if (bin->head) {
 		eHandle cobj = OBJECT_OFFSET(bin->head);
@@ -148,7 +148,7 @@ static eint scrollwin_hadjust_update(eHandle hobj, efloat value)
 	GuiScrollWin *scr = GUI_SCROLLWIN_DATA(own);
 	GuiBin       *bin = GUI_BIN_DATA(own);
 
-	scr->offset_x = value;
+	scr->offset_x = (eint)value;
 
 	if (bin->head) {
 		eHandle cobj = OBJECT_OFFSET(bin->head);

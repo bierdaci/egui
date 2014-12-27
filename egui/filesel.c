@@ -58,13 +58,13 @@ eGeneType egui_genetype_filesel(void)
 static eint sepbar_enter(eHandle hobj, eint x, eint y)
 {
 	GuiFilesel *fs = GUI_WIDGET_DATA(hobj)->extra_data;
-	egal_window_set_cursor(GUI_WIDGET_DATA(hobj)->drawable, fs->cursor);
+	egal_set_cursor(GUI_WIDGET_DATA(hobj)->drawable, fs->cursor);
 	return 0;
 }
 
 static eint sepbar_leave(eHandle hobj)
 {
-	egal_window_set_cursor(GUI_WIDGET_DATA(hobj)->drawable, 0);
+	egal_set_cursor(GUI_WIDGET_DATA(hobj)->drawable, 0);
 	return 0;
 }
 

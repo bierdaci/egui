@@ -70,7 +70,7 @@ static void bin_free_data(eHandle hobj, ePointer this)
 		GuiWidget *t = cw;
 		cw = cw->next;
 
-		egui_remove(OBJECT_OFFSET(t));
+		egui_remove(OBJECT_OFFSET(t), true);
 		e_object_unref(OBJECT_OFFSET(t));
 	}
 }
@@ -132,14 +132,13 @@ static eint bin_expose(eHandle hobj, GuiWidget *pw, GalEventExpose *expose)
 		exp.rect.w = sec->sec.x2 - exp.rect.x;
 		exp.rect.h = sec->sec.y2 - exp.rect.y;
 		e_signal_emit(hobj, SIG_EXPOSE_BG, &exp);
-
 		sec = sec->next;
 	}
 	egal_region_destroy(region);
 
 	for (cw = bin->head; cw; cw = cw->next) {
 		if (WIDGET_STATUS_VISIBLE(cw)) {
-			GalEventExpose exp;;
+			GalEventExpose exp;
 			GalRect prc = {0, 0, pw->rect.w, pw->rect.h};
 
 			if (!egal_rect_intersect(&exp.rect, &expose->rect, &cw->rect))
@@ -156,6 +155,11 @@ static eint bin_expose(eHandle hobj, GuiWidget *pw, GalEventExpose *expose)
 			else
 				exp.pb = expose->pb;
 
+			if (WIDGET_STATUS_TRANSPARENT(cw) && cw->drawable == pw->drawable) {
+				exp.rect.x += cw->offset_x;
+				exp.rect.y += cw->offset_y;
+			}
+
 			if (!GUI_TYPE_BIN(OBJECT_OFFSET(cw)))
 				e_signal_emit(OBJECT_OFFSET(cw), SIG_EXPOSE_BG, &exp);
 
@@ -166,14 +170,14 @@ static eint bin_expose(eHandle hobj, GuiWidget *pw, GalEventExpose *expose)
 					egal_composite(pw->drawable, pw->pb,
 							cw->offset_x + exp.rect.x,
 							cw->offset_y + exp.rect.y,
-							cw->drawable,
+							cw->drawable, cw->pb,
 							exp.rect.x, exp.rect.y,
 							exp.rect.w, exp.rect.h);
 				else
 					egal_draw_drawable(pw->drawable, pw->pb,
 							cw->offset_x + exp.rect.x,
 							cw->offset_y + exp.rect.y,
-							cw->drawable,
+							cw->drawable, cw->pb,
 							exp.rect.x, exp.rect.y,
 							exp.rect.w, exp.rect.h);
 			}
@@ -308,12 +312,13 @@ static eint bin_buttonup(eHandle hobj, GalEventMouse *mevent, esig_t sig)
 	eint x = mevent->point.x;
 	eint y = mevent->point.y;
 	eHandle grab = bin->grab;
+	eHandle c;
 
 	if (grab) {
 		mouse_signal_emit(grab, sig, mevent);
 		bin->grab = 0;
 	}
-	eHandle c = point_in_active(bin, x, y);
+	c = point_in_active(bin, x, y);
 	if (c && c != grab)
 		e_signal_emit(hobj, SIG_MOUSEMOVE, mevent);
 
@@ -504,7 +509,7 @@ static eHandle bin_next_child(GuiBin *bin, eHandle child, eint dir, eint axis)
 	GuiWidget *ow = NULL;
 	GuiWidget *cw = NULL;
 	eint       od = 0xffff;
-	eHandle  near = 0;
+	eHandle  Near = 0;
 	eHandle (*cb)(GuiBin *, eHandle);
 
 	eint diff = 0xffff;
@@ -602,7 +607,7 @@ static eHandle bin_next_child(GuiBin *bin, eHandle child, eint dir, eint axis)
 
 			if (diff > d) {
 				diff = d;
-				near = child;
+				Near = child;
 			}
 			ow = cw;
 			od = d;
@@ -611,8 +616,8 @@ static eHandle bin_next_child(GuiBin *bin, eHandle child, eint dir, eint axis)
 	} while (loop);
 
 	if (axis == 0)
-		return near ? near : child;
-	return near;
+		return Near ? Near : child;
+	return Near;
 }
 
 #define BIN_RETURN_AXIS \
@@ -764,6 +769,8 @@ static void bin_put(eHandle pobj, eHandle cobj)
 	else {
 		cw->offset_x = cw->rect.x + pw->offset_x;
 		cw->offset_y = cw->rect.y + pw->offset_y;
+		if (ws->set_offset)
+			ws->set_offset(cobj);
 	}
 
 	if (cw->window)

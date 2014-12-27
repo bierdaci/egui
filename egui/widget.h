@@ -82,7 +82,7 @@ struct _GuiWidgetOrders {
 
 	void (*realize)(eHandle, GuiWidget *);
 
-	void (*adjust_offset)(eHandle);
+	void (*set_offset)(eHandle);
 
 	void (*set_transparent)(eHandle);
 	void (*unset_transparent)(eHandle);

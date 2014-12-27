@@ -148,7 +148,7 @@ static eint vbox_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 		default:
 			_h -= box->spacing * box->child_num - box->spacing;
 	}
-	expand_h = _h - (box->children_min - box->expand_min);
+	expand_h = _h - ((eint)box->children_min - (eint)box->expand_min);
 
 	p = box->head;
 	while (p) {
@@ -162,7 +162,7 @@ static eint vbox_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 				p->req_w = p->wid->min_w;
 
 			if (p->wid->max_h == 0)
-				p->req_h = expand_h * (p->wid->min_h / box->expand_min);
+				p->req_h = (eint)(expand_h * (p->wid->min_h / box->expand_min));
 			else
 				p->req_h = p->wid->min_h;
 
@@ -264,15 +264,15 @@ static eint get_expand_h(GuiWidget *pw, GuiBox *box, GuiWidget *cw, eint req_h)
 		while (p) {
 			if (p->type != BoxPack_SPACING && p->wid->max_h == 0) {
 				if (p->wid == cw)
-					m = box->expand_min * req_h / cw->min_h;
+					m = (eint)(box->expand_min * req_h / (efloat)cw->min_h);
 				else
-					m = box->expand_min * p->wid->rect.h / p->wid->min_h;
+					m = (eint)(box->expand_min * p->wid->rect.h / (efloat)p->wid->min_h);
 				if (max_h < m)
 					max_h = m;
 			}
 			p = p->next;
 		}
-		max_h += box->border_width * 2 + spacing_min + (box->children_min - box->expand_min);
+		max_h += box->border_width * 2 + spacing_min + ((eint)box->children_min - (eint)box->expand_min);
 	}
 	else
 		max_h = pw->min_h;
@@ -341,7 +341,7 @@ static void __vbox_set_min(GuiWidget *wid, GuiBox *box)
 	}
 
 	wid->min_w += box->border_width * 2;
-	wid->min_h += box->border_width * 2 + box->children_min;
+	wid->min_h += box->border_width * 2 + (eint)box->children_min;
 }
 
 static void vbox_set_min(eHandle hobj, eint w, eint h)
@@ -349,7 +349,7 @@ static void vbox_set_min(eHandle hobj, eint w, eint h)
 	__vbox_set_min(GUI_WIDGET_DATA(hobj), GUI_BOX_DATA(hobj));
 }
 
-static void __vbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool a)
+static void __vbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool add)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	GuiBox    *box = GUI_BOX_DATA(hobj);
@@ -359,7 +359,7 @@ static void __vbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint r
 
 	__vbox_set_min(wid, box);
 
-	if (a || !fixed) {
+	if (add || !fixed) {
 		GuiWidget *cw;
 
 		if (cobj)
@@ -378,16 +378,16 @@ static void __vbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint r
 	}
 
 	if (wid->parent)
-		egui_request_layout(wid->parent, tmp, max_w, max_h, fixed, a);
+		egui_request_layout(wid->parent, tmp, max_w, max_h, fixed, add);
 	else {
 		GalEventResize resize = {max_w, max_h};
 		vbox_resize(hobj, wid, &resize);
 	}
 }
 
-static void vbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool a)
+static void vbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool add)
 {
-	__vbox_request_layout(hobj, cobj, req_w, req_h, fixed, a);
+	__vbox_request_layout(hobj, cobj, req_w, req_h, fixed, add);
 }
 
 static void vbox_add(eHandle pobj, eHandle cobj)

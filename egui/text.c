@@ -26,6 +26,7 @@ static void insert_text_to_cursor(eHandle, GuiText *, const echar *, eint);
 static void egui_show_cursor(GalDrawable, TextCursor *, bool);
 static void egui_hide_cursor(GalDrawable, TextCursor *);
 static eint text_line_insert(GuiText *, const echar *, eint);
+static eint del_line_series(GuiText *, TextLine *, TextLine *);
 
 static int (*text_char_keydown)(eHandle, GalEventKey *) = NULL;
 
@@ -181,16 +182,18 @@ static eint text_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	text->bn_down = true;
 	text->select.s_id   = wrap->line->id;
 	text->select.s_ioff = ioff;
-
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, text->gal_cursor);
-
+#ifdef WIN32
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+#endif
 	return 0;
 }
 
 static eint text_lbuttonup(eHandle hobj, GalEventMouse *ent)
 {
 	GUI_TEXT_DATA(hobj)->bn_down = false;
+#ifdef WIN32
 	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->window);
+#endif
 	return 0;
 }
 
@@ -296,14 +299,14 @@ static void text_set_scrollbar(GuiText *text, eint y)
 		if (offset_y < 0)
 			offset_y = 0;
 		offset_y -= offset_y % text->hline;
-		egui_adjust_set_hook(text->vadj, offset_y);
+		egui_adjust_set_hook(text->vadj, (efloat)offset_y);
 	}
 	else if (y > text->height - text->hline) {
 		offset_y += y - (text->height - text->hline);
 		offset_y += text->hline - offset_y % text->hline;
 		if (offset_y > text->total_h - text->height)
 			offset_y = text->total_h - text->height;
-		egui_adjust_set_hook(text->vadj, offset_y);
+		egui_adjust_set_hook(text->vadj, (efloat)offset_y);
 	}
 }
 
@@ -380,8 +383,70 @@ static void text_set_spacing(eHandle hobj, eint spacing)
 {
 }
 
-static void text_set_text(eHandle hobj, const echar *text, eint len)
+static TextLine *textline_new(void)
 {
+	TextLine *line = e_slice_new(TextLine);
+	line->nichar      = 0;
+	line->chars       = NULL;
+	line->nwrap       = 0;
+	line->is_lf       = false;
+	line->nchar       = 0;
+	line->id          = 0;
+	line->over        = 0;
+	line->lack        = 0;
+	line->max_w       = 0;
+	line->offset_y    = 0;
+	line->load_nchar  = 0;
+	line->load_nichar = 0;
+	line->next        = NULL;
+	line->prev        = NULL;
+	line->glyphs      = NULL;
+	line->wrap_top    = NULL;
+	line->coffsets    = NULL;
+	line->underlines  = NULL;
+	line->wrap_tail   = NULL;
+	e_memset(&line->wrap_head, 0, sizeof(line->wrap_head));
+	line->wrap_head.line = line;
+
+	return line;
+}
+
+static void text_clear(GuiText *text)
+{
+	TextLine *line;
+
+	if (text->nchar == 0)
+		return;
+
+	del_line_series(text, text->line_head, text->line_tail);
+
+	line = textline_new();
+	text->line_head = line;
+	text->line_tail = line;
+	text->nline = 1;
+
+	if (text->is_sel) {
+		text->is_sel = false;
+		egal_region_empty(text->sel_rgn);
+	}
+}
+
+static void text_set_text(eHandle hobj, const echar *chars, eint nchar)
+{
+	GuiText *text = GUI_TEXT_DATA(hobj);
+
+	text_clear(text);
+
+	while (nchar > 0) {
+		eint n = text_line_insert(text, chars, nchar);
+		chars += n;
+		nchar -= n;
+	}
+
+	if (text->font) {
+		text_wrap(hobj, text);
+		text_cursor_setpos(hobj, text, text->line_head, NULL, 0, true);
+	}
 }
 
 static eint text_get_text(eHandle hobj, echar *buf, eint size)
@@ -426,14 +491,14 @@ static eint text_enter(eHandle hobj, eint x, eint y)
 {
 	GuiText   *text = GUI_TEXT_DATA(hobj);
 	GuiWidget  *wid = GUI_WIDGET_DATA(hobj);
-	egal_window_set_cursor(wid->window, text->gal_cursor);
+	egal_set_cursor(wid->window, text->gal_cursor);
 	return 0;
 }
 
 static eint text_leave(eHandle hobj)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
-	egal_window_set_cursor(wid->window, 0);
+	egal_set_cursor(wid->window, 0);
 	return 0;
 }
 
@@ -482,7 +547,7 @@ static void text_init_orders(eGeneType new, ePointer this)
 static INLINE eint get_space_width(GalFont font)
 {
 	GalGlyph glyph;
-	egal_get_glyph(font, e_utf8_get_char((echar *)" "), &glyph);
+	egal_get_glyph(font, e_uni_get_char((echar *)" "), &glyph);
 	return glyph.w;
 }
 
@@ -517,7 +582,6 @@ static eint text_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 static eint text_configure(eHandle hobj, GuiWidget *wid, GalEventConfigure *conf)
 {
 	GuiText *text = GUI_TEXT_DATA(hobj);
-
 	if (text->font == 0) {
 		text->font  = egal_default_font();
 		text->hline = egal_font_height(text->font) + text->spacing;
@@ -703,7 +767,7 @@ static eint text_adjust_update(eHandle hobj, efloat value)
 	if (text->offset_y == value)
 		return 0;
 
-	text->offset_y = value;
+	text->offset_y = (eint)value;
 	text->top      = y_offset_to_line(text);
 	if (!text->is_sel)
 		text_hide_cursor(obj, text);
@@ -721,7 +785,8 @@ static eint text_adjust_update(eHandle hobj, efloat value)
 
 static eint text_init_data(eHandle hobj, ePointer this)
 {
-	GuiText *text = this;
+	GuiText  *text = this;
+	TextLine *line;
 
 	text->gal_cursor  = egal_cursor_new(GAL_XTERM);
 
@@ -732,19 +797,20 @@ static eint text_init_data(eHandle hobj, ePointer this)
 	text->width       = 0;
 	text->height      = 0;
 	text->nchar       = 0;
-	text->nline       = 0;
 	text->offset_x    = 0;
 	text->offset_y    = 0;
 	text->spacing     = 5;
 	text->space_mul   = 4;
-	text->line_head   = NULL;
-	text->line_tail   = NULL;
 	text->top         = NULL;
 	text->cursor.line = NULL;
 	text->cursor.ioff = 0;
 	text->cursor.show = false;
 	text->is_sel      = false;
 	text->bn_down     = false;
+	text->nline       = 1;
+	line = textline_new();
+	text->line_head = line;
+	text->line_tail = line;
 
 	text->sel_rgn = egal_region_new();
 
@@ -793,8 +859,8 @@ static void text_wrap(eHandle hobj, GuiText *text)
 
 	if (text->total_h > text->height) {
 		egui_adjust_reset_hook(text->vadj,
-				text->offset_y, text->height,
-				text->total_h, text->hline, 0);
+				(efloat)text->offset_y, (efloat)text->height,
+				(efloat)text->total_h, (efloat)text->hline, 0);
 	}
 	else
 		egui_adjust_reset_hook(text->vadj, 0, 1, 1, 1, 0);
@@ -826,7 +892,9 @@ static void draw_wrap(GalDrawable drawable, GalPB pb,
 			i ++;
 			len--;
 		}
-		egal_draw_line(drawable, pb, x, y + text->cursor.h + 1, x + w, y + text->cursor.h + 1);
+		egal_draw_line(drawable, pb,
+			x, y + text->cursor.h + 1,
+			x + w, y + text->cursor.h + 1);
 		return;
 	}
 
@@ -872,9 +940,9 @@ static void draw_text(GalDrawable drawable, GalPB pb, GuiText *text, GalRect *pr
 	eint h =  text->hline;
 
 	while (line) {
+		GalRect lrc = {x, 0, line->max_w, line->nwrap * h};
 		y = line->offset_y - text->offset_y;
-		GalRect lrc = {x, y, line->max_w, line->nwrap * h};
-
+		lrc.y = y;
 		if (y >= prc->y + prc->h)
 			break;
 
@@ -958,34 +1026,6 @@ static eint text_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *expose)
 	return 0;
 }
 
-static TextLine *textline_new(void)
-{
-	TextLine *line = e_slice_new(TextLine);
-	line->nichar      = 0;
-	line->chars       = NULL;
-	line->nwrap       = 0;
-	line->is_lf       = false;
-	line->nchar       = 0;
-	line->id          = 0;
-	line->over        = 0;
-	line->lack        = 0;
-	line->max_w       = 0;
-	line->offset_y    = 0;
-	line->load_nchar  = 0;
-	line->load_nichar = 0;
-	line->next        = NULL;
-	line->prev        = NULL;
-	line->glyphs      = NULL;
-	line->wrap_top    = NULL;
-	line->coffsets    = NULL;
-	line->underlines  = NULL;
-	line->wrap_tail   = NULL;
-	e_memset(&line->wrap_head, 0, sizeof(line->wrap_head));
-	line->wrap_head.line = line;
-
-	return line;
-}
-
 static TextWrap *textwrap_new(TextLine *line)
 {
 	TextWrap *wrap = e_slice_new(TextWrap);
@@ -1044,7 +1084,8 @@ static eint latin_word_width(TextLine *line, eint o, eint *j, eint max_w)
 
 static void line_load_glyphs(TextLine *line, GalFont font)
 {
-	eint nchar, ichar, i, n;
+	eint nchar, i, n;
+	eunichar ichar;
 	const echar *p;
 
 	if (line->nichar == 0 || line->load_nichar == line->nichar)
@@ -1068,8 +1109,8 @@ static void line_load_glyphs(TextLine *line, GalFont font)
 	nchar = line->load_nchar;
 	for ( ; i < n; i++) {
 		line->coffsets[i] = nchar;
-		ichar  = e_utf8_get_char(p + nchar);
-		nchar += e_utf8_char_len(p + nchar);
+		ichar  = e_uni_get_char(p + nchar);
+		nchar += e_uni_char_len(p + nchar);
 		egal_get_glyph(font, ichar, &line->glyphs[i]);
 	}
 
@@ -1190,18 +1231,12 @@ static eint text_line_insert(GuiText *text, const echar *chars, eint clen)
 	TextLine *line;
 
 	line = text->line_tail;
-	if (!line || line->is_lf) {
+	if (line->is_lf) {
 		line = textline_new();
-		line->id = text->nline;
-		if (!text->line_head) {
-			text->line_head = line;
-			text->line_tail = line;
-		}
-		else {
-			line->prev = text->line_tail;
-			text->line_tail->next = line;
-			text->line_tail = line;
-		}
+		line->id = text->nline++;
+		line->prev = text->line_tail;
+		text->line_tail->next = line;
+		text->line_tail = line;
 	}
 	else if (line->lack > 0) {
 		if (clen >= line->lack) {
@@ -1221,7 +1256,7 @@ static eint text_line_insert(GuiText *text, const echar *chars, eint clen)
 		goto finish;
 
 	do {
-		eint l = e_utf8_char_len(p + len);
+		eint l = e_uni_char_len(p + len);
 		if (len + l > clen) {
 			line->lack = len + l - clen;
 			line->over = l - line->lack;
@@ -1236,10 +1271,8 @@ static eint text_line_insert(GuiText *text, const echar *chars, eint clen)
 		line->nichar++;
 	} while (ichar != '\n' && len < clen);
 
-	if (ichar == '\n') {
+	if (ichar == '\n')
 		line->is_lf = true;
-		text->nline ++;
-	}
 
 finish:
 	if (line->nchar > 0)
@@ -1265,10 +1298,10 @@ static ePointer insert_data(ePointer chars, eint c_size,
 		chars = e_malloc(c + d);
 	else {
 		chars = e_realloc(chars, c + d);
-		e_memmove(chars + o + d, chars + o, c - o);
+		e_memmove((char *)chars + o + d, (char *)chars + o, c - o);
 	}
 
-	if (data) e_memcpy(chars + o, data, d);
+	if (data) e_memcpy((char *)chars + o, data, d);
 
 	return chars;
 }
@@ -1284,19 +1317,20 @@ typedef struct {
 static void text_update_area(eHandle hobj, GuiText *text, TextCursor *cursor,
 		TextLine *line, eint inc, eint nichar, bool text_sel, eint bear_x)
 {
+	GuiWidget *widget;
+	TextWrap  *wrap, *prev, *next;
+	GalRect rc, sel_rc;
+
 	if (text->old_y != text->offset_y) {
 		text->old_y  = text->offset_y;
 		egui_update(hobj);
 		return;
 	}
 
-	GuiWidget *widget = GUI_WIDGET_DATA(hobj);
-
-	TextWrap *wrap = ioffset_to_wrap(cursor->line, cursor->ioff);
-	TextWrap *prev = cursor->wrap ? cursor->wrap->prev : wrap;
-	TextWrap *next = cursor->wrap ? cursor->wrap->next : NULL;
-
-	GalRect rc, sel_rc;
+	widget = GUI_WIDGET_DATA(hobj);
+	wrap = ioffset_to_wrap(cursor->line, cursor->ioff);
+	prev = cursor->wrap ? cursor->wrap->prev : wrap;
+	next = cursor->wrap ? cursor->wrap->next : NULL;
 
 	if (wrap == next && nichar > 0) {
 		wrap  = cursor->wrap;
@@ -1428,8 +1462,8 @@ static void adjust_line_series(GuiText *text, TextLine *begin)
 			text->top = y_offset_to_line(text);
 		}
 		egui_adjust_reset_hook(text->vadj,
-				text->offset_y, text->height,
-				text->total_h, text->hline, 0);
+				(efloat)text->offset_y, (efloat)text->height,
+				(efloat)text->total_h, (efloat)text->hline, 0);
 	}
 	else
 		egui_adjust_reset_hook(text->vadj, 0, 1, 1, 1, 0);
@@ -1555,8 +1589,8 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 		for (i = 0; i < node->nichar; i++) {
 			eunichar ichar;
 			line->coffsets[ioff + i] = coff + nchar;
-			ichar  = e_utf8_get_char(p + nchar);
-			nchar += e_utf8_char_len(p + nchar);
+			ichar  = e_uni_get_char(p + nchar);
+			nchar += e_uni_char_len(p + nchar);
 			egal_get_glyph(text->font, ichar, &line->glyphs[ioff + i]);
 			if (is_underline)
 				line->underlines[ioff + i] = 1;
@@ -1599,7 +1633,7 @@ cont:
 static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *chars, eint clen)
 {
 	eint max = INSERT_MAX;
-	LineNode  tmp[max];
+	LineNode  tmp[INSERT_MAX];
 	LineNode *node_head = tmp;
 
 	eint         n = 0;
@@ -1625,8 +1659,8 @@ static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *char
 		node = &node_head[n];
 		node->coff = p - chars;
 		do {
-			ichar  = e_utf8_get_char(p + nchar);
-			nchar += e_utf8_char_len(p + nchar);
+			ichar  = e_uni_get_char(p + nchar);
+			nchar += e_uni_char_len(p + nchar);
 			node->nichar++;
 		} while (ichar != '\n' && nchar < clen);
 
@@ -1695,8 +1729,8 @@ static eint del_line_series(GuiText *text, TextLine *begin, TextLine *end)
 		e_slice_free(TextLine, t);
 	} while (n && end && n->id <= end->id);
 
-	if (!p)
-		text->line_head = e;
+	if (!p) text->line_head = e;
+	if (!e) text->line_tail = p;
 
 	return nwrap;
 }
@@ -1713,11 +1747,11 @@ static eint _text_delete_area(eHandle hobj, GuiText *text,
 		*bear_x = sl->glyphs[sioff].x;
 
 	if (sid == eid) {
+		eint i;
 		eint scoff = sl->coffsets[sioff];
 		eint ecoff = sl->coffsets[eioff];
 		nichar = eioff - sioff;
 		nchar  = ecoff - scoff;
-		eint i;
 
 		if (del_nr)
 			*del_nr = -nichar;
@@ -1749,11 +1783,11 @@ static eint _text_delete_area(eHandle hobj, GuiText *text,
 			inc_wrap -= del_line_series(text, sl->next, NULL);
 	}
 	else {
+		eint i;
 		TextLine *el = find_line_by_id(text, eid);
 		eint scoff   = sl->coffsets[sioff];
 		eint ecoff   = el->coffsets[eioff];
 		nichar       = sl->nichar - sioff;
-		eint i;
 
 		sl->chars      = e_realloc(sl->chars, scoff + el->nchar - ecoff);
 		sl->glyphs     = e_realloc(sl->glyphs, (sioff + el->nichar - eioff) * sizeof(GalGlyph));
@@ -1812,10 +1846,10 @@ static void backspace_from_cursor(eHandle hobj, GuiText *text)
 
 	text->update_h = text->total_h;
 	if (text->is_sel) {
+		eint sid, sioff, eid, eioff;
 		text_sel     = true;
 		text->is_sel = false;
 		egal_region_empty(text->sel_rgn);
-		eint sid, sioff, eid, eioff;
 		select_normalize(text, &sid, &sioff, &eid, &eioff);
 		inc_wrap  = _text_delete_area(hobj, text, sid, sioff, eid, eioff, &nchar, &bear_x, true);
 	}
@@ -1879,8 +1913,7 @@ static INLINE void text_hide_cursor(eHandle hobj, GuiText *text)
 static void egui_hide_cursor(GalDrawable window, TextCursor *cursor)
 {
 	if (cursor->show) {
-		GalPB pb = egal_type_pb(GalPBnor);
-		egal_draw_line(window, pb, cursor->x, cursor->y, cursor->x, cursor->y + cursor->h);
+		egal_draw_line(window, cursor->pb, cursor->x, cursor->y, cursor->x, cursor->y + cursor->h);
 		cursor->show = false;
 	}
 }
@@ -1891,14 +1924,13 @@ static void egui_show_cursor(GalDrawable window, TextCursor *cursor, bool show)
 			cursor->ox != cursor->x ||
 			cursor->oy != cursor->y ||
 			cursor->oh != cursor->h) {
-		GalPB pb = egal_type_pb(GalPBnor);
 		if (cursor->ox != cursor->x)
 			cursor->ox  = cursor->x;
 		if (cursor->oy != cursor->y)
 			cursor->oy  = cursor->y;
 		if (cursor->oh != cursor->h)
 			cursor->oh  = cursor->h;
-		egal_draw_line(window, pb,
+		egal_draw_line(window, cursor->pb,
 				cursor->x, cursor->y, cursor->x, cursor->y + cursor->h);
 		cursor->show = true;
 	}
@@ -1911,6 +1943,7 @@ static eint text_init(eHandle hobj, eValist vp)
 
 	eint w = e_va_arg(vp, eint);
 	eint h = e_va_arg(vp, eint);
+	eint retval;
 
 	wid->bg_color = 0xffffff;
 	wid->fg_color = 0;
@@ -1921,7 +1954,17 @@ static eint text_init(eHandle hobj, eValist vp)
 	txt->width  = w;
 	txt->height = h;
 
-	return e_signal_emit(hobj, SIG_REALIZE);
+	retval = e_signal_emit(hobj, SIG_REALIZE);
+#ifdef WIN32
+	{
+		GalPBAttr  attribute;
+		attribute.func = GalPBnor;
+		txt->cursor.pb = egal_pb_new(wid->window, &attribute);
+	}
+#else
+	txt->cursor.pb = egal_type_pb(GalPBnor);
+#endif
+	return retval;
 }
 
 void egui_text_set_only_read(eHandle hobj, bool only)
@@ -1937,19 +1980,14 @@ eHandle egui_text_new(eint w, eint h)
 void egui_text_clear(eHandle hobj)
 {
 	GuiText  *text = GUI_TEXT_DATA(hobj);
-
-	_text_delete_area(hobj, text, 0, 0,
-			text->line_tail->id, text->line_tail->nichar - 1, NULL, NULL, true);
-
-	if (text->is_sel) {
-		text->is_sel = false;
-		egal_region_empty(text->sel_rgn);
-	}
-	if (text->cursor.line->id == 0)
-		text->top = text->cursor.line;
-
+	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+	text_clear(text);
+	text_line_insert(text, _("\n"), 1);
+	text_wrap(hobj, text);
+	text_cursor_setpos(hobj, text, text->line_head, NULL, 0, true);
 	egui_update(hobj);
-	egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, false);
+	if (WIDGET_STATUS_FOCUS(wid))
+		egui_show_cursor(wid->drawable, &text->cursor, false);
 }
 
 void egui_text_append(eHandle hobj, const echar *chars, eint nchar)

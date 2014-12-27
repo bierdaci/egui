@@ -62,6 +62,13 @@ static void widget_set_min(eHandle hobj, eint w, eint h)
 	}
 }
 
+static void widget_set_max(eHandle hobj, eint w, eint h)
+{
+	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+	wid->max_w = w;
+	wid->max_h = h;
+}
+
 /*
 static void widget_set_max(eHandle hobj, eint w, eint h)
 {
@@ -112,7 +119,11 @@ static void widget_realize(eHandle hobj, GuiWidget *wid)
 
 	wid->window   = egal_window_new(&attr);
 	wid->drawable = wid->window;
+#ifdef WIN32
+	wid->pb       = egal_pb_new(wid->drawable, NULL);
+#else
 	wid->pb       = egal_default_pb();
+#endif
 	egal_window_set_attachment(wid->drawable, hobj);
 }
 
@@ -177,6 +188,7 @@ static void widget_init_orders(eGeneType new, ePointer this)
 	w->resize          = widget_resize;
 	w->realize         = widget_realize;
 	w->set_min         = widget_set_min;
+	w->set_max         = widget_set_max;
 	w->set_fg_color    = widget_set_fg_color;
 	w->set_bg_color    = widget_set_bg_color;
 	w->move_resize     = widget_move_resize;

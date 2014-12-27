@@ -59,11 +59,11 @@ static void adjust_set_hook(eHandle hobj, efloat value)
 
 static eint adjust_init(eHandle hobj, eValist vp)
 {
-	efloat value    = e_va_arg(vp, edouble);
-	efloat min      = e_va_arg(vp, edouble);
-	efloat max      = e_va_arg(vp, edouble);
-	efloat step_inc = e_va_arg(vp, edouble);
-	efloat page_inc = e_va_arg(vp, edouble);
+	efloat value    = (efloat)e_va_arg(vp, edouble);
+	efloat min      = (efloat)e_va_arg(vp, edouble);
+	efloat max      = (efloat)e_va_arg(vp, edouble);
+	efloat step_inc = (efloat)e_va_arg(vp, edouble);
+	efloat page_inc = (efloat)e_va_arg(vp, edouble);
 
 	adjust_reset_hook(hobj, value, min, max, step_inc, page_inc);
 

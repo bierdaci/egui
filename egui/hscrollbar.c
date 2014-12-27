@@ -51,7 +51,7 @@ static bool __hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint val)
 
 	if (b->steps + val < 0)
 		val = -b->steps;
-	else if (b->steps + val > (b->bar_span << SCALE))
+	else if ((b->steps + val) > (eint)(b->bar_span << SCALE))
 		val = (b->bar_span << SCALE) - b->steps;
 
 	if (val == 0)
@@ -124,7 +124,7 @@ static eint hscrollbar_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *e
 	GuiScrollBar *scroll = GUI_SCROLLBAR_DATA(hobj);
 	GuiScrollRegion *rn;
 
-	euint x, y, w;
+	eint x, y, w;
 	eint steps = scroll->steps >> SCALE;
 	GalRect rc = scroll->bn_rn1.rect;
 	if (egal_rect_intersect(&rc, &rc, &exp->rect)) {

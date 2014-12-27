@@ -93,12 +93,16 @@ static void spinbn_set_value(GuiSpinBtn *spin, efloat value)
 static void spinbn_right_value(GuiSpinBtn *spin)
 {
 	GuiEntry *entry = GUI_ENTRY_DATA(spin->entry);
+#ifdef linux
 	echar buf[entry->nchar + 1];
+#else
+	echar buf[1024];
+#endif
 
 	e_memcpy(buf, entry->chars, entry->nchar);
 	buf[entry->nchar] = 0;
 
-	spinbn_set_value(spin, e_atof(buf));
+	spinbn_set_value(spin, (efloat)e_atof(buf));
 }
 
 static eint spinbn_keydown(eHandle hobj, GalEventKey *ent)
@@ -192,6 +196,9 @@ static eint bn_lbuttondown(eHandle hobj, GalEventMouse *ent)
 
 	spinbn_set_value(spin, value);
 	egui_set_focus(spin->entry);
+#ifdef WIN32
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+#endif
 	return 0;
 }
 
@@ -206,6 +213,9 @@ static eint bn_lbuttonup(eHandle hobj, GalEventMouse *ent)
 	}
 	bn->down = false;
 	egui_update(hobj);
+#ifdef WIN32
+	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->window);
+#endif
 	return 0;
 }
 
@@ -260,22 +270,21 @@ static void bn_init_orders(eGeneType new, ePointer this)
 static eint spinbtn_init(eHandle hobj, eValist vp)
 {
 	GuiSpinBtn *spin = GUI_SPINBTN_DATA(hobj);
-	echar      *p;
-	echar       buf[100];
-	eint        bn_size;
+	echar *p;
+	echar buf[100];
+	eint  bn_size;
+	eint  s1, s2;
 
-	spin->value    = e_va_arg(vp, edouble);
-	spin->min      = e_va_arg(vp, edouble);
-	spin->max      = e_va_arg(vp, edouble);
-	spin->step_inc = e_va_arg(vp, edouble);
-	spin->page_inc = e_va_arg(vp, edouble);
+	spin->value    = (efloat)e_va_arg(vp, edouble);
+	spin->min      = (efloat)e_va_arg(vp, edouble);
+	spin->max      = (efloat)e_va_arg(vp, edouble);
+	spin->step_inc = (efloat)e_va_arg(vp, edouble);
+	spin->page_inc = (efloat)e_va_arg(vp, edouble);
 	spin->digits   = e_va_arg(vp, eint);
 
-	eint s1 = (eint)spin->max;
-	eint s2 = (eint)spin->min;
-	e_sprintf(buf, _("%d"), s1);
+	e_sprintf(buf, _("%d"), (eint)spin->max);
 	s1 = e_strlen(buf);
-	e_sprintf(buf, _("%d"), s2);
+	e_sprintf(buf, _("%d"), (eint)spin->min);
 	s2 = e_strlen(buf);
 	s1 = s1 >= s2 ? s1 : s2;
 

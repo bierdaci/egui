@@ -1,6 +1,6 @@
 .386P
 
-_TEXT	SEGMENT
+_TEXT	SEGMENT	'CODE'
 
 ___signal_call_marshal PROC NEAR
 	push	ebp
@@ -56,12 +56,12 @@ ___signal_call_marshal ENDP
 ___signal_call_marshal_1 PROC NEAR
 	push	ebp
 	mov		ebp, esp
-	sub		esp, 4 
+	sub		esp, 8
 	mov   	esi, 20[ebp]
 	mov		ebx, 24[ebp]
 	mov		edx, 28[ebp]
 	sub		esp, 32[ebp]
-	lea		edi,  4[esp]
+	lea		edi,  8[esp]
 P0:
 	cmp     edx, 0
 	je      P5

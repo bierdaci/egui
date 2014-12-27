@@ -118,7 +118,7 @@ void egui_update_rect(eHandle, GalRect *);
 void egui_update_async(eHandle);
 void egui_update_rect_async(eHandle, GalRect *);
 void egui_put(eHandle, eHandle, eint, eint);
-void egui_remove(eHandle); 
+void egui_remove(eHandle, bool); 
 void egui_move(eHandle, eint, eint);
 void egui_move_resize(eHandle, eint, eint, eint, eint);
 void egui_raise(eHandle);

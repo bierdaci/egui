@@ -117,40 +117,45 @@ static eint button_keyup(eHandle hobj, GalEventKey *ent)
 	return 0;
 }
 
-static eint button_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *ent)
+static eint button_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
 {
 	GuiButton *button = GUI_BUTTON_DATA(hobj);
 
 	GalRect *erc = &ent->rect;
+
 	if (button->key_down) {
-		egal_set_foreground(ent->pb, 0x303030);
+		egal_set_foreground(wid->pb, 0x303030);
 	}
 	else if (button->down) {
 		if (button->enter)
-			egal_set_foreground(ent->pb, 0x303030);
+			egal_set_foreground(wid->pb, 0x303030);
 		else
-			egal_set_foreground(ent->pb, 0x0000ff);
+			egal_set_foreground(wid->pb, 0x0000ff);
 	}
 	else if (GUI_STATUS_FOCUS(hobj)) {
 		if (button->enter)
-			egal_set_foreground(ent->pb, 0x3030ff);
+			egal_set_foreground(wid->pb, 0x3030ff);
 		else
-			egal_set_foreground(ent->pb, 0x0000ff);
+			egal_set_foreground(wid->pb, 0x0000ff);
 	}
 	else {
 		if (button->enter)
-			egal_set_foreground(ent->pb, 0x00ffb0);
+			egal_set_foreground(wid->pb, 0x00ffb0);
 		else
-			egal_set_foreground(ent->pb, 0x00e0b0);
+			egal_set_foreground(wid->pb, 0x00e0b0);
 	}
 
-	egal_fill_rect(widget->drawable, ent->pb, erc->x, erc->y, erc->w, erc->h);
+	egal_fill_rect(wid->drawable, wid->pb, erc->x, erc->y, erc->w, erc->h);
 
 	return 0;
 }
 
 static eint button_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 {
+#ifdef WIN32
+	eHandle top = egui_get_top(hobj);
+	egal_grab_pointer(GUI_WIDGET_DATA(top)->window, true, 0);
+#endif
 	GUI_BUTTON_DATA(hobj)->down = true;
 	egui_update(hobj);
 	return 0;
@@ -159,6 +164,10 @@ static eint button_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 static eint button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 {
 	GuiButton *button = GUI_BUTTON_DATA(hobj);
+#ifdef WIN32
+	eHandle top = egui_get_top(hobj);
+	egal_ungrab_pointer(GUI_WIDGET_DATA(top)->window);
+#endif
 	if (button->down) {
 		button->down = false;
 		egui_update(hobj);
@@ -166,6 +175,7 @@ static eint button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 			e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
 		}
 	}
+
 	return 0;
 }
 

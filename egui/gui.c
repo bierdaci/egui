@@ -229,6 +229,7 @@ int egui_main()
 	esig_t   signal;
 
 	egal_event_init();
+
 	while (egal_wait_event(&event)) {
 
 		e_timer_loop();
@@ -460,10 +461,10 @@ static void reunion_region_mask(eHandle hobj)
 
 	egal_region_init(&region);
 	while (wid->parent) {
-		GuiBin *pbin = GUI_BIN_DATA(wid->parent);
+		GuiBin  *pbin = GUI_BIN_DATA(wid->parent);
+		GuiWidget *cw = pbin->head;
 		egal_region_empty(&pbin->region_mask);
 
-		GuiWidget *cw = pbin->head;
 		while (cw) {
 			if (!cw->window && WIDGET_STATUS_VISIBLE(cw)) {
 				GuiBin *cbin = GUI_BIN_DATA(OBJECT_OFFSET(cw));
@@ -488,11 +489,11 @@ void egui_set_transparent(eHandle hobj)
 
 	if (!WIDGET_STATUS_TRANSPARENT(wid)) {
 		GuiWidgetOrders *wos = GUI_WIDGET_ORDERS(hobj);
-
 		widget_set_status(wid, GuiStatusTransparent);
-
+		egui_hide(hobj, true);
 		if (wos->set_transparent)
 			wos->set_transparent(hobj);
+		egui_show(hobj, true);
 	}
 }
 
@@ -502,11 +503,11 @@ void egui_unset_transparent(eHandle hobj)
 
 	if (WIDGET_STATUS_TRANSPARENT(wid)) {
 		GuiWidgetOrders *wos = GUI_WIDGET_ORDERS(hobj);
-
 		widget_unset_status(wid, GuiStatusTransparent);
-
+		egui_hide(hobj, true);
 		if (wos->unset_transparent)
 			wos->unset_transparent(hobj);
+		egui_show(hobj, true);
 	}
 }
 
@@ -686,7 +687,7 @@ void egui_add(eHandle pobj, eHandle cobj)
 	}
 }
 
-void egui_request_layout_async(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+void egui_request_layout_async(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool add)
 {
 	GalEvent event;
 
@@ -697,7 +698,7 @@ void egui_request_layout_async(eHandle hobj, eHandle cobj, eint req_w, eint req_
 	event.e.private.args[1] = (eHandle)req_w;
 	event.e.private.args[2] = (eHandle)req_h;
 	event.e.private.args[3] = (eHandle)up;
-	event.e.private.args[4] = (eHandle)a;
+	event.e.private.args[4] = (eHandle)add;
 
 	egal_add_async_event_to_queue(&event);
 }
@@ -717,11 +718,11 @@ static void __request_layout_event(eHandle hobj, GalEvent *ent)
 	}
 }
 
-void egui_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+void egui_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool add)
 {
 	GuiBinOrders *bs = GUI_BIN_ORDERS(hobj);
 	if (bs && bs->request_layout)
-		bs->request_layout(hobj, cobj, req_w, req_h, up, a);
+		bs->request_layout(hobj, cobj, req_w, req_h, up, add);
 }
 
 void egui_request_resize(eHandle hobj, eint w, eint h)
@@ -777,6 +778,8 @@ void egui_move_resize(eHandle hobj, eint x, eint y, eint w, eint h)
 
 	wid->offset_x = offset_x;
 	wid->offset_y = offset_y;
+	if (ws->set_offset)
+		ws->set_offset(hobj);
 
 	reunion_region_mask(hobj);
 	if (wid->window)
@@ -814,7 +817,7 @@ void egui_move(eHandle hobj, eint x, eint y)
 		ws->move(hobj);
 }
 
-void egui_remove(eHandle hobj)
+void egui_remove(eHandle hobj, bool relay)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	if (wid->parent) {
@@ -823,10 +826,18 @@ void egui_remove(eHandle hobj)
 		if (o->remove)
 			o->remove(wid->parent, hobj);
 
-		if (wid->window)
+		if (wid->window) {
 			egal_window_remove(wid->window);
+			wid->window = 0;
+		}
 
-		if (WIDGET_STATUS_VISIBLE(wid))
+		wid->drawable = 0;
+		if (wid->pb) {
+			e_object_unref(wid->pb);
+			wid->pb = 0;
+		}
+
+		if (relay && WIDGET_STATUS_VISIBLE(wid))
 			egui_request_layout_async(wid->parent, 0, 0, 0, false, true);
 
 		wid->parent = 0;

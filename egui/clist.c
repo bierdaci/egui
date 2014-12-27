@@ -233,7 +233,7 @@ static void set_hlight(GuiClist *cl, ClsItemBar *ibar, bool update)
 	cl->hlight = ibar;
 	cl->top    = index_to_item(cl, cl->offset_y / cl->ibar_h);
 
-	egui_adjust_set_hook(cl->vadj, cl->offset_y);
+	egui_adjust_set_hook(cl->vadj, (efloat)cl->offset_y);
 
 	if (update) {
 		update_ibar(cl, ibar);
@@ -274,9 +274,9 @@ static void reset_adjust(GuiClist *cl)
 			cl->offset_y = total_h - cl->view_h;
 		}
 		egui_adjust_reset_hook(cl->vadj,
-			cl->offset_y, cl->view_h,
-			cl->item_n * cl->ibar_h,
-			cl->ibar_h, 0);
+			(efloat)cl->offset_y, (efloat)cl->view_h,
+			(efloat)cl->item_n * cl->ibar_h,
+			(efloat)cl->ibar_h, 0);
 	}
 	else {
 		egui_adjust_reset_hook(cl->vadj, 0, 1, 1, 0, 0);
@@ -370,8 +370,8 @@ static void update_ibar(GuiClist *cl, ClsItemBar *ibar)
 		x += cl->titles[i].width;
 	}
 
-	egal_draw_drawable(wid->drawable, cl->pb,
-			cl->offset_x, y, cl->drawable, 0, 0, cl->view_w, cl->ibar_h);
+	egal_draw_drawable(wid->drawable, wid->pb, cl->offset_x, y, 
+			cl->drawable, cl->pb, 0, 0, cl->view_w, cl->ibar_h);
 }
 
 static eint clist_update(eHandle hobj, GuiClist *cl, ClsItemBar *ibar)
@@ -412,7 +412,7 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 		egal_draw_drawable(wid->drawable, wid->pb,
 				ox,
 				iy - oy,
-				cl->drawable,
+				cl->drawable, cl->pb,
 				0, 0, cl->view_w, cl->ibar_h);
 
 		ib  = ibar_next(cl, ib);
@@ -427,8 +427,8 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 					cl->drawable, cl->pb,
 					0, cl->view_w, cl->ibar_h,
 					0, 0, index++);
-			egal_draw_drawable(wid->drawable, wid->pb,
-					0, iy, cl->drawable, 0, 0, cl->view_w, cl->ibar_h);
+			egal_draw_drawable(wid->drawable, wid->pb, 0, iy, 
+					cl->drawable, cl->pb, 0, 0, cl->view_w, cl->ibar_h);
 			iy += cl->ibar_h;
 		}
 	}
@@ -478,7 +478,7 @@ static eint view_resize(eHandle hobj, GuiWidget *widget, GalEventResize *resize)
 	}
 
 	reset_adjust(cl);
-	cl->top = index_to_item(cl, GUI_ADJUST_DATA(cl->vadj)->value / cl->ibar_h);
+	cl->top = index_to_item(cl, (int)(GUI_ADJUST_DATA(cl->vadj)->value / cl->ibar_h));
 	return 0;
 }
 
@@ -589,13 +589,13 @@ static eint view_focus_out(eHandle hobj)
 		if (_h < cl->offset_y) {
 			cl->offset_y = cl->hlight->index * cl->ibar_h;
 			cl->top      = cl->hlight;
-			egui_adjust_set_hook(cl->vadj, cl->offset_y);
+			egui_adjust_set_hook(cl->vadj, (float)cl->offset_y);
 			egui_update(hobj);
 		}
 		else if (_h + cl->ibar_h > cl->offset_y + cl->view_h) {
 			cl->offset_y += _h + cl->ibar_h - (cl->offset_y + cl->view_h);
 			cl->top       = index_to_item(cl, cl->offset_y / cl->ibar_h);
-			egui_adjust_set_hook(cl->vadj, cl->offset_y);
+			egui_adjust_set_hook(cl->vadj, (efloat)cl->offset_y);
 			egui_update(hobj);
 		}
 		else
@@ -664,7 +664,7 @@ static eint clist_vadjust_update(eHandle hobj, efloat value)
 {
 	eHandle    own = GUI_ADJUST_DATA(hobj)->owner;
 	GuiClist   *cl = GUI_WIDGET_DATA(own)->extra_data;
-	cl->offset_y   = value;
+	cl->offset_y   = (eint)value;
 	cl->top        = index_to_item(cl, cl->offset_y / cl->ibar_h);
 	egui_update(cl->view);
     return 0;

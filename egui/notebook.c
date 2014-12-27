@@ -242,14 +242,13 @@ static eint tabbar_keydown(eHandle hobj, GalEventKey *ent)
 {
 	GuiNotebook *nb = GUI_WIDGET_DATA(hobj)->extra_data;
 	GuiWidget   *cw = GUI_WIDGET_DATA(nb->curpage);
+	eint pos = 0;
 
 	if (ent->code == GAL_KC_Tab)
 		return 0;
 
 #define PAGE_PREV  1
 #define PAGE_NEXT  2
-	eint pos = 0;
-
 	if (nb->direct == GUI_POS_TOP || nb->direct == GUI_POS_BOTTOM) {
 		if (ent->code == GAL_KC_Left)
 			pos = PAGE_PREV;
@@ -339,9 +338,9 @@ static void varbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint r
 {
 	VarBox *vb = VARBOX_DATA(hobj);
 	if (vb->pos == DIRECT_V)
-		return vbox_request_layout(hobj, 0, req_w, req_h, false, a);
+		vbox_request_layout(hobj, 0, req_w, req_h, false, a);
 	else
-		return hbox_request_layout(hobj, 0, req_w, req_h, false, a);
+		hbox_request_layout(hobj, 0, req_w, req_h, false, a);
 }
 
 static void varbox_add(eHandle pobj, eHandle cobj)
@@ -399,13 +398,13 @@ static void notebook_set_current_page(GuiNotebook *nb, eHandle bn)
 	nb->curpage = bn;
 	egui_show(pagebn->page, true);
 	egui_update(bn);
+	egui_update(nb->pagebox);
 }
 
 static eint box_expose_bg(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
 {
 	egal_set_foreground(wid->pb, 0x3c3b37);
-	egal_fill_rect(wid->drawable, wid->pb,
-			wid->offset_x, wid->offset_y, wid->rect.w, wid->rect.h);
+	egal_fill_rect(wid->drawable, wid->pb, wid->offset_x, wid->offset_y, wid->rect.w, wid->rect.h);
 	return 0;
 }
 
@@ -483,7 +482,7 @@ void egui_notebook_set_pos(eHandle hobj, GuiPositionType pos)
 		while (tail) {
 			GuiWidget *t = tail;
 			tail = t->prev;
-			egui_remove(OBJECT_OFFSET(t));
+			egui_remove(OBJECT_OFFSET(t), false);
 			t->next = head;
 			head = t;
 		}

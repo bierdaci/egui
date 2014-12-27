@@ -209,7 +209,7 @@ static eint ddlist_menu_pos_cb(eHandle hobj, eint *_x, eint *_y, eint *_h)
 
 	*_x = x - 1;
 	*_y = y - 1;
-	*_h = h + 2;
+	*_h = h;
 
 	return 0;
 }

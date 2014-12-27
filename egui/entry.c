@@ -130,16 +130,18 @@ static eint entry_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	entry->e_ioff = i;
 
 	entry->bn_down = true;
-
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, entry->cursor);
-
+#ifdef WIN32
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+#endif
 	return 0;
 }
 
 static eint entry_lbuttonup(eHandle hobj, GalEventMouse *ent)
 {
 	GUI_ENTRY_DATA(hobj)->bn_down = false;
+#ifdef WIN32
 	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->window);
+#endif
 	return 0;
 }
 
@@ -359,8 +361,8 @@ static void entry_set_text(eHandle hobj, const echar *chars, eint clen)
 	const  echar *p = chars;
 
 	eint i;
-	eint ichar;
 	eint nchar = 0;
+	eunichar ichar;
 	eint old_w = entry->total_w;
 
 	eint old_nichar = entry->nichar;
@@ -376,7 +378,7 @@ static void entry_set_text(eHandle hobj, const echar *chars, eint clen)
 	entry->nichar = 0;
 	entry->nchar  = 0;
 	do {
-		nchar += e_utf8_char_len(p + nchar);
+		nchar += e_uni_char_len(p + nchar);
 		if (nchar <= clen) {
 			entry->nchar = nchar;
 			entry->nichar++;
@@ -400,8 +402,8 @@ static void entry_set_text(eHandle hobj, const echar *chars, eint clen)
 	entry->total_w = 0;
 	for (i = 0, nchar = 0; i < entry->nichar; i++) {
 		entry->offsets[i].c = nchar;
-		ichar  = e_utf8_get_char(p + nchar);
-		nchar += e_utf8_char_len(p + nchar);
+		ichar  = e_uni_get_char(p + nchar);
+		nchar += e_uni_char_len(p + nchar);
 		egal_get_glyph(entry->font, ichar, &glyphs[i]);
 		if (entry->visible) {
 			entry->total_w += glyphs[i].w;
@@ -448,14 +450,14 @@ static eint entry_enter(eHandle hobj, eint x, eint y)
 {
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
 	GuiWidget  *wid = GUI_WIDGET_DATA(hobj);
-	egal_window_set_cursor(wid->window, entry->cursor);
+	egal_set_cursor(wid->window, entry->cursor);
 	return 0;
 }
 
 static eint entry_leave(eHandle hobj)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
-	egal_window_set_cursor(wid->window, 0);
+	egal_set_cursor(wid->window, 0);
 	return 0;
 }
 
@@ -739,6 +741,13 @@ static void visible_expose(GuiWidget *wid, GuiEntry *entry, GalEventExpose *exp)
 	eint w = 0;
 	eint i = 0;
 	eint x, n, over;
+
+	if (entry->nichar == 0) {
+		if (WIDGET_STATUS_FOCUS(wid))
+			entry_show_cursor(wid->drawable, entry, entry->is_show);
+		return;
+	}
+
 	for (; i < entry->nichar; i++) {
 		if (w + entry->glyphs[i].w > entry->offset_x)
 			break;
@@ -797,10 +806,10 @@ static ePointer insert_data(ePointer chars, eint c_size,
 		chars = e_malloc(c + d);
 	else {
 		chars = e_realloc(chars, c + d);
-		e_memmove(chars + o + d, chars + o, c - o);
+		e_memmove((echar *)chars + o + d, (echar *)chars + o, c - o);
 	}
 
-	if (data) e_memcpy(chars + o, data, d);
+	if (data) e_memcpy((echar *)chars + o, data, d);
 
 	return chars;
 }
@@ -898,7 +907,7 @@ static void insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *chars, 
 
 	nchar = 0;
 	do {
-		nchar += e_utf8_char_len(p + nchar);
+		nchar += e_uni_char_len(p + nchar);
 		if (nchar <= clen) {
 			in_nchar = nchar;
 			in_nichar++;
@@ -929,8 +938,8 @@ static void insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *chars, 
 	for (nchar = 0, nw = 0, i = ioff; i < ioff + in_nichar; i++) {
 		eunichar ichar;
 		entry->offsets[i].c = coff + nchar;
-		ichar  = e_utf8_get_char(p + nchar);
-		nchar += e_utf8_char_len(p + nchar);
+		ichar  = e_uni_get_char(p + nchar);
+		nchar += e_uni_char_len(p + nchar);
 		egal_get_glyph(entry->font, ichar, &entry->glyphs[i]);
 		if (entry->visible) {
 			nw += entry->glyphs[i].w;
@@ -965,8 +974,8 @@ static void insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *chars, 
 static void entry_insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *chars, eint clen)
 {
 	if (entry->is_sel) {
-		entry->is_sel = false;
 		eint n = entry->e_ioff - entry->s_ioff;
+		entry->is_sel = false;
 		if (n < 0)
 			entry_delete_from_offset(hobj, entry, entry->e_ioff, -n);
 		else
@@ -979,8 +988,8 @@ static void entry_insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *c
 static void entry_backspace_from_cursor(eHandle hobj, GuiEntry *entry)
 {
 	if (entry->is_sel) {
-		entry->is_sel  = false;
 		eint n = entry->e_ioff - entry->s_ioff;
+		entry->is_sel  = false;
 		if (n < 0)
 			entry_delete_from_offset(hobj, entry, entry->e_ioff, -n);
 		else
@@ -1026,10 +1035,10 @@ static eint entry_init(eHandle hobj, eValist vp)
 	GuiWidget *wid   = GUI_WIDGET_DATA(hobj);
 
 	eint w = e_va_arg(vp, eint);
+	eint retval;
 
 	entry->font = egal_default_font();
 	entry->h    = egal_font_height(entry->font) + SIDE_SPACING * 2;
-	entry->cpb  = egal_type_pb(GalPBnor);
 	entry->visible = true;
 
 	wid->rect.w = w;
@@ -1040,7 +1049,17 @@ static eint entry_init(eHandle hobj, eValist vp)
 	wid->min_h = entry->h;
 	wid->max_w = 0;
 	wid->max_h = 1;
-	return e_signal_emit(hobj, SIG_REALIZE);
+	retval = e_signal_emit(hobj, SIG_REALIZE);
+	#ifdef WIN32
+	{
+		GalPBAttr  attribute;
+		attribute.func = GalPBnor;
+		entry->cpb = egal_pb_new(wid->window, &attribute);
+	}
+#else
+	entry->cpb = egal_type_pb(GalPBnor);
+#endif
+	return retval;
 }
 
 eHandle egui_entry_new(eint w)
@@ -1053,7 +1072,7 @@ void egui_entry_set_visibility(eHandle hobj, bool visible)
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
 	eint i;
 
-	eunichar ichar = e_utf8_get_char(_("*"));
+	eunichar ichar = e_uni_get_char(_("*"));
 
 	egal_get_glyph(entry->font, ichar, &entry->glyph);
 	entry->glyph_w = entry->glyph.w;

@@ -593,7 +593,7 @@ static eint menu_bn_enter(eHandle hobj, eint x, eint y)
 		close_popup_menu(GUI_MENU_DATA(menu->popup));
 		menu->popup = 0;
 	}
-	
+
 	if (bn->type == BN_UP)
 		bn->timer = e_timer_add(100, menu_bn1_timer_cb,
 				(ePointer)GUI_WIDGET_DATA(hobj)->parent);
@@ -766,7 +766,6 @@ static void menu_scrwin_add(eHandle hobj, eHandle cobj)
 	}
 }
 
-
 static void menu_scrwin_init_orders(eGeneType new, ePointer this)
 {
 	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
@@ -914,7 +913,7 @@ static void menu_realize(eHandle hobj, GuiWidget *wid)
 	attr.width   = wid->rect.w;
 	attr.height  = wid->rect.h;
 	attr.wclass  = GAL_INPUT_OUTPUT;
-	attr.wa_mask = GAL_WA_NOREDIR;
+	attr.wa_mask = GAL_WA_NOREDIR | GAL_WA_TOPMOST;
 
 	wid->window   = egal_window_new(&attr);
 	wid->drawable = wid->window;
@@ -1007,7 +1006,6 @@ static void menu_v_request_resize(eHandle hobj, eint w, eint h)
 		wid->rect.w = w;
 		wid->rect.h = h;
 		egal_window_resize(wid->drawable, w, h);
-
 		menu_resize(hobj, wid, &res);
 	}
 }
@@ -1037,9 +1035,9 @@ static eint menu_enter(eHandle hobj, eint x, eint y)
 	}
 
 	if (menu->close_timer) {
+		GuiMenu *smenu = GUI_MENU_DATA(menu->super);
 		e_timer_del(menu->close_timer);
 		menu->close_timer = 0;
-		GuiMenu *smenu = GUI_MENU_DATA(menu->super);
 		smenu->popup = OBJECT_OFFSET(menu);
 		egui_set_focus(menu->super_item);
 	}
@@ -1234,12 +1232,9 @@ static eint item_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *exp)
 	else
 		egal_set_foreground(exp->pb, 0x3c3b37);
 
-	egal_fill_rect(wid->drawable, exp->pb,
-			wid->offset_x + rc.x,
-			wid->offset_y + rc.y,
-			rc.w, rc.h);
+	egal_fill_rect(wid->drawable, exp->pb, rc.x, rc.y, rc.w, rc.h);
 
-	rc.x = wid->offset_x + MENU_BRINK_SIZE;
+	rc.x = MENU_BRINK_SIZE;
 	rc.y = wid->offset_y;
 	rc.w = wid->rect.w - MENU_BRINK_SIZE * 2;
 	rc.h = wid->rect.h;
@@ -1718,7 +1713,6 @@ static void bar_item_popup_submenu(GuiMenu *menu, eHandle hobj, eHandle sub)
 
 	egal_get_visual_info(egal_root_window(), &vinfo);
 	egal_window_get_origin(mwid->drawable, &x, &y);
-
 	x += iwid->rect.x;
 	if (src->h > (vinfo.h - y - mwid->rect.h)
 			&& y > (vinfo.h - mwid->rect.h) / 2) {
@@ -1872,10 +1866,7 @@ static eint bar_item_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *exp)
 
 	if (WIDGET_STATUS_FOCUS(wid)) {
 		egal_set_foreground(exp->pb, 0xb4a590);
-		egal_fill_rect(wid->drawable, exp->pb,
-				wid->offset_x + rc.x,
-				wid->offset_y + rc.y,
-				rc.w, rc.h);
+		egal_fill_rect(wid->drawable, exp->pb, rc.x, rc.y, rc.w, rc.h);
 	}
 	rc.x = wid->offset_x + (wid->rect.w - item->l_size) / 2;
 	rc.y = wid->offset_y;
@@ -1940,33 +1931,32 @@ static void menu_bar_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint
 			egui_request_layout(wid->parent, hobj, req_w, req_h, false, a);
 	}
 }
-
-static eint bar_scrwin_configure(eHandle hobj, GuiWidget *wid, GalEventConfigure *conf)
+/*
+static eint bar_scrwin_resize(eHandle hobj, GuiWidget *wid, GalEventResize *conf)
 {
 	wid->rect.w = conf->rect.w;
 	return 0;
 }
-
+*/
 static void bar_scrwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	wid->min_h  = req_h;
 	wid->rect.h = req_h;
 	if (wid->parent) {
-		egui_request_layout(wid->parent, hobj, req_w, req_h, false, a);
-
 		GalEventResize res = {req_w, req_h};
+		egui_request_layout(wid->parent, hobj, req_w, req_h, false, a);
 		e_signal_emit(cobj, SIG_RESIZE, &res);
 	}
 }
 
 static void bar_scrwin_init_orders(eGeneType new, ePointer this)
 {
-	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
+	//GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
 	GuiEventOrders  *e = e_genetype_orders(new, GTYPE_EVENT);
 	GuiBinOrders    *b = e_genetype_orders(new, GTYPE_BIN);
 
-	w->configure      = bar_scrwin_configure;
+	//w->resize         = bar_scrwin_resize;
 	e->lbuttondown    = menu_lbuttondown;
 	b->request_layout = bar_scrwin_request_layout;
 }

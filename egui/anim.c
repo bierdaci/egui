@@ -57,7 +57,7 @@ static eint anim_timer_cb(eTimer timer, euint num, ePointer args)
 	GuiAnimData *d  = GUI_ANIM_DATA((eHandle)args);
 
 	d->elapsed += num * 20;
-	while (d->frame && d->elapsed >= d->frame->elapsed) {
+	while (d->frame && d->elapsed >= (euint)d->frame->elapsed) {
 		egal_image_copy_from_pixbuf(d->image,
 				d->frame->x_offset, d->frame->y_offset,
 				d->frame->pixbuf, 0, 0, d->frame->pixbuf->w, d->frame->pixbuf->h);

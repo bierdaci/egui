@@ -37,24 +37,42 @@ static void label_set_transparent(eHandle hobj)
 
 	if (wid->window) {
 		e_object_unref(wid->window);
-		wid->window = 0;
-	}
-	if (wid->pb)
 		e_object_unref(wid->pb);
+		wid->window = 0;
+		wid->drawable = 0;
+		wid->pb = 0;
+	}
 
-	wid->drawable = egal_drawable_new(wid->rect.w, wid->rect.h, true);
-	wid->pb       = egal_pb_new(wid->drawable, NULL);
+	if (wid->parent) {
+		GuiWidget *pw = GUI_WIDGET_DATA(wid->parent);
+		wid->drawable = e_object_refer(pw->drawable);
+		wid->pb       = e_object_refer(pw->pb);
+		layout_set_offset(hobj, wid->offset_x, wid->offset_y);
+	}
 }
 
 static void label_unset_transparent(eHandle hobj)
 {
 	GuiWidget *cw = GUI_WIDGET_DATA(hobj);
-	GuiWidget *pw  = GUI_WIDGET_DATA(cw->parent);
 
-	e_object_unref(cw->drawable);
-	e_object_unref(cw->pb);
-	e_signal_emit(hobj, SIG_REALIZE, cw->rect.w, cw->rect.h);
-	egal_window_put(pw->drawable, cw->drawable, cw->offset_x, cw->offset_y);
+	if (cw->drawable) {
+		e_object_unref(cw->drawable);
+		e_object_unref(cw->pb);
+		cw->drawable = 0;
+		cw->pb       = 0;
+	}
+	if (cw->parent) {
+		GuiWidget *pw = GUI_WIDGET_DATA(cw->parent);
+		e_signal_emit(hobj, SIG_REALIZE, cw->rect.w, cw->rect.h);
+		egal_window_put(pw->drawable, cw->drawable, cw->offset_x, cw->offset_y);
+	}
+	layout_set_offset(hobj, 0, 0);
+}
+
+static void label_set_offset(eHandle hobj)
+{
+	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+	layout_set_offset(hobj, wid->offset_x, wid->offset_y);
 }
 
 static void label_put(eHandle hobj, eHandle cobj)
@@ -89,6 +107,9 @@ static void label_move(eHandle hobj)
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	if (wid->window)
 		egal_window_move(wid->window, wid->offset_x, wid->offset_y);
+
+	if (WIDGET_STATUS_TRANSPARENT(wid))
+		layout_set_offset(hobj, wid->offset_x, wid->offset_y);
 }
 
 static eint label_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *ent)
@@ -115,35 +136,22 @@ static void label_set_min(eHandle hobj, eint w, eint h)
 
 static eint label_expose_bg(eHandle hobj, GuiWidget *widget, GalEventExpose *ent)
 {
-	if (WIDGET_STATUS_TRANSPARENT(widget))
-		egal_set_foreground(widget->pb, 0);
-	else
+	if (!WIDGET_STATUS_TRANSPARENT(widget)) {
 		egal_set_foreground(widget->pb, widget->bg_color);
-
-	egal_fill_rect(widget->drawable, widget->pb,
-			ent->rect.x, ent->rect.y,
-			ent->rect.w, ent->rect.h);
-
+		egal_fill_rect(widget->drawable, widget->pb,
+				ent->rect.x, ent->rect.y,
+				ent->rect.w, ent->rect.h);
+	}
 	return 0;
 }
 
 static eint label_resize(eHandle hobj, GuiWidget *widget, GalEventResize *resize)
 {
 	GuiLayout *layout = GUI_LAYOUT_DATA(hobj);
-	eint w = resize->w;
-	eint h = resize->h;
-
-	if (!widget->window && (layout->w != w || layout->h != h)) {
-		e_object_unref(widget->drawable);
-		e_object_unref(widget->pb);
-		widget->drawable = egal_drawable_new(w, h, true);
-		widget->pb       = egal_pb_new(widget->drawable, NULL);
-	}
-
-	widget->rect.w = w;
-	widget->rect.h = h;
-	layout->w = w;
-	layout->h = h;
+	widget->rect.w = resize->w;
+	widget->rect.h = resize->h;
+	layout->w = resize->w;
+	layout->h = resize->h;
 	layout->configure = false;
 	egui_update(hobj);
 	return 0;
@@ -195,6 +203,7 @@ static void label_init_orders(eGeneType new, ePointer this)
 	w->expose            = label_expose;
 	w->set_min           = label_set_min;
 	w->expose_bg         = label_expose_bg;
+	w->set_offset        = label_set_offset;
 	w->set_transparent   = label_set_transparent;
 	w->unset_transparent = label_unset_transparent;
 

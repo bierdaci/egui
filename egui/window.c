@@ -166,7 +166,7 @@ static void window_init_orders(eGeneType new, ePointer this)
 	w->move           = window_move;
 	w->raise          = window_raise;
 	w->lower          = window_lower;
-	//w->resize         = window_resize;
+	w->resize         = window_resize;
 	w->configure      = window_configure;
 	w->expose_bg      = window_expose_bg;
 	w->request_resize = window_request_resize;
@@ -209,10 +209,10 @@ static eint __window_init(eHandle hobj, GalWindowType type, GuiWindowType win_ty
 		GalPBAttr attr;
 		attr.func = GalPBcopy;
 		attr.use_cairo = true;
-		wid->pb   = egal_pb_new(wid->window, &attr);
+		wid->pb = egal_pb_new(wid->window, &attr);
 	}
 #else
-	wid->pb     = egal_pb_new(wid->window, NULL);
+	wid->pb = egal_pb_new(wid->window, NULL);
 #endif
 	egal_window_set_attachment(wid->window, hobj);
 	return 0;
@@ -285,18 +285,8 @@ static eint window_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 
 static eint window_configure(eHandle hobj, GuiWidget *wid, GalEventConfigure *ent)
 {
-	GalEventResize resize = {ent->rect.w, ent->rect.h};
-
-	GuiBin *bin = GUI_BIN_DATA(hobj);
-	if (bin->head) {
-		GalEventConfigure conf;
-		GuiWidget *cw = bin->head;
-		conf.rect     = cw->rect;
-		e_signal_emit(OBJECT_OFFSET(cw), SIG_CONFIGURE, &conf);
-	}
-
+	GalEventResize resize = {wid->rect.w, wid->rect.h};
 	window_resize(hobj, wid, &resize);
-
 	return 0;
 }
 
@@ -343,7 +333,7 @@ static void window_add(eHandle hobj, eHandle cobj)
 	}
 }
 
-static void window_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool a)
+static void window_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool add)
 {
 	GuiBox    *box = GUI_BOX_DATA(hobj);
 	GuiWidget *pw  = GUI_WIDGET_DATA(hobj);
@@ -360,7 +350,7 @@ static void window_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint r
 	geom.min_height = pw->min_h;
 	egal_window_set_geometry_hints(pw->window, &geom, GAL_HINT_MIN_SIZE);
 
-	if (a || fixed) {
+	if (add || fixed) {
 		if (pw->rect.w < pw->min_w)
 			pw->rect.w = pw->min_w;
 		if (pw->rect.h < pw->min_h)

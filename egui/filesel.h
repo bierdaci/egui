@@ -8,7 +8,7 @@
 
 #define GUI_FILESEL_DATA(hobj)	((GuiFilesel *)e_object_type_data((eHandle)(hobj), GTYPE_FILESEL))
 
-#define MAX_PATH				256
+#define GUI_MAX_PATH				256
 
 typedef struct _GuiFilesel GuiFilesel;
 
@@ -31,7 +31,7 @@ struct _GuiFilesel {
 	eint old_x;
 	bool grab;
 	bool is_hide;
-	echar path[MAX_PATH];
+	echar path[GUI_MAX_PATH];
 	eint len;
 	GalCursor cursor;
 };

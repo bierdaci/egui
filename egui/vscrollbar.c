@@ -49,8 +49,8 @@ static bool __vscrollbar_update(eHandle hobj, GuiScrollBar *bar, eint val)
 
 	if (bar->steps + val < 0)
 		val = -bar->steps;
-	else if (bar->steps + val > bar->bar_span << SCALE)
-		val = (bar->bar_span << SCALE) - bar->steps;
+	else if (bar->steps + val > (eint)(bar->bar_span << SCALE))
+		val = (eint)(bar->bar_span << SCALE) - bar->steps;
 
 	if (val == 0)
 		return false;
@@ -122,7 +122,7 @@ static eint vscrollbar_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *e
 	GuiScrollBar *scroll = GUI_SCROLLBAR_DATA(hobj);
 	GuiScrollRegion *rn;
 
-	euint x, y, h;
+	eint x, y, h;
 	eint steps = scroll->steps >> SCALE;
 	GalRect rc = scroll->bn_rn1.rect;
 	if (egal_rect_intersect(&rc, &rc, &exp->rect)) {

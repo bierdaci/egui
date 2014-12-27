@@ -36,11 +36,19 @@ struct _GuiScrollBar {
 	euint bar_span;
 	euint adj_span;
 
+#ifdef WIN32
+	euint adj_step;
+	euint adj_recoup;
+
+	euint bar_step;
+	euint bar_recoup;
+#else
 	euint64 adj_step;
 	euint64 adj_recoup;
 
 	euint64 bar_step;
 	euint64 bar_recoup;
+#endif
 
 	euint bn_size;
 	GuiScrollRegion bn_rn1, bn_rn2;

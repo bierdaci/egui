@@ -65,6 +65,7 @@ struct _TextCursor {
 	eint ioff;
 	eint offset_x;
 	TextWrap *wrap;
+	GalPB pb;
 
 	eint x, y, h;
 	eint ox, oy, oh;
