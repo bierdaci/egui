@@ -138,10 +138,10 @@ static eint decode_header(const euchar *BFH, const euchar *BIH, struct bmp_conte
 
 	if (header->height < 0) {
 		header->height = -header->height;
-		header->negative = 1;
+		header->negative = 0;
 	}
 	else
-		header->negative = 0;
+		header->negative = 1;
 
 	if (header->negative
 			&& context->compressed != BI_RGB 
@@ -403,7 +403,8 @@ static void one_line32(const euchar *src, struct bmp_context_state *context)
 		eint g_lshift, g_rshift;
 		eint b_lshift, b_rshift;
 		eint a_lshift, a_rshift;
-		euint8 v, r, g, b, a;
+		euint32 v;
+		euchar r, g, b, a;
 
 		r_lshift = 8 - context->r_bits;
 		g_lshift = 8 - context->g_bits;
@@ -441,8 +442,6 @@ static void one_line32(const euchar *src, struct bmp_context_state *context)
 			con->set_x(con, -1, r, g, b, 0xff);
 		}
 	}
-
-	return;
 }
 
 static void one_line24(const euchar *buf, struct bmp_context_state *context)
@@ -456,8 +455,6 @@ static void one_line24(const euchar *buf, struct bmp_context_state *context)
 		euint8 b = buf[x * 3 + 2];
 		con->set_x(con, -1, r, g, b, 0xff);
 	}
-
-	return;
 }
 
 static void one_line16(const euchar *src, struct bmp_context_state *context)
@@ -479,9 +476,10 @@ static void one_line16(const euchar *src, struct bmp_context_state *context)
 		b_rshift = context->b_bits - b_lshift;
 
 		for (x = 0; x < context->header.width; x++) {
-			euint8 v, r, g, b;
+			euint16 v;
+			euchar r, g, b;
 
-			v = (eint)src[0] | ((eint)src[1] << 8);
+			v = src[0] | (src[1] << 8);
 
 			r = (v & context->r_mask) >> context->r_shift;
 			g = (v & context->g_mask) >> context->g_shift;
@@ -497,9 +495,10 @@ static void one_line16(const euchar *src, struct bmp_context_state *context)
 	}
 	else {
 		for (x = 0; x < context->header.width; x++) {
-			euint8 v, r, g, b;
+			euint16 v;
+			euchar r, g, b;
 
-			v = src[0] | (src[1] << 8);
+			v = src[0] | ((eushort)src[1] << 8);
 
 			r = (v >> 10) & 0x1f;
 			g = (v >> 5) & 0x1f;
