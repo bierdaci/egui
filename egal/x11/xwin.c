@@ -39,7 +39,7 @@ static eGeneType x11_genetype_drawable(void);
 static eGeneType x11_genetype_surface(void);
 
 static void x11_drawable_init(GalDrawable, Window, eint, eint, eint);
-static GalWindow   x11_wait_event(GalEvent *);
+static GalWindow   x11_wait_event(GalEvent *, bool);
 static GalWindow   x11_window_new(GalWindowAttr *);
 static GalDrawable x11_drawable_new(eint, eint, bool);
 static GalImage   *x11_image_new(eint, eint, bool);
@@ -48,10 +48,10 @@ static GalCursor x11_cursor_new(GalCursorType);
 static GalCursor x11_cursor_new_name(const echar *);
 static GalCursor x11_cursor_new_pixbuf(GalPixbuf *, eint, eint);
 static void x11_image_free(GalImage *);
-static void x11_composite(GalDrawable, int, int, GalDrawable, int, int, int, int);
-static void x11_composite_image(GalDrawable, int, int, GalImage *, int, int, int, int);
+static void x11_composite(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
+static void x11_composite_image(GalDrawable, GalPB, int, int, GalImage *, int, int, int, int);
 static void x11_composite_subwindow(GalWindow, int, int, int, int);
-static void x11_draw_drawable(GalDrawable, GalPB, int, int, GalDrawable, int, int, int, int);
+static void x11_draw_drawable(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 
 typedef struct _GalDrawableX11	GalDrawableX11;
 typedef struct _GalSurfaceX11	GalSurfaceX11;
@@ -85,6 +85,7 @@ struct _GalWindowX11 {
 	GalWindowX11 *parent;
 	Window xid;
 	GalCursor cursor;
+	bool is_configure;
 
 	list_t list;
 	list_t child_head;
@@ -304,6 +305,8 @@ static eint x11_compare_func(eConstPointer a, eConstPointer b)
 }
 
 static eint x11_window_get_attr(GalWindow, GalWindowAttr *);
+GalFont cairo_create_font(GalPattern *pattern);
+GalFont ft2_create_font(GalPattern *pattern);
 int x11_wmananger_init(GalWindowManager *wm)
 {
 	GalWindowAttr attributes;
@@ -364,6 +367,11 @@ int x11_wmananger_init(GalWindowManager *wm)
 	wm->image_free   = x11_image_free;
 	wm->drawable_new = x11_drawable_new;
 	wm->pb_new       = x11_pb_new;
+#ifdef _GAL_SUPPORT_CAIRO
+	wm->create_font  = cairo_create_font;
+#else
+	wm->create_font  = ft2_create_font;
+#endif
 
 	wm->cursor_new   = x11_cursor_new;
 	wm->cursor_new_name   = x11_cursor_new_name;
@@ -423,17 +431,27 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 		case ConfigureNotify:
 		{
 			XConfigureEvent *e = &event->xconfigure;
-			static eint old_w = -1;
-			static eint old_h = -1;
-			if (old_w == e->width && old_h == e->height)
-				return false;
-			old_w = e->width;
-			old_h = e->height;
-			ent->type = GAL_ET_CONFIGURE;
-			ent->e.configure.rect.x = e->x;
-			ent->e.configure.rect.y = e->y;
-			ent->e.configure.rect.w = e->width;
-			ent->e.configure.rect.h = e->height;
+			GalWindowX11 *xwin = X11_WINDOW_DATA(x11_find_gwin(event->xany.window));
+			if (!xwin->is_configure) {
+				xwin->is_configure = true;
+				ent->type = GAL_ET_CONFIGURE;
+				ent->e.configure.rect.x = e->x;
+				ent->e.configure.rect.y = e->y;
+				ent->e.configure.rect.w = e->width;
+				ent->e.configure.rect.h = e->height;
+			}
+			else {
+				if (xwin->attr.type != GalWindowChild) {
+#ifdef _GAL_SUPPORT_CAIRO
+					GalSurfaceX11 *xface =
+						X11_SURFACE_DATA(X11_DRAWABLE_DATA(OBJECT_OFFSET(xwin))->surface);
+					cairo_xlib_surface_set_size(xface->surface, e->width, e->height);
+#endif
+					ent->type = GAL_ET_RESIZE;
+					ent->e.resize.w = e->width;
+					ent->e.resize.h = e->height;
+				}
+			}
 			return true;
 		}
 		case KeyPress:
@@ -545,14 +563,14 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 	return false;
 }
 
-static GalWindow x11_wait_event(GalEvent *gent)
+static GalWindow x11_wait_event(GalEvent *gent, bool recv)
 {
 	XEvent xent;
 
 #if 0
 	XIfEvent(x11_dpy, &xent, x11_predicate, gent);
 #else
-	while (XPending(x11_dpy)) {
+	while (recv && XPending(x11_dpy)) {
 		XNextEvent(x11_dpy, &xent);
 		if (x11_predicate(x11_dpy, &xent, gent)) {
 			gent->window = x11_find_gwin(xent.xany.window);
@@ -606,8 +624,8 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 	XSetWindowAttributes xattribs;
 	GalWindow  window  = OBJECT_OFFSET(child);
 	eulong xevent_mask = 0;
-	euint  wclass = 0;;
-	eint   depth  = 0;;
+	euint  wclass = 0;
+	eint   depth  = 0;
 
 	e_memset(&xattribs, 0, sizeof(xattribs));
 
@@ -1094,9 +1112,9 @@ static INLINE bool xpb_init_gc(GalPBX11 *xpb)
 	return true;
 }
 
-static void x11_draw_drawable(GalDrawable dst,
-		GalPB pb, int x, int y,
-		GalDrawable src, int sx, int sy, int w, int h)
+static void x11_draw_drawable(
+		GalDrawable dst, GalPB pb, int x, int y,
+		GalDrawable src, GalPB pb1, int sx, int sy, int w, int h)
 {
 	GalDrawableX11 *xsrc = X11_DRAWABLE_DATA(src);
 	GalDrawableX11 *xdst = X11_DRAWABLE_DATA(dst);
@@ -1350,25 +1368,25 @@ static eint x11_window_get_attr(GalWindow window, GalWindowAttr *attr)
 	return 0;
 }
 
-static int x11_set_foreground(GalPB pb, eulong color)
+static euint x11_set_foreground(GalPB pb, euint color)
 {
 	GalPBX11 *xpb = X11_PB_DATA(pb);
 	xpb->attr.foreground = color;
 	if (xpb_init_gc(xpb))
 		return XSetForeground(x11_dpy, xpb->gc, color);
-	return -1;
+	return 0;
 }
 
-static int x11_set_background(GalPB pb, eulong color)
+static euint x11_set_background(GalPB pb, euint color)
 {
 	GalPBX11 *xpb = X11_PB_DATA(pb);
 	xpb->attr.background = color;
 	if (xpb_init_gc(xpb))
 		return XSetBackground(x11_dpy, xpb->gc, color);
-	return -1;
+	return 0;
 }
 
-static eulong x11_get_foreground(GalPB pb)
+static euint x11_get_foreground(GalPB pb)
 {
 	GalPBX11 *xpb = X11_PB_DATA(pb);
 #if 0
@@ -1380,7 +1398,7 @@ static eulong x11_get_foreground(GalPB pb)
 #endif
 }
 
-static eulong x11_get_background(GalPB pb)
+static euint x11_get_background(GalPB pb)
 {
 	GalPBX11 *xpb = X11_PB_DATA(pb);
 #if 0
@@ -1546,6 +1564,7 @@ static GalImage *x11_image_new(eint w, eint h, bool alpha)
 	ximg->pb         = 0;
 	ximg->pixmap     = 0;
 
+	gimg->negative   = 1;
 	gimg->alpha      = alpha;
 	gimg->pixels     = (euint8 *)ximg->ximg->data;
 	gimg->depth      = gimg->pixelbytes * 8;
@@ -1780,9 +1799,9 @@ static XRenderPictFormat *GetRenderARGB32Format(Display *dpy)
 	return pictformat;
 }
 
-static void x11_composite(GalDrawable dst,
-		int dx, int dy,
-		GalDrawable src, int sx, int sy, int w, int h)
+static void x11_composite(
+		GalDrawable dst, GalPB pb1, int dx, int dy,
+		GalDrawable src, GalPB pb2, int sx, int sy, int w, int h)
 {
 	GalDrawableX11 *xdst = X11_DRAWABLE_DATA(dst);
 	GalDrawableX11 *xsrc = X11_DRAWABLE_DATA(src);
@@ -1830,7 +1849,7 @@ static void x11_composite(GalDrawable dst,
 			w, h);
 }
 
-static void x11_composite_image(GalDrawable dst,
+static void x11_composite_image(GalDrawable dst, GalPB pb,
 		int dx, int dy,
 		GalImage *img, int sx, int sy, int w, int h)
 {
@@ -1842,7 +1861,7 @@ static void x11_composite_image(GalDrawable dst,
 	}
 	x11_draw_image(ximg->pixmap, ximg->pb, sx, sy, img, sx, sy, w, h);
 
-	x11_composite(dst, dx, dy, ximg->pixmap, sx, sy, w, h);
+	x11_composite(dst, pb, dx, dy, ximg->pixmap, 0, sx, sy, w, h);
 }
 
 static void x11_composite_subwindow(GalWindow window, int x, int y, int w, int h)
@@ -1851,7 +1870,7 @@ static void x11_composite_subwindow(GalWindow window, int x, int y, int w, int h
 
 	if (!child->parent)
 		return;
-	x11_composite(OBJECT_OFFSET(child->parent), x, y, window, x, y, w, h);
+	x11_composite(OBJECT_OFFSET(child->parent), 0, x, y, window, 0, x, y, w, h);
 }
 
 static eint x11_get_mark(GalDrawable drawable)
