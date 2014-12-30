@@ -264,9 +264,11 @@ static eint window_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 {
 	GuiBox *box = GUI_BOX_DATA(hobj);
 
+#ifdef WIN32
 	bool update = false;
 	if (wid->rect.w != resize->w || wid->rect.h != resize->h)
 		update = true;
+#endif
 
 	wid->rect.w = resize->w;
 	wid->rect.h = resize->h;
@@ -277,7 +279,9 @@ static eint window_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 				resize->h - box->border_width * 2);
 	}
 
+#ifdef WIN32
 	if (update)
+#endif
 		egui_update(hobj);
 
 	return 0;

@@ -17,6 +17,7 @@ static eint bin_wheelforward(eHandle, GalEventMouse *);
 static eint bin_wheelbackward(eHandle, GalEventMouse *);
 static eint bin_keydown(eHandle, GalEventKey *);
 static eint bin_keyup(eHandle, GalEventKey *);
+static eint bin_imeinput(eHandle hobj, GalEventImeInput *);
 static void bin_put(eHandle, eHandle);
 static void bin_hide(eHandle);
 static void bin_remove(eHandle, eHandle);
@@ -101,6 +102,7 @@ static void bin_init_orders(eGeneType new, ePointer this)
 	o->mbuttondown   = bin_mbuttondown;
 	o->wheelforward  = bin_wheelforward;
 	o->wheelbackward = bin_wheelbackward;
+	o->imeinput      = bin_imeinput;
 
 	b->next_child    = bin_next_child;
 	b->switch_focus  = bin_switch_focus;
@@ -432,6 +434,14 @@ static eint bin_keyup(eHandle hobj, GalEventKey *ent)
 	GuiBin *bin = GUI_BIN_DATA(hobj);
 	if (bin->focus)
 		e_signal_emit(bin->focus, SIG_KEYUP, ent);
+	return 0;
+}
+
+static eint bin_imeinput(eHandle hobj, GalEventImeInput *ent)
+{
+	GuiBin *bin = GUI_BIN_DATA(hobj);
+	if (bin->focus)
+		e_signal_emit(bin->focus, SIG_IME_INPUT, ent);
 	return 0;
 }
 

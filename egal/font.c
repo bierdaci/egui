@@ -89,7 +89,7 @@ eint egal_text_width(GalFont font, const echar *text, eint len)
 	eint i;
 	for (i = 0; i < len; i++) {
 		GalRect extent;
-		eunichar ichar = e_uni_get_char(text + nchar);
+		eunichar ichar = e_uni_get_char((const euchar *)text + nchar);
 		nchar += e_uni_char_len(text + nchar);
 		egal_unichar_extents(font, ichar, &extent);
 		width += extent.w;
@@ -104,7 +104,7 @@ eint egal_text_height(GalFont font, const echar *text, eint len)
 	eint nchar = 0;
 	eint i;
 	for (i = 0; i < len; i++) {
-		eint ichar = e_uni_get_char(text + nchar);
+		eint ichar = e_uni_get_char((const euchar *)text + nchar);
 		nchar += e_uni_char_len(text + nchar);
 		if (ichar == '\n')
 			line++;

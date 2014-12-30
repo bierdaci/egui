@@ -380,6 +380,7 @@ typedef enum {
 	GAL_ET_MBUTTONUP,
 	GAL_ET_WHEELFORWARD,
 	GAL_ET_WHEELBACKWARD,
+	GAL_ET_IME_INPUT,
 	GAL_ET_ENTER,
 	GAL_ET_LEAVE,
 	GAL_ET_FOCUS_IN,
@@ -426,6 +427,11 @@ typedef struct {
 } GalEventMouse;
 
 typedef struct {
+	eint   len;
+	euchar data[sizeof(eHandle) * 7];
+} GalEventImeInput;
+
+typedef struct {
 	eHandle args[8];
 } GalEventPrivate;
 
@@ -440,6 +446,7 @@ struct _GalEvent {
 		GalEventConfigure configure;
 		GalEventKey       key;
 		GalEventMouse     mouse;
+		GalEventImeInput  imeinput;
 	} e;
 };
 

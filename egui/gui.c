@@ -111,6 +111,9 @@ static esig_t event_to_signal(GalEvent *event)
 		case GAL_ET_WHEELBACKWARD:
 			signal = SIG_WHEELBACKWARD;
 			break;
+		case GAL_ET_IME_INPUT:
+			signal = SIG_IME_INPUT;
+			break;
 		case GAL_ET_ENTER:
 			signal = SIG_ENTER;
 			break;

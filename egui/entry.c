@@ -323,6 +323,12 @@ static void entry_insert_text(eHandle hobj, const echar *chars, eint nchar)
 	entry_insert_to_cursor(hobj, GUI_ENTRY_DATA(hobj), chars, nchar);
 }
 
+static eint entry_imeinput(eHandle hobj, GalEventImeInput *ent)
+{
+	entry_insert_to_cursor(hobj, GUI_ENTRY_DATA(hobj), (echar *)ent->data, ent->len);
+	return 0;
+}
+
 static eint entry_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 {
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
@@ -358,7 +364,7 @@ static void entry_set_max(eHandle hobj, eint size)
 static void entry_set_text(eHandle hobj, const echar *chars, eint clen)
 {
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
-	const  echar *p = chars;
+	euchar *p = (euchar *)chars;
 
 	eint i;
 	eint nchar = 0;
@@ -485,6 +491,7 @@ static void entry_init_orders(eGeneType new, ePointer this)
 	e->lbuttonup      = entry_lbuttonup;
 	e->mousemove      = entry_mousemove;
 	e->lbuttondown    = entry_lbuttondown;
+	e->imeinput       = entry_imeinput;
 
 	s->insert_text    = entry_insert_text;
 	s->set_text       = entry_set_text;
@@ -888,7 +895,7 @@ static void entry_delete_from_offset(eHandle hobj, GuiEntry *entry, eint ioff, e
 static void insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *chars, eint clen)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
-	const echar *p = chars;
+	euchar *p = (euchar *)chars;
 
 	eint nchar, i, nw, pw;
 	eint ioff, coff;
@@ -1072,7 +1079,7 @@ void egui_entry_set_visibility(eHandle hobj, bool visible)
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
 	eint i;
 
-	eunichar ichar = e_uni_get_char(_("*"));
+	eunichar ichar = e_uni_get_char((euchar *)"*");
 
 	egal_get_glyph(entry->font, ichar, &entry->glyph);
 	entry->glyph_w = entry->glyph.w;

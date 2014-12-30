@@ -5,9 +5,7 @@
 #include "drawable.h"
 
 static void drawable_init_orders(eGeneType new, ePointer this);
-static eint drawable_init  (eHandle, eValist vp);
-static eint drawable_expose_bg(eHandle, GuiWidget *, GalEventExpose *);
-
+static eint drawable_init(eHandle, eValist vp);
 eGeneType egui_genetype_drawable(void)
 {
 	static eGeneType gtype = 0;
@@ -27,28 +25,21 @@ eGeneType egui_genetype_drawable(void)
 
 static void drawable_init_orders(eGeneType new, ePointer this)
 {
-	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
-	eCellOrders     *c = e_genetype_orders(new, GTYPE_CELL);
-
-	w->expose_bg  = drawable_expose_bg;
-	c->init       = drawable_init;
-}
-
-static eint drawable_expose_bg(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
-{
-	egal_set_foreground(ent->pb, 0xaaaaaa);
-	egal_fill_rect(wid->drawable, ent->pb, ent->rect.x, ent->rect.y, ent->rect.w, ent->rect.h);
-	return 0;
+	eCellOrders *c = e_genetype_orders(new, GTYPE_CELL);
+	c->init = drawable_init;
 }
 
 static eint drawable_init(eHandle hobj, eValist vp)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+	
+	eint w = e_va_arg(vp, eint);
+	eint h = e_va_arg(vp, eint);
 
-	wid->rect.w = 1;
-	wid->rect.h = 1;
-	wid->min_w  = 1;
-	wid->min_h  = 1;
+	wid->rect.w = w;
+	wid->rect.h = h;
+	wid->min_w  = w;
+	wid->min_h  = h;
 	wid->max_w  = 0;
 	wid->max_h  = 0;
 	egui_set_status(hobj, GuiStatusVisible | GuiStatusActive | GuiStatusMouse);
@@ -56,8 +47,8 @@ static eint drawable_init(eHandle hobj, eValist vp)
 	return e_signal_emit(hobj, SIG_REALIZE);
 }
 
-eHandle egui_drawable_new(void)
+eHandle egui_drawable_new(eint w, eint h)
 {
-	return e_object_new(GTYPE_DRAWABLE);
+	return e_object_new(GTYPE_DRAWABLE, w, h);
 }
 

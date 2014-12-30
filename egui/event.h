@@ -19,6 +19,7 @@
 #define SIG_MBUTTONUP					event_signal_mbuttonup
 #define SIG_WHEELFORWARD				event_signal_wheelforward
 #define SIG_WHEELBACKWARD				event_signal_wheelbackward
+#define SIG_IME_INPUT					event_signal_ime_input
 #define SIG_FOCUS_IN					event_signal_focus_in
 #define SIG_FOCUS_OUT					event_signal_focus_out
 #define SIG_ENTER						event_signal_enter
@@ -46,6 +47,8 @@ struct _GuiEventOrders {
 	eint (*wheelforward) (eHandle, GalEventMouse *);
 	eint (*wheelbackward)(eHandle, GalEventMouse *);
 
+	eint (*imeinput)     (eHandle, GalEventImeInput *);
+
 	eint (*enter)        (eHandle, eint, eint);
 	eint (*leave)        (eHandle);
 
@@ -68,6 +71,7 @@ extern esig_t event_signal_mbuttondown;
 extern esig_t event_signal_mbuttonup;
 extern esig_t event_signal_wheelforward;
 extern esig_t event_signal_wheelbackward;
+extern esig_t event_signal_ime_input;
 extern esig_t event_signal_focus_in;
 extern esig_t event_signal_focus_out;
 extern esig_t event_signal_enter;

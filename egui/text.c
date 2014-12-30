@@ -482,6 +482,12 @@ static void text_insert_text(eHandle hobj, const echar *text, eint nchar)
 	text_set_scrollbar(t, t->cursor.y);
 }
 
+static eint text_imeinput(eHandle hobj, GalEventImeInput *ent)
+{
+	text_insert_text(hobj, (echar *)ent->data, ent->len);
+	return 0;
+}
+
 static void text_hook_v(eHandle hobj, eHandle hook)
 {
 	egui_adjust_hook(GUI_TEXT_DATA(hobj)->vadj, hook);
@@ -528,6 +534,7 @@ static void text_init_orders(eGeneType new, ePointer this)
 	e->lbuttonup      = text_lbuttonup;
 	e->mousemove      = text_mousemove;
 	e->lbuttondown    = text_lbuttondown;
+	e->imeinput       = text_imeinput;
 
 	s->insert_text    = text_insert_text;
 	s->set_text       = text_set_text;
@@ -547,7 +554,7 @@ static void text_init_orders(eGeneType new, ePointer this)
 static INLINE eint get_space_width(GalFont font)
 {
 	GalGlyph glyph;
-	egal_get_glyph(font, e_uni_get_char((echar *)" "), &glyph);
+	egal_get_glyph(font, e_uni_get_char((euchar *)" "), &glyph);
 	return glyph.w;
 }
 
@@ -575,6 +582,7 @@ static eint text_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 	text_wrap(hobj, text);
 	if (text->cursor.line)
 		text_set_cursor(hobj, text, text->cursor.line, NULL, text->cursor.ioff, false);
+	egui_update(hobj);
 
 	return 0;
 }
@@ -1086,7 +1094,7 @@ static void line_load_glyphs(TextLine *line, GalFont font)
 {
 	eint nchar, i, n;
 	eunichar ichar;
-	const echar *p;
+	euchar *p;
 
 	if (line->nichar == 0 || line->load_nichar == line->nichar)
 		return;
@@ -1104,7 +1112,7 @@ static void line_load_glyphs(TextLine *line, GalFont font)
 	}
 	e_memset(line->underlines, 0, n);
 
-	p     = line->chars;
+	p     = (euchar *)line->chars;
 	i     = line->load_nichar;
 	nchar = line->load_nchar;
 	for ( ; i < n; i++) {
@@ -1297,8 +1305,11 @@ static ePointer insert_data(ePointer chars, eint c_size,
 	if (!chars)
 		chars = e_malloc(c + d);
 	else {
+		echar buf[100];
 		chars = e_realloc(chars, c + d);
-		e_memmove((char *)chars + o + d, (char *)chars + o, c - o);
+		e_memcpy(buf, (char *)chars + o, c - o);
+		e_memcpy((char *)chars + o + d, buf, c  - o);
+		//e_memmove((char *)chars + o + d, (char *)chars + o, c - o);
 	}
 
 	if (data) e_memcpy((char *)chars + o, data, d);
@@ -1520,7 +1531,7 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 	do {
 		LineNode *node = &nds[count];
 
-		const echar *p;
+		euchar *p;
 		eint i, ioff, coff, nchar;
 		bool is_underline;
 
@@ -1584,7 +1595,7 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 		line->coffsets[line->nichar] = line->nchar;
 
 		nchar = 0;
-		p = chars + node->coff;
+		p = (euchar *)chars + node->coff;
 		is_underline = (text->is_underline || (ioff > 0 && line->underlines[ioff - 1])) ? 1 : 0;
 		for (i = 0; i < node->nichar; i++) {
 			eunichar ichar;
@@ -1597,6 +1608,7 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 			else
 				line->underlines[ioff + i] = 0;
 		}
+		line->load_nichar = line->nichar;
 
 		if (count == 0 && line->glyphs[ioff].x < bear_x)
 			bear_x = line->glyphs[ioff].x;
@@ -1636,8 +1648,8 @@ static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *char
 	LineNode  tmp[INSERT_MAX];
 	LineNode *node_head = tmp;
 
-	eint         n = 0;
-	const echar *p = chars;
+	eint    n = 0;
+	euchar *p = (euchar *)chars;
 
 	e_memset(tmp, 0, sizeof(tmp));
 	do {
@@ -1657,7 +1669,7 @@ static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *char
 		}
 
 		node = &node_head[n];
-		node->coff = p - chars;
+		node->coff = p - (euchar *)chars;
 		do {
 			ichar  = e_uni_get_char(p + nchar);
 			nchar += e_uni_char_len(p + nchar);

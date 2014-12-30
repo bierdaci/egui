@@ -185,7 +185,8 @@ void egal_composite(GalDrawable dst, GalPB pb, int dx, int dy, GalDrawable src, 
 
 void egal_composite_image(GalDrawable drawable, GalPB pb, int dx, int dy, GalImage *image, int sx, int sy, int w, int h)
 {
-	GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, pb, dx, dy, image, sx, sy, w, h);
+	if (image->alpha)
+		GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, pb, dx, dy, image, sx, sy, w, h);
 }
 
 void egal_composite_subwindow(GalDrawable drawable, int x, int y, int w, int h)
@@ -200,10 +201,7 @@ void egal_draw_drawable(GalDrawable drawable, GalPB pb, int dx, int dy, GalDrawa
 
 void egal_draw_image(GalDrawable drawable, GalPB pb, int dx, int dy, GalImage *image, int sx, int sy, int w, int h)
 {
-	if (image->alpha)
-		GAL_DRAWABLE_ORDERS(drawable)->composite_image(drawable, pb, dx, dy, image, sx, sy, w, h);
-	else
-		GAL_DRAWABLE_ORDERS(drawable)->draw_image(drawable, pb, dx, dy, image, sx, sy, w, h);
+	GAL_DRAWABLE_ORDERS(drawable)->draw_image(drawable, pb, dx, dy, image, sx, sy, w, h);
 }
 
 void egal_draw_point(GalDrawable drawable, GalPB pb, int x, int y)

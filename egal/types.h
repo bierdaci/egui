@@ -18,6 +18,7 @@
 #include <gl/gl.h>
 #pragma comment(lib,"opengl32.lib")
 #pragma comment(lib, "msimg32.lib")
+#pragma comment(lib, "imm32.lib")
 #elif linux
 #include <GL/glx.h>
 #include <GL/glu.h>
