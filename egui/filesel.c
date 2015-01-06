@@ -1,6 +1,3 @@
-#include <sys/types.h>
-#include <dirent.h>
-
 #include "gui.h"
 #include "widget.h"
 #include "event.h"
@@ -49,7 +46,7 @@ eGeneType egui_genetype_filesel(void)
 
 		gtype = e_register_genetype(&info, GTYPE_DIALOG, NULL);
 
-		res      = egui_res_find(GUI_RES_HANDLE, _("filesel")); 
+		res      = egui_res_find(GUI_RES_HANDLE, _("filesel"));
 		icon_dir = egui_res_find_item(res, _("dir"));
 	}
 	return gtype;
@@ -120,25 +117,33 @@ static void add_hlight_file_list(GuiFilesel *fs, const echar *path, bool empty)
 	struct dirent *ent;
 	ClsItemBar *ibar;
 
-	if (!(dir = opendir((const char *)path)))
+	if (!(dir = e_opendir(path)))
 		return;
 
 	fs->len = e_strlen(path);
 	if (fs->path != path)
 		e_strcpy(fs->path, path);
+#ifdef linux
 	if (fs->path[fs->len - 1] != '/') {
 		e_strcat(fs->path, _("/"));
 		fs->len++;
 	}
+#elif WIN32
+	if (fs->path[fs->len - 1] != '\\') {
+		e_strcat(fs->path, _("\\"));
+		fs->len++;
+	}
+#endif
 	egui_set_strings(fs->addr, fs->path);
 	if (empty)
 		egui_clist_empty(fs->clist);
 
-	while ((ent = readdir(dir))) {
+	while ((ent = e_readdir(dir))) {
+#ifdef linux
 		if (ent->d_name[0] == '.' &&
 				(!ent->d_name[1] || ent->d_name[1] == '.' || !fs->is_hide))
 			continue;
-
+#endif
 		ibar = egui_clist_ibar_new_valist(fs->clist, (echar *)ent->d_name, _(" "));
 		ibar->add_data = (ePointer)(ent->d_type == DT_DIR);
 		if (ibar->add_data)
@@ -147,7 +152,7 @@ static void add_hlight_file_list(GuiFilesel *fs, const echar *path, bool empty)
 	}
 	egui_clist_set_hlight(fs->clist, egui_clist_get_first(fs->clist));
 
-	closedir(dir);
+	e_closedir(dir);
 }
 
 static eint (*bin_lbuttondown)(eHandle, GalEventMouse *);
@@ -318,9 +323,15 @@ static eint up_dir_func(eHandle hobj, ePointer data)
 	GuiFilesel *fs = data;
 	if (fs->len > 1) {
 		echar *p;
+#ifdef linux
 		if (fs->path[fs->len - 1] == '/')
 			fs->path[fs->len - 1] = 0;
 		p = e_strrchr(fs->path, '/');
+#elif WIN32
+		if (fs->path[fs->len - 1] == '\\')
+			fs->path[fs->len - 1] = 0;
+		p = e_strrchr(fs->path, '\\');
+#endif
 		if (p == fs->path)
 			p[1] = 0;
 		else
@@ -378,10 +389,18 @@ static eint filesel_init_data(eHandle hobj, ePointer this)
 	{
 		eint size = e_strlen(ibar->add_data);
 		ibar->add_data = e_realloc(ibar->add_data, size + 2);
+#ifdef linux
 		e_strcat(ibar->add_data, _("/"));
+#elif WIN32
+		e_strcat(ibar->add_data, _("\\"));
+#endif
 	}
 	ibar = egui_clist_append_valist(fs->locat_list, _("Root"));
+#ifdef linux
 	ibar->add_data = "/";
+#elif WIN32
+	ibar->add_data = "\\";
+#endif
 	egui_set_min(fs->locat_list, 100, 50);
 	egui_request_resize(fs->locat_list, 150, 100);
 	egui_set_expand_h(fs->locat_list, false);

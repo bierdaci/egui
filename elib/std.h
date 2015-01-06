@@ -7,6 +7,8 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#include <sys/types.h>
+
 #ifdef WIN32
 #define _WIN32_WINNT	0x0500
 #include <windows.h>
@@ -18,6 +20,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <dirent.h>
 
 #endif
 
@@ -54,14 +57,71 @@ int gettimeofday(struct timeval *tp, void *tzp);
 #define e_thread_condattr_t		CRITICAL_SECTION
 #define e_sem_t					handle_sem_t
 
+enum {
+    DT_UNKNOWN = 0,
+    DT_FIFO    = 1,
+    DT_CHR     = 2,
+    DT_DIR     = 4,
+    DT_BLK     = 6,
+    DT_REG     = 8,
+    DT_LNK     = 10,
+    DT_SOCK    = 12,
+    DT_WHT     = 14
+};
+
+typedef struct {
+    eint     dd_fd;
+    elong    dd_loc;
+    elong    dd_size;
+    echar    *dd_buf;
+    eint     dd_len;
+    elong    dd_seek;
+	HANDLE  hFind;
+} DIR;
+
+struct dirent {
+     elong  d_ino;
+     off_t  d_off;
+     eulong d_reclen;
+     euchar d_type;
+     echar  d_name[256];
+};
+
+#define __dirfd(dp)    ((dp)->dd_fd)
+
+DIR *e_opendir(const echar *);
+struct dirent *e_readdir(DIR *);
+void e_rewinddir(DIR *);
+eint e_closedir(DIR *);
+
 #else
 
 #define e_thread_t				pthread_t
 #define e_thread_mutexattr_t	pthread_mutexattr_t
 #define e_thread_mutex_t		pthread_mutex_t
-#define e_thread_cond_t		pthread_cond_t
-#define e_thread_condattr_t    pthread_condattr_t
+#define e_thread_cond_t			pthread_cond_t
+#define e_thread_condattr_t		pthread_condattr_t
 #define e_sem_t					sem_t
+
+static INLINE DIR *e_opendir(const char *path)
+{
+	return opendir(path);
+}
+
+static INLINE struct dirent *e_readdir(DIR *dir)
+{
+	return readdir(dir);
+}
+
+static INLINE void e_rewinddir(DIR *dir)
+{
+	rewinddir(dir);
+}
+
+static INLINE eint e_closedir(DIR *dir)
+{
+	return closedir(dir);
+}
 
 #endif
 

@@ -14,7 +14,7 @@ typedef enum {false = 0, true = 1} bool;
 
 #ifndef __ELIB_STD_H__
 #endif
-
+typedef enum {efalse = 0, etrue = 1} ebool;
 typedef long				elong;
 typedef short				eint16;
 typedef int					eint;

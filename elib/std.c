@@ -121,6 +121,56 @@ eint e_sem_getvalue(e_sem_t *sem, eint *val)
 	return 0;
 }
 
+DIR *e_opendir(const echar *path)
+{
+	WIN32_FIND_DATA FindData;
+	DIR *dir;
+	echar buf[512];
+
+	e_sprintf(buf, "%s\\*.*", path);
+
+	if (!(dir = (DIR *)e_calloc(sizeof(DIR), 1)))
+		return NULL;
+
+	dir->hFind = FindFirstFile(buf, &FindData);
+	if (dir->hFind == INVALID_HANDLE_VALUE) {
+		e_free(dir);
+		return NULL;
+	}
+
+	dir->dd_fd = 0;
+
+	return dir;
+}
+
+struct dirent *e_readdir(DIR *dir)
+{
+	static struct dirent dirent;
+	WIN32_FIND_DATA FileData;
+
+	if (!FindNextFile(dir->hFind, &FileData))
+		return 0;
+
+	e_strncpy(dirent.d_name, FileData.cFileName, 256);
+	dirent.d_reclen = e_strlen(dirent.d_name);
+	dirent.d_reclen = FileData.nFileSizeLow;
+
+	if (FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		dirent.d_type = DT_DIR;
+	else if (FileData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL)
+		dirent.d_type = DT_REG;
+	else
+		dirent.d_type = DT_UNKNOWN;
+
+	return &dirent;
+}
+
+eint e_closedir(DIR *dir)
+{
+	free(dir);
+	return 0;
+}
+
 #else
 
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)

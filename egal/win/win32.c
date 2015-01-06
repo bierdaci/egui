@@ -158,7 +158,7 @@ static void w32_get_event(GalEvent *gent)
 		DispatchMessage(&msg);
 	}
 	else {
-		//Sleep(5);
+		//Sleep(1);
 		gent->type = GAL_ET_TIMEOUT;
 		egal_add_event_to_queue(gent);
 	}
@@ -481,16 +481,6 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			egal_add_event_to_queue(&gent);
 			break;
 
-		//case WM_INPUTLANGCHANGEREQUEST:
-		//	return 1;
-
-		case WM_IME_COMPOSITION:
-			//ImmGetCompositionString();
-			break;
-
-		case WM_IME_CHAR:
-			break;
-
 		case WM_CHAR:
 			break;
 
@@ -516,10 +506,6 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			gent.type = GAL_ET_FOCUS_OUT;
 			gent.window = find_window(wnd);
 			egal_add_event_to_queue(&gent);
-			break;
-
-		case WM_DESTROY:
-			PostQuitMessage(0);
 			break;
 
 		case WM_PAINT:
@@ -581,16 +567,12 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 		case WM_CLOSE:
-			gent.type = GAL_ET_QUIT;
-			egal_add_event_to_queue(&gent);
-		break;
-
-		case WM_NCACTIVATE:
-			if (w_grab_mouse) {
-				if (W32_WINDOW_DATA(w_grab_mouse)->hwnd == wnd)
-					return 1;
+			gent.window = find_window(wnd);
+			if (gent.window) {
+				gent.type = GAL_ET_DESTROY;
+				egal_add_event_to_queue(&gent);
 			}
-			break;
+		break;
 
 		case WM_GETMINMAXINFO:
 		{
@@ -603,11 +585,52 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		}
+
+		case WM_IME_COMPOSITION:
+		{
+			HIMC himc = ImmGetContext(wnd);
+			gent.window = find_window(wnd);
+			if (gent.window && himc && (lParam & GCS_RESULTSTR)) {
+				euchar buf[128];
+				int len = ImmGetCompositionString(himc, GCS_RESULTSTR, NULL, 0);
+				ImmGetCompositionString(himc, GCS_RESULTSTR, buf, len);
+				gent.type = GAL_ET_IME_INPUT;
+				while (len  > sizeof(eHandle) * 7) {
+					len -= sizeof(eHandle) * 7;
+					gent.e.imeinput.len = sizeof(eHandle) * 7;
+					memcpy(gent.e.imeinput.data, buf, sizeof(eHandle) * 7);
+					egal_add_event_to_queue(&gent);
+				}
+				gent.e.imeinput.len = len;
+				memcpy(gent.e.imeinput.data, buf, len);
+				egal_add_event_to_queue(&gent);
+			}
+			break;
+		}
+/*
+		case WM_IME_KEYDOWN:
+		case WM_INPUTLANGCHANGEREQUEST:
+		case WM_IME_SETCONTEXT:
+		case WM_IME_STARTCOMPOSITION: 
+		case WM_IME_COMPOSITIONFULL:
+		case WM_IME_CHAR:
+		case WM_IME_CONTROL:
+		case WM_IME_ENDCOMPOSITION:
+		case WM_IME_SELECT:
+		case WM_IME_NOTIFY:
 		case WM_NCCALCSIZE:
 		case WM_GETICON:
 		case WM_SETCURSOR:
 		case WM_SHOWWINDOW:
 		case WM_MOVE:
+		case WM_DESTROY:
+*/
+		case WM_NCACTIVATE:
+			if (w_grab_mouse) {
+				if (W32_WINDOW_DATA(w_grab_mouse)->hwnd == wnd)
+					return 1;
+			}
+
 		default:
 			return DefWindowProc(wnd, msg, wParam, lParam);
 	}
@@ -666,9 +689,10 @@ static int  CALLBACK WinProcChild(HWND wnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 static ATOM  RegisterGalClass(GalWindowType type)
 {
-	static ATOM topClass   = 0;
-	static ATOM childClass = 0;
-	static ATOM tempClass  = 0;
+	static ATOM topClass    = 0;
+	static ATOM tempClass   = 0;
+	static ATOM childClass  = 0;
+	static ATOM dialogClass = 0;
 	ATOM kclass;
 	WNDCLASSEX  wce = {0};
 
@@ -699,6 +723,20 @@ static ATOM  RegisterGalClass(GalWindowType type)
 			childClass = RegisterClassEx(&wce);
 		}
 		kclass = childClass;
+	}
+	else if (type == GalWindowDialog) {
+		if (dialogClass == 0) {
+			wce.cbSize = sizeof(wce);
+			wce.style |= CS_SAVEBITS;
+			wce.lpfnWndProc = WinProc;
+			wce.hInstance = GetModuleHandle(0);
+			wce.hIcon = LoadIcon(0, MAKEINTRESOURCE(IDI_WINLOGO));
+			wce.hCursor = LoadCursor(0, MAKEINTRESOURCE(IDC_ARROW));
+			wce.hbrBackground = (HBRUSH)GetStockObject(COLOR_APPWORKSPACE);
+			wce.lpszClassName = "GalWindowDialog";
+			dialogClass = RegisterClassEx(&wce);
+		}
+		kclass = dialogClass;
 	}
 	else if (type == GalWindowTemp) {
 		if (tempClass == 0) {
@@ -792,7 +830,7 @@ static bool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 
 	child->hwnd = CreateWindowEx(dwExStyle,
 		    MAKEINTRESOURCE(kclass),
-		    "test",
+		    "egui",
 		    dwStyle,
 		    child->x, child->y,
 		    child->w, child->h,
@@ -828,7 +866,6 @@ static bool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 		xdraw->handle   = child->hwnd;
 		xdraw->depth    = depth;
 	}
-
 
 	return true;
 }

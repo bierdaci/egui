@@ -1305,11 +1305,8 @@ static ePointer insert_data(ePointer chars, eint c_size,
 	if (!chars)
 		chars = e_malloc(c + d);
 	else {
-		echar buf[100];
 		chars = e_realloc(chars, c + d);
-		e_memcpy(buf, (char *)chars + o, c - o);
-		e_memcpy((char *)chars + o + d, buf, c  - o);
-		//e_memmove((char *)chars + o + d, (char *)chars + o, c - o);
+		e_memmove((char *)chars + o + d, (char *)chars + o, c - o);
 	}
 
 	if (data) e_memcpy((char *)chars + o, data, d);
