@@ -129,6 +129,10 @@ SOURCE=..\event.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\filesel.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\fixed.c
 # End Source File
 # Begin Source File
@@ -233,7 +237,15 @@ SOURCE=..\clist.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\drawable.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\egui.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\event.h
 # End Source File
 # Begin Source File
 
