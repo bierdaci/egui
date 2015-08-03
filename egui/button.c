@@ -169,11 +169,14 @@ static eint button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 	egal_ungrab_pointer(GUI_WIDGET_DATA(top)->window);
 #endif
 	if (button->down) {
+		GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+		eint x = mevent->point.x;
+		eint y = mevent->point.y;
 		button->down = false;
-		egui_update(hobj);
-		if (button->enter) {
+		if (x >= 0 && x < wid->rect.w && y >= 0 && y < wid->rect.h) {
 			e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
 		}
+		egui_update(hobj);
 	}
 
 	return 0;

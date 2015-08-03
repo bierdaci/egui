@@ -844,7 +844,7 @@ eHandle e_object_refer(eHandle hobj)
 	return hobj;
 }
 
-static void invoke_node_free(eObject *obj, eDnaNode *node, eint num)
+static void call_node_free(eObject *obj, eDnaNode *node, eint num)
 {
 	if (node->branch_num > 0) {
 		euchar *base = (euchar *)&node->index[node->branch_num];
@@ -852,7 +852,7 @@ static void invoke_node_free(eObject *obj, eDnaNode *node, eint num)
 		for (j = 0; j < node->branch_num; j++) {
 			eBranchIndex *index = &node->index[j];
 			eDnaNode *n = (eDnaNode *)(base + index->offset);
-			invoke_node_free(obj, n, index->node_num - 1);
+			call_node_free(obj, n, index->node_num - 1);
 		}
 	}
 
@@ -860,7 +860,7 @@ static void invoke_node_free(eObject *obj, eDnaNode *node, eint num)
 		return;
 
 	if (num > 0)
-		invoke_node_free(obj, (eDnaNode *)((euchar *)(node + 1) + node->branch_size), num - 1);
+		call_node_free(obj, (eDnaNode *)((euchar *)(node + 1) + node->branch_size), num - 1);
 
 	if (node->info.free_data) {
 		if (node->info.object_size > 0)
@@ -868,19 +868,6 @@ static void invoke_node_free(eObject *obj, eDnaNode *node, eint num)
 		else
 			node->info.free_data((eHandle)obj, NULL);
 	}
-}
-
-static void e_object_free(eObject *obj, eCellOrders *ors)
-{
-	if (obj->ref_count > 0)
-		return;
-
-	if (ors->free)
-		ors->free((eHandle)obj);
-
-	invoke_node_free(obj, obj->gene->nodes, obj->gene->node_num - 1);
-
-	e_free(obj);
 }
 
 void e_object_unref(eHandle hobj)
@@ -891,12 +878,32 @@ void e_object_unref(eHandle hobj)
 	if (obj->ref_count <= 0)
 		abort();
 
-	obj->ref_count--;
 	if (ors->unref)
 		ors->unref(hobj);
 
 	if (obj->ref_count <= 0)
-		e_object_free(obj, ors);
+		abort();
+
+	if (--obj->ref_count == 0) {
+		if (ors->free)
+			ors->free(hobj);
+		call_node_free(obj, obj->gene->nodes, obj->gene->node_num - 1);
+		e_free(obj);
+	}
+}
+
+void e_object_destroy(eHandle hobj)
+{
+	eObject     *obj = (eObject *)hobj;
+	eCellOrders *ors = (eCellOrders *)obj->gene->orders_base;
+
+	if (obj->ref_count <= 0)
+		abort();
+
+	if (ors->destroy)
+		ors->destroy(hobj);
+
+	e_object_unref(hobj);
 }
 
 static void __object_set_offset(eDnaNode *nodes, eint node_num, euchar *object_base)

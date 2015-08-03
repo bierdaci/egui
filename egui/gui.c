@@ -237,6 +237,9 @@ int egui_main()
 
 		e_timer_loop();
 
+		if (event.window == 0)
+			continue;
+
 		if (event.type == GAL_ET_PRIVATE) {
 			do_private_event(&event);
 		}
@@ -660,8 +663,6 @@ void egui_put(eHandle pobj, eHandle cobj, eint x, eint y)
 
 		union_region_mask(wid);
 
-		e_object_refer(cobj);
-
 		__update_rect(GUI_WIDGET_DATA(pobj), &wid->rect);
 	}
 }
@@ -686,7 +687,6 @@ void egui_add(eHandle pobj, eHandle cobj)
 	if (cw->parent == 0 && ws->add) {
 		ws->add(pobj, cobj);
 		union_region_mask(GUI_WIDGET_DATA(cobj));
-		e_object_refer(cobj);
 	}
 }
 
@@ -829,12 +829,13 @@ void egui_remove(eHandle hobj, bool relay)
 		if (o->remove)
 			o->remove(wid->parent, hobj);
 
-		if (wid->window) {
+		if (wid->window)
 			egal_window_remove(wid->window);
-			wid->window = 0;
+		else {
+			e_object_unref(wid->drawable);
+			wid->drawable = 0;
 		}
 
-		wid->drawable = 0;
 		if (wid->pb) {
 			e_object_unref(wid->pb);
 			wid->pb = 0;
@@ -842,9 +843,6 @@ void egui_remove(eHandle hobj, bool relay)
 
 		if (relay && WIDGET_STATUS_VISIBLE(wid))
 			egui_request_layout_async(wid->parent, 0, 0, 0, false, true);
-
-		wid->parent = 0;
-		e_object_unref(hobj);
 	}
 }
 

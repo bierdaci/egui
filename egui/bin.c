@@ -5,7 +5,6 @@
 
 static void bin_init_orders(eGeneType, ePointer);
 static eint bin_init_data(eHandle, ePointer);
-static void bin_free_data(eHandle, ePointer);
 static eint bin_mousemove(eHandle, GalEventMouse *);
 static eint bin_lbuttonup(eHandle, GalEventMouse *);
 static eint bin_rbuttonup(eHandle, GalEventMouse *);
@@ -42,8 +41,7 @@ eGeneType egui_genetype_bin(void)
 			bin_init_orders,
 			sizeof(GuiBin),
 			bin_init_data,
-			bin_free_data,
-			NULL,
+			NULL, NULL,
 		};
 
 		gtype = e_register_genetype(&info, GTYPE_WIDGET, GTYPE_EVENT, NULL);
@@ -64,15 +62,15 @@ static eint bin_init_data(eHandle hobj, ePointer this)
 	return 0;
 }
 
-static void bin_free_data(eHandle hobj, ePointer this)
+extern eHandle debug_button;
+static void bin_destroy(eHandle hobj)
 {
-	GuiWidget *cw = ((GuiBin *)this)->head;
+	GuiWidget *cw = GUI_BIN_DATA(hobj)->head;
 	while (cw) {
 		GuiWidget *t = cw;
 		cw = cw->next;
-
 		egui_remove(OBJECT_OFFSET(t), true);
-		e_object_unref(OBJECT_OFFSET(t));
+		e_object_destroy(OBJECT_OFFSET(t));
 	}
 }
 
@@ -80,7 +78,10 @@ static void bin_init_orders(eGeneType new, ePointer this)
 {
 	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
 	GuiEventOrders  *o = e_genetype_orders(new, GTYPE_EVENT);
+	eCellOrders     *c = e_genetype_orders(new, GTYPE_CELL);
 	GuiBinOrders    *b = this;
+
+	c->destroy       = bin_destroy;
 
 	w->put           = bin_put;
 	w->hide          = bin_hide;
@@ -804,6 +805,8 @@ static void bin_put(eHandle pobj, eHandle cobj)
 		ws->show(cobj);
 	else
 		ws->hide(cobj);
+
+	e_object_refer(pobj);
 }
 
 static void bin_show(eHandle hobj)
@@ -892,6 +895,9 @@ static void bin_remove(eHandle pobj, eHandle cobj)
 
 	if (!pw->window && !cw->window)
 		remove_sub_window(cobj, cw, GUI_BIN_DATA(cobj));
+
+	e_object_unref(pobj);
+	cw->parent = 0;
 }
 
 eint bin_prev_focus(eHandle hobj, eint val)
