@@ -4,6 +4,7 @@
 
 #include <egal/egal.h>
 #include "win32.h"
+#include "xcursors.h"
 
 static GalWindow   w32_wait_event(GalEvent *, bool);
 static GalWindow   w32_window_new(GalWindowAttr *);
@@ -17,7 +18,6 @@ static void w32_get_event(GalEvent *gent);
 static void w32_image_free(GalImage *);
 static void w32_composite(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 static void w32_composite_image(GalDrawable, GalPB, int, int, GalImage *, int, int, int, int);
-static void w32_composite_subwindow(GalWindow, int, int, int, int);
 static void w32_draw_drawable(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 static bool w32_create_child_window(GalWindow32 *);
 
@@ -37,13 +37,13 @@ static e_thread_mutex_t wait_create_lock;
 static HWND create_hwnd;
 static GalWindow w_grab_mouse = 0;
 static GalWindow w_grab_key = 0;
+static HWND hwnd_cursor = 0;
 
 static struct {
 	GalWindow32 *win;
 	HWND  hwnd;
 	HDC   hdc;
-	HGLRC hrc;
-} currentGL = {NULL, 0, 0, 0};
+} currentGL = {NULL, 0, 0};
 
 static eint w32_compare_func(eConstPointer a, eConstPointer b)
 {
@@ -69,7 +69,7 @@ int w32_wmananger_init(GalWindowManager *wm)
 	display_hdc = CreateDC("DISPLAY", NULL, NULL, NULL);
 	comp_hdc = CreateCompatibleDC(display_hdc);
 	win_version = GetVersion();
-	
+
 	//SetWindowsHookEx(WH_GETMESSAGE, WinProc, hmodule, 0);
 	//CoInitialize(NULL);
 
@@ -127,6 +127,22 @@ static void check_mouse_leave(void)
 
 	GetCursorPos(&point);
 	hwnd = WindowFromPoint(point);
+	if (hwnd) {
+		RECT rc1, rc2, wrc;
+		int dwStyle = GetWindowLong(hwnd, GWL_STYLE);
+		int dwExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+		GetClientRect(hwnd, &rc1);
+		rc2 = rc1;
+		AdjustWindowRectEx(&rc2, dwStyle, FALSE, dwExStyle);
+		GetWindowRect(hwnd, &wrc);
+		wrc.top -= rc2.top;
+		wrc.left -= rc2.left;
+		wrc.right -= rc2.right - rc1.right;
+		wrc.bottom -= rc2.bottom - rc1.bottom;
+		if (!PtInRect(&wrc, point))
+			hwnd = 0;
+	}
+
 	if (top_enter) {
 		if (top_enter->hwnd == hwnd)
 			return;
@@ -607,6 +623,10 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		}
+		case WM_SETCURSOR:
+			if (wnd == hwnd_cursor)
+				break;
+			return DefWindowProc(wnd, msg, wParam, lParam);
 /*
 		case WM_IME_KEYDOWN:
 		case WM_INPUTLANGCHANGEREQUEST:
@@ -756,38 +776,33 @@ static ATOM  RegisterGalClass(GalWindowType type)
 }
 
 #ifdef _GAL_SUPPORT_OPENGL
-static void makeCurrent32(HWND hwnd)
+static void makeCurrent32(GalWindow32 *win32)
 {
-	static PIXELFORMATDESCRIPTOR pixelFormateDes;
-	static BOOL is_init = FALSE;
-
-	if (hwnd == currentGL.hwnd)
+	if (win32->hwnd == 0)
+		return;
+	if (win32->hwnd == currentGL.hwnd)
 		return;
 
-	if (!is_init) {
-		is_init = TRUE;
-		ZeroMemory(&pixelFormateDes,sizeof(pixelFormateDes));
-		pixelFormateDes.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-		pixelFormateDes.nVersion = 1;
-		pixelFormateDes.cColorBits = 32;
-		pixelFormateDes.cDepthBits = 32;
-		pixelFormateDes.iPixelType = PFD_TYPE_RGBA;
-		pixelFormateDes.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL| PFD_DOUBLEBUFFER;
+	if (win32->hrc == 0) {
+		static PIXELFORMATDESCRIPTOR pixelFormateDes;
+		static BOOL is_init = FALSE;
+		if (!is_init) {
+			is_init = TRUE;
+			ZeroMemory(&pixelFormateDes,sizeof(pixelFormateDes));
+			pixelFormateDes.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+			pixelFormateDes.nVersion = 1;
+			pixelFormateDes.cColorBits = 32;
+			pixelFormateDes.cDepthBits = 32;
+			pixelFormateDes.iPixelType = PFD_TYPE_RGBA;
+			pixelFormateDes.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL| PFD_DOUBLEBUFFER;
+		}
+		win32->hdc = GetDC(win32->hwnd);
+		SetPixelFormat(win32->hdc, ChoosePixelFormat(win32->hdc, &pixelFormateDes), &pixelFormateDes);
+		win32->hrc = wglCreateContext(win32->hdc);
 	}
-
-	if (currentGL.hwnd) {
-		wglDeleteContext(currentGL.hrc);
-		ReleaseDC(currentGL.hwnd, currentGL.hdc);
-	}
-
-	currentGL.hwnd = hwnd;
-	currentGL.hdc  = GetDC(hwnd);
-
-	SetPixelFormat(currentGL.hdc, ChoosePixelFormat(currentGL.hdc, &pixelFormateDes), &pixelFormateDes);
-
-	currentGL.hrc = wglCreateContext(currentGL.hdc);
-
-	wglMakeCurrent(currentGL.hdc, currentGL.hrc);
+	currentGL.hdc  = win32->hdc;
+	currentGL.hwnd = win32->hwnd;
+	wglMakeCurrent(currentGL.hdc, win32->hrc);
 }
 #endif
 
@@ -841,7 +856,7 @@ static bool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 
 #ifdef _GAL_SUPPORT_OPENGL
 	if (currentGL.win == child)
-		makeCurrent32(child->hwnd);
+		makeCurrent32(child);
 #endif
 
 	e_thread_mutex_lock(&tree_lock);
@@ -888,7 +903,12 @@ static void w32_destory_window(GalWindow32 *xwin)
 	e_thread_mutex_lock(&tree_lock);
 	e_tree_remove(w32_tree, (ePointer)xwin->hwnd);
 	e_thread_mutex_unlock(&tree_lock);
-
+#ifdef _GAL_SUPPORT_OPENGL
+	if (xwin->hdc) {
+		wglDeleteContext(xwin->hrc);
+		ReleaseDC(xwin->hwnd, xwin->hdc);
+	}
+#endif
 	DestroyWindow(xwin->hwnd);
 }
 
@@ -1129,6 +1149,13 @@ static GalGrabStatus w32_grab_pointer(GalWindow window, bool owner_events, GalCu
 		xwin = xwin->parent;
 	SetCapture(xwin->hwnd);
 	w_grab_mouse = OBJECT_OFFSET(xwin);
+
+	if (cursor) {
+		xwin->cursor = cursor;
+		SetCursor(W32_CURSOR_DATA(cursor)->hcursor);
+		hwnd_cursor = xwin->hwnd;
+	}
+
 	return 0;
 }
 
@@ -1141,6 +1168,11 @@ static GalGrabStatus w32_ungrab_pointer(GalWindow window)
 		if (w_grab_mouse == OBJECT_OFFSET(xwin)) {
 			w_grab_mouse = 0;
 			ReleaseCapture();
+			if (xwin->cursor) {
+				hwnd_cursor = 0;
+				xwin->cursor = 0;
+				SetCursor(LoadCursor(NULL, IDC_ARROW));
+			}
 		}
 	}
 	return 0;
@@ -1360,7 +1392,20 @@ static eHandle w32_get_attachmen(GalWindow window)
 static eint w32_window_set_cursor(GalWindow window, GalCursor cursor)
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
+
 	xwin->cursor = cursor;
+
+	if (cursor) {
+		SetCursor(W32_CURSOR_DATA(cursor)->hcursor);
+		while (xwin->parent)
+			xwin = xwin->parent;
+		hwnd_cursor = xwin->hwnd;
+	}
+	else {
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
+		hwnd_cursor = 0;
+	}
+
 	return 0;
 }
 
@@ -1465,8 +1510,7 @@ static int w32_set_font(GalPB *pb, GalFont *font)
 static void w32_window_make_GL(GalWindow window)
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
-	if (xwin->hwnd)
-		makeCurrent32(xwin->hwnd);
+	makeCurrent32(xwin);
 	currentGL.win = xwin;
 }
 #endif
@@ -1808,11 +1852,6 @@ static GalPB w32_pb_new(GalDrawable drawable, GalPBAttr *attr)
 	return pb;
 }
 
-static void w32_composite_subwindow(GalWindow window, int x, int y, int w, int h)
-{
-	GalWindow32 *child = W32_WINDOW_DATA(window);
-}
-
 static eint w32_get_mark(GalDrawable drawable)
 {
 	return 0;
@@ -1825,7 +1864,7 @@ static eint w32_get_depth(GalDrawable drawable)
 
 static GalVisual *w32_get_visual(GalDrawable drawable)
 {
-	return 0l;
+	return 0;
 }
 
 static GalColormap *w32_get_colormap(GalDrawable drawable)
@@ -1840,48 +1879,6 @@ static int w32_get_visual_info(GalDrawable drawable, GalVisualInfo *vinfo)
 	vinfo->h     = xdraw->h;
 	vinfo->depth = xdraw->depth;
 	return 0;
-}
-
-static ePointer w32_refer_surface_private(GalDrawable drawable)
-{
-	return ENULL;
-}
-
-static void w32_refer_surface(eHandle hobj)
-{
-}
-
-static void w32_unref_surface(eHandle hobj)
-{
-}
-
-static void w32_surface_init_orders(eGeneType new, ePointer this)
-{
-	eCellOrders *cell = e_genetype_orders(new, GTYPE_CELL);
-	cell->refer = w32_refer_surface;
-	cell->unref = w32_unref_surface;
-}
-
-static void w32_surface_free_data(eHandle hobj, ePointer this)
-{
-}
-
-eGeneType w32_genetype_surface(void)
-{
-	static eGeneType gtype = 0;
-
-	if (!gtype) {
-		eGeneInfo info = {
-			0,
-			w32_surface_init_orders, 
-			0,
-			NULL,
-			w32_surface_free_data, NULL
-		};
-
-		gtype = e_register_genetype(&info, GTYPE_GAL, NULL);
-	}
-	return gtype;
 }
 
 static void w32_drawable_init_orders(eGeneType new, ePointer this)
@@ -1903,13 +1900,7 @@ static void w32_drawable_init_orders(eGeneType new, ePointer this)
 
 	draw->composite           = w32_composite;
 	draw->composite_image     = w32_composite_image;
-	draw->composite_subwindow = w32_composite_subwindow;
 	draw->draw_drawable       = w32_draw_drawable;
-
-#ifdef _GAL_SUPPORT_CAIRO
-	draw->refer_surface         = w32_drawable_refer_surface;
-	draw->refer_surface_private = w32_refer_surface_private;
-#endif
 }
 
 static void w32_drawable_free(eHandle hobj, ePointer data)
@@ -1938,6 +1929,8 @@ eGeneType w32_genetype_drawable(void)
 
 static void w32_cursor_free(eHandle hobj, ePointer data)
 {
+	GalCursor32 *cursor32 = W32_CURSOR_DATA(hobj);
+	DestroyCursor(cursor32->hcursor);
 }
 
 eGeneType w32_genetype_cursor(void)
@@ -1964,6 +1957,59 @@ static GalCursor w32_cursor_new_pixbuf(GalPixbuf *pixbuf, eint x, eint y)
 	return 0;
 }
 
+static HCURSOR w32_data_to_wcursor(GalCursorType cursor_type)
+{
+	eint i, j, x, y, ofs;
+	HCURSOR rv = NULL;
+	eint w, h;
+	euchar *and_plane, *xor_plane;
+
+	for (i = 0; i < TABLES_SIZEOF(xcursors); i++)
+		if (xcursors[i].type == cursor_type)
+			break;
+
+	if (i >= TABLES_SIZEOF(xcursors) || !xcursors[i].name)
+		return NULL;
+
+	w = GetSystemMetrics(SM_CXCURSOR);
+	h = GetSystemMetrics(SM_CYCURSOR);
+
+	and_plane = e_malloc((w/8) * h);
+	e_memset(and_plane, 0xff, (w/8) * h);
+	xor_plane = e_malloc((w/8) * h);
+	e_memset(xor_plane, 0, (w/8) * h);
+
+#define SET_BIT(v, b)	(v |= (1 << b))
+#define RESET_BIT(v, b)	(v &= ~(1 << b))
+
+	for (j = 0, y = 0; y < xcursors[i].height && y < h; y++) {
+		ofs = (y * w) / 8;
+		j = y * xcursors[i].width;
+
+		for (x = 0; x < xcursors[i].width && x < w ; x++, j++) {
+			eint pofs = ofs + x / 8;
+			euchar data = (xcursors[i].data[j/4] & (0xc0 >> (2 * (j%4)))) >> (2 * (3 - (j%4)));
+			eint bit = 7 - (j % xcursors[i].width) % 8;
+
+			if (data) {
+				RESET_BIT(and_plane[pofs], bit);
+				if (data == 1)
+					SET_BIT(xor_plane[pofs], bit);
+			}
+		}
+	}
+
+#undef SET_BIT
+#undef RESET_BIT
+
+	rv = CreateCursor(hmodule, xcursors[i].hotx, xcursors[i].hoty, w, h, and_plane, xor_plane);
+
+	e_free(and_plane);
+	e_free(xor_plane);
+
+	return rv;
+}
+
 static GalCursor w32_cursor_new_name(const echar *name)
 {
 	return 0;
@@ -1974,10 +2020,16 @@ static GalCursor w32_cursor_new(GalCursorType type)
 	GalCursor32 *cursor32;
 	GalCursor cursor;
 
+	HCURSOR hcursor = w32_data_to_wcursor(type);
+
+	if (!hcursor) return 0;
+
 	cursor  = e_object_new(w32_genetype_cursor());
 	cursor32 = W32_CURSOR_DATA(cursor);
 	cursor32->type = type;
-	return 0;
+	cursor32->hcursor = hcursor;
+
+	return cursor;
 }
 
 void GalSwapBuffers(void)

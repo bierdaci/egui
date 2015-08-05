@@ -32,6 +32,10 @@ struct _GalWindow32 {
 	BOOL is_enter;
 	BOOL is_configure;
 	DWORD ntype;
+#ifdef _GAL_SUPPORT_OPENGL
+	HDC hdc;
+	HGLRC hrc;
+#endif
 
 	list_t list;
 	list_t child_head;
@@ -63,7 +67,8 @@ struct _GalPB32 {
 
 struct _GalCursor32 {
 	GalCursorType type;
-	echar *name;
+	echar   *name;
+	HCURSOR hcursor;
 };
 
 GalFont w32_create_font(GalPattern *pattern);
@@ -73,13 +78,11 @@ eGeneType w32_genetype_window(void);
 eGeneType w32_genetype_bitmap(void);
 eGeneType w32_genetype_cursor(void);
 eGeneType w32_genetype_drawable(void);
-eGeneType w32_genetype_surface(void);
 
 #define W32_PB_DATA(hobj)			((GalPB32       *)e_object_type_data(hobj, w32_genetype_pb()))
 #define W32_WINDOW_DATA(hobj)		((GalWindow32   *)e_object_type_data(hobj, w32_genetype_window()))
 #define W32_BITMAP_DATA(hobj)		((GalBitmap32   *)e_object_type_data(hobj, w32_genetype_bitmap()))
 #define W32_CURSOR_DATA(hobj)		((GalCursor32   *)e_object_type_data(hobj, w32_genetype_cursor()))
 #define W32_DRAWABLE_DATA(hobj)		((GalDrawable32 *)e_object_type_data(hobj, w32_genetype_drawable()))
-#define W32_SURFACE_DATA(hobj)		((GalSurface32  *)e_object_type_data(hobj, w32_genetype_surface()))
 
 #endif
