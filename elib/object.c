@@ -34,8 +34,6 @@ static e_thread_mutex_t object_lock = {0};
 static e_thread_mutex_t object_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-int SIG_FREE;
-
 static eDnaList *__dna_list_which_contain(eDnaList *list1, eDnaList *list2)
 {
 	eDnaList *n1 = list1;
@@ -891,20 +889,6 @@ void e_object_unref(eHandle hobj)
 		call_node_free(obj, obj->gene->nodes, obj->gene->node_num - 1);
 		e_free(obj);
 	}
-}
-
-void e_object_destroy(eHandle hobj)
-{
-	eObject     *obj = (eObject *)hobj;
-	eCellOrders *ors = (eCellOrders *)obj->gene->orders_base;
-
-	if (obj->ref_count <= 0)
-		abort();
-
-	if (ors->destroy)
-		ors->destroy(hobj);
-
-	e_object_unref(hobj);
 }
 
 static void __object_set_offset(eDnaNode *nodes, eint node_num, euchar *object_base)

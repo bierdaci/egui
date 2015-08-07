@@ -103,7 +103,6 @@ struct _eCellOrders {
 	void (*unref)(eHandle);
 	eint (* init)(eHandle, eValist vp);
 	void (* free)(eHandle);
-	void (* destroy)(eHandle);
 };
 
 eGeneType e_genetype_cell(void);
@@ -111,7 +110,6 @@ eGeneType e_genetype_cell(void);
 eHandle e_object_new(eGeneType, ...);
 eHandle e_object_refer(eHandle);
 void    e_object_unref(eHandle);
-void    e_object_destroy(eHandle);
 
 ePointer e_object_type_data(eHandle, eGeneType);
 ePointer e_object_type_orders(eHandle, eGeneType);

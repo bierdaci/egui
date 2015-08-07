@@ -62,7 +62,6 @@ static eint bin_init_data(eHandle hobj, ePointer this)
 	return 0;
 }
 
-extern eHandle debug_button;
 static void bin_destroy(eHandle hobj)
 {
 	GuiWidget *cw = GUI_BIN_DATA(hobj)->head;
@@ -70,7 +69,8 @@ static void bin_destroy(eHandle hobj)
 		GuiWidget *t = cw;
 		cw = cw->next;
 		egui_remove(OBJECT_OFFSET(t), true);
-		e_object_destroy(OBJECT_OFFSET(t));
+		e_signal_emit(OBJECT_OFFSET(t), SIG_DESTROY);
+		e_object_unref(OBJECT_OFFSET(t));
 	}
 }
 
@@ -78,10 +78,7 @@ static void bin_init_orders(eGeneType new, ePointer this)
 {
 	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
 	GuiEventOrders  *o = e_genetype_orders(new, GTYPE_EVENT);
-	eCellOrders     *c = e_genetype_orders(new, GTYPE_CELL);
 	GuiBinOrders    *b = this;
-
-	c->destroy       = bin_destroy;
 
 	w->put           = bin_put;
 	w->hide          = bin_hide;
@@ -89,6 +86,7 @@ static void bin_init_orders(eGeneType new, ePointer this)
 	w->move          = bin_move;
 	w->remove        = bin_remove;
 	w->expose        = bin_expose;
+	w->destroy       = bin_destroy;
 	w->configure     = bin_configure;
 	w->unset_focus   = bin_unset_focus;
 

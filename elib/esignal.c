@@ -2,6 +2,8 @@
 #include "esignal.h"
 #include "list.h"
 
+int SIG_FREE;
+
 static eTree *signal_tree = NULL;
 #ifdef WIN32
 static e_thread_mutex_t signal_lock = {0};

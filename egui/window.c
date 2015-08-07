@@ -144,6 +144,19 @@ static void window_show(eHandle hobj)
 	bin_show(hobj);
 }
 
+static void window_destroy(eHandle hobj)
+{
+	GuiWidget *cw = GUI_BIN_DATA(hobj)->head;
+	while (cw) {
+		GuiWidget *t = cw;
+		cw = cw->next;
+		egui_remove(OBJECT_OFFSET(t), true);
+		e_signal_emit(OBJECT_OFFSET(t), SIG_DESTROY);
+		e_object_unref(OBJECT_OFFSET(t));
+	}
+	e_object_unref(hobj);
+}
+
 static void window_init_orders(eGeneType new, ePointer this)
 {
 	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
@@ -167,6 +180,7 @@ static void window_init_orders(eGeneType new, ePointer this)
 	w->raise          = window_raise;
 	w->lower          = window_lower;
 	w->resize         = window_resize;
+	w->destroy        = window_destroy;
 	w->configure      = window_configure;
 	w->expose_bg      = window_expose_bg;
 	w->request_resize = window_request_resize;
