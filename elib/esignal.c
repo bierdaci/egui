@@ -511,4 +511,8 @@ void e_signal_init(void)
 #ifdef WIN32
 	e_thread_mutex_init(&signal_lock, NULL);
 #endif
+	SIG_FREE = e_signal_new("free",
+			GTYPE_CELL,
+			STRUCT_OFFSET(eCellOrders, free),
+			false, 0, NULL);
 }

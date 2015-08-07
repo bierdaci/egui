@@ -34,6 +34,8 @@ static e_thread_mutex_t object_lock = {0};
 static e_thread_mutex_t object_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+int SIG_FREE;
+
 static eDnaList *__dna_list_which_contain(eDnaList *list1, eDnaList *list2)
 {
 	eDnaList *n1 = list1;
@@ -885,8 +887,7 @@ void e_object_unref(eHandle hobj)
 		abort();
 
 	if (--obj->ref_count == 0) {
-		if (ors->free)
-			ors->free(hobj);
+		e_signal_emit(hobj, SIG_FREE);
 		call_node_free(obj, obj->gene->nodes, obj->gene->node_num - 1);
 		e_free(obj);
 	}
