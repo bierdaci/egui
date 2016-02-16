@@ -11,7 +11,7 @@
 
 #include "logmsg.h"
 
-int log_level = 0;
+int log_level = 1;
 int time_stamp_log = 0;
 
 FILE *log_fp = NULL;

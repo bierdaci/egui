@@ -246,17 +246,45 @@ void e_list_add_data_by_sort(elist_t *lt, void *data)
 {
 	elistnode_t *node = lt->head;
 	elistnode_t *new  = e_list_alloc_node(lt, data);
+	int ret = -1;
 
-	if (lt->sort) {
-		while (node) {
-			if (lt->sort(node, new, lt->data))
-				break;
-			node = node->next;
-		}
-		e_list_insert_before(lt, node, new);
+	if (!lt->sort || lt->count == 0) {
+		e_list_insert_tail(lt, new);
+		return;
 	}
+
+	while (node) {
+		if ((ret = lt->sort(node, new, lt->data)) >= 0)
+			break;
+		node = node->next;
+	}
+
+	if (node) {
+		if (ret == 0)
+			ret = ELIST_INSERT_BEFORE;
+		else if (ret == 1)
+			ret = ELIST_INSERT_AFTER;
+		else if (ret > ELIST_INSERT_AFTER)
+			ret = ELIST_INSERT_AFTER;
+	}
+	else {
+		if (lt->mode < 0) {
+			free(new);
+			return;
+		}
+		ret = lt->mode;
+		if (ret > ELIST_MODE_HEAD)
+			ret = ELIST_MODE_HEAD;
+	}
+
+	if (ret == ELIST_INSERT_BEFORE)
+		e_list_insert_before(lt, node, new);
+	else if (ret == ELIST_INSERT_AFTER)
+		e_list_insert_after(lt, node, new);
+	else if (ret == ELIST_MODE_HEAD)
+		e_list_insert_head(lt, new);
 	else
-		e_list_insert_tail(lt, node);
+		e_list_insert_tail(lt, new);
 }
 
 void e_list_insert_data_before(elist_t *lt, elistnode_t *node, void *data)

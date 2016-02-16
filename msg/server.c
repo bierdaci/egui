@@ -1296,8 +1296,10 @@ int main(int argc, char *const argv[])
 	load_user();
 
 	signal(SIGPIPE, SIG_IGN);
-	if ((listen_fd = socket_listen(&port, NULL, 1)) < 0)
+	if ((listen_fd = socket_listen(&port, NULL, 1)) < 0) {
+		fprintf(stderr, "listen:%s\n", strerror(errno));
 		return 1;
+	}
 	if (!(thread_pool = create_thread_pool(100)))
 		return 1;
 	if (pthread_create(&pid, NULL, listen_data_handler, NULL) == -1) {

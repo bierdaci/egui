@@ -3,6 +3,14 @@
 
 #include <elib/types.h>
 
+#define ELIST_MODE_NO      -1
+#define ELIST_MODE_TAIL     0
+#define ELIST_MODE_HEAD     1
+
+#define ELIST_INSERT_NO		-1
+#define ELIST_INSERT_BEFORE 2
+#define ELIST_INSERT_AFTER  3
+
 typedef struct _enode {
     struct _enode *next;
     struct _enode *prev;
@@ -11,6 +19,7 @@ typedef struct _enode {
 typedef struct {
 	eint size;
 	eint count;
+	eint mode;
     elistnode_t *head;
     elistnode_t *tail;
 	eint (*sort)(elistnode_t *, elistnode_t *, void *);

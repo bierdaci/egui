@@ -796,11 +796,6 @@ static void destroy_hide_dlg(eHandle hobj)
 	egui_hide(hobj, false);
 }
 
-static void destroy_transfer_dlg(eHandle hobj)
-{
-	e_object_unref(hobj);
-}
-
 static eint clicked_accept_recv_file(eHandle hobj, ePointer data)
 {
 	eHandle        dlg = (eHandle)data;
@@ -846,7 +841,6 @@ static void sysmsg_recv_file_dlg(ePointer data)
 
 	dlg = egui_dialog_new();
 	egui_box_set_border_width(dlg, 5);
-	e_signal_connect(dlg, SIG_DESTROY, destroy_transfer_dlg);
 
 	vbox = egui_vbox_new();
 	egui_box_set_spacing(vbox, 5);
@@ -1214,7 +1208,7 @@ static eint clicked_login_account(eHandle hobj, ePointer data)
 	passwd[n] = 0;
 	if (main_window((char *)name, (char *)passwd) < 0)
 		return -1;
-	e_object_unref(dlg);
+	e_signal_emit(dlg, SIG_DESTROY);
 	return 0;
 }
 
@@ -1235,7 +1229,6 @@ static void login_account_dlg(void)
 
 	dlg = egui_window_new(GUI_WINDOW_TOPLEVEL);
 	egui_box_set_border_width(dlg, 5);
-	e_signal_connect(dlg, SIG_DESTROY, egui_quit);
 
 	vbox = egui_vbox_new();
 	egui_box_set_spacing(vbox, 5);

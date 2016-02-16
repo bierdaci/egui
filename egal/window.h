@@ -254,7 +254,6 @@ struct _GalDrawableOrders {
 
 	void (*composite)(GalDrawable, GalPB, eint, eint, GalDrawable, GalPB, eint, eint, eint, eint);
 	void (*composite_image)(GalDrawable, GalPB, eint, eint, GalImage *, eint, eint, eint, eint);
-	void (*composite_subwindow)(GalDrawable, eint, eint, eint, eint);
 
 	eint (*get_mark)       (GalDrawable);
 	eint (*get_depth)      (GalDrawable);
@@ -528,7 +527,6 @@ ePointer egal_surface_private(GalDrawable);
 
 void egal_composite(GalDrawable, GalPB, eint, eint, GalDrawable, GalPB, eint, eint, eint, eint);
 void egal_composite_image(GalDrawable, GalPB, eint, eint, GalImage *, eint, eint, eint, eint);
-void egal_composite_subwindow(GalDrawable, eint, eint, eint, eint);
 
 eint egal_set_cursor(GalWindow, GalCursor);
 GalCursor egal_get_cursor(GalWindow);

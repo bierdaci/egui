@@ -113,6 +113,13 @@ if test "x$build_opengl_support" = "xyes"; then
     SYSTEM_LIBS="$SYSTEM_LIBS -lGL -lGLU"
 fi
 
+if (gcc -dM -E - < /dev/null | grep arm); then
+    AC_DEFINE(HOST_SYSTEM_ARM, 1, [host system arm])
+    AM_CONDITIONAL(USE_MARSHAL_ARM, true)
+else
+    AM_CONDITIONAL(USE_MARSHAL_ARM, false)
+fi
+
 if test "$(getconf LONG_BIT)" = "64"; then
     AC_DEFINE(HOST_SYSTEM_64, 1, [host system 64])
 	AM_CONDITIONAL(USE_MARSHAL64, true)

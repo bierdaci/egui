@@ -50,7 +50,6 @@ static GalCursor x11_cursor_new_pixbuf(GalPixbuf *, eint, eint);
 static void x11_image_free(GalImage *);
 static void x11_composite(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 static void x11_composite_image(GalDrawable, GalPB, int, int, GalImage *, int, int, int, int);
-static void x11_composite_subwindow(GalWindow, int, int, int, int);
 static void x11_draw_drawable(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 
 typedef struct _GalDrawableX11	GalDrawableX11;
@@ -1864,15 +1863,6 @@ static void x11_composite_image(GalDrawable dst, GalPB pb,
 	x11_composite(dst, pb, dx, dy, ximg->pixmap, 0, sx, sy, w, h);
 }
 
-static void x11_composite_subwindow(GalWindow window, int x, int y, int w, int h)
-{
-	GalWindowX11 *child = X11_WINDOW_DATA(window);
-
-	if (!child->parent)
-		return;
-	x11_composite(OBJECT_OFFSET(child->parent), 0, x, y, window, 0, x, y, w, h);
-}
-
 static eint x11_get_mark(GalDrawable drawable)
 {
 	return X11_DRAWABLE_DATA(drawable)->xid;
@@ -1973,6 +1963,7 @@ static GalSurface __x11_refer_surface(GalDrawable drawable, GalDrawableX11 *draw
 		xface = X11_SURFACE_DATA(draw->surface);
 #ifdef _GAL_SUPPORT_CAIRO
 		if (draw->depth == 32) {
+#if 0
 			XRenderPictFormat *format;
 			if (e_object_type_check(drawable, x11_genetype_pixmap()))
 				format = GetRenderARGB32Format(x11_dpy);
@@ -1981,6 +1972,12 @@ static GalSurface __x11_refer_surface(GalDrawable drawable, GalDrawableX11 *draw
 			xface->surface =
 				cairo_xlib_surface_create_with_xrender_format(x11_dpy,
 					draw->xid, visual->xvid, format, draw->w, draw->h);
+#else
+			XWindowAttributes xattr;
+			XGetWindowAttributes(x11_dpy, x11_root->xid, &xattr);
+			xface->surface = cairo_xlib_surface_create_for_bitmap(x11_dpy,
+					draw->xid, xattr.screen, draw->w, draw->h);
+#endif
 		}
 		else
 			xface->surface = cairo_xlib_surface_create(x11_dpy, draw->xid, visual->xvid, draw->w, draw->h);
@@ -2033,7 +2030,6 @@ static void x11_drawable_init_orders(eGeneType new, ePointer this)
 
 	draw->composite           = x11_composite;
 	draw->composite_image     = x11_composite_image;
-	draw->composite_subwindow = x11_composite_subwindow;
 	draw->draw_drawable       = x11_draw_drawable;
 
 #ifdef _GAL_SUPPORT_CAIRO
