@@ -24,7 +24,7 @@ typedef short				eshort;
 typedef char				echar;
 typedef unsigned char		euchar;
 typedef unsigned char		ebyte;
-typedef char				eint8;
+typedef signed   char		eint8;
 typedef unsigned char		euint8;
 typedef unsigned short		euint16;
 typedef unsigned int 		euint32;
