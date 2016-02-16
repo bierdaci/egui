@@ -19,9 +19,10 @@ typedef struct _enode {
 typedef struct {
 	eint size;
 	eint count;
-	eint mode;
     elistnode_t *head;
     elistnode_t *tail;
+	void(*free)(void *);
+	eint mode;
 	eint (*sort)(elistnode_t *, elistnode_t *, void *);
 	void *data;
 } elist_t;
