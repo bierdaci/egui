@@ -1,5 +1,5 @@
 #include <math.h>
-#include <freetype/ftglyph.h>
+#include <ftglyph.h>
 #include <ft2build.h>
 
 #include FT_FREETYPE_H 

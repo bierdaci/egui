@@ -319,22 +319,22 @@ static esig_t __signal_new(const char *name, eGeneType gtype,
 esig_t e_signal_new(const char *name, eGeneType gtype,
 		euint32 offset, bool prefix, eSignalType stype, const char *fmstr, ...)
 {
+	eValist vp;
 	if (fmstr) {
-		eValist vp;
 		e_va_start(vp, fmstr);
 		return __signal_new(name, gtype, offset, prefix, stype, fmstr, vp);
 	}
-	return __signal_new(name, gtype, offset, prefix, stype, fmstr, 0);
+	return __signal_new(name, gtype, offset, prefix, stype, fmstr, vp);
 }
 
 esig_t e_signal_new_label(const char *name, eGeneType gtype, const char *fmstr, ...)
 {
+	eValist vp;
 	if (fmstr) {
-		eValist vp;
 		e_va_start(vp, fmstr);
 		return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, vp);
 	}
-	return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, 0);
+	return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, vp);
 }
 
 static eint signal_call_marshal(eObject *obj, eSignal *signal, eVoidFunc func, eValist vp)

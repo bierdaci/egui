@@ -52,7 +52,9 @@ int gettimeofday(struct timeval *tp, void *tzp);
 
 #define e_thread_t				HANDLE
 #define e_thread_mutexattr_t	ePointer
+#define e_thread_rwlockattr_t	ePointer
 #define e_thread_mutex_t		handle_sem_t
+#define e_thread_rwlock_t		handle_sel_t
 #define e_thread_cond_t			CRITICAL_SECTION
 #define e_thread_condattr_t		CRITICAL_SECTION
 #define e_sem_t					handle_sem_t
@@ -98,7 +100,9 @@ eint e_closedir(DIR *);
 
 #define e_thread_t				pthread_t
 #define e_thread_mutexattr_t	pthread_mutexattr_t
+#define e_thread_rwlockattr_t	pthread_rwlockattr_t
 #define e_thread_mutex_t		pthread_mutex_t
+#define e_thread_rwlock_t		pthread_rwlock_t
 #define e_thread_cond_t			pthread_cond_t
 #define e_thread_condattr_t		pthread_condattr_t
 #define e_sem_t					sem_t
@@ -131,6 +135,13 @@ eint e_thread_mutex_lock(e_thread_mutex_t *mutex);
 eint e_thread_mutex_trylock(e_thread_mutex_t *mutex);
 eint e_thread_mutex_unlock(e_thread_mutex_t *mutex);
 eint e_thread_mutex_destroy(e_thread_mutex_t *mutex);
+eint e_thread_rwlock_destroy(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_init(e_thread_rwlock_t *rwlock, e_thread_rwlockattr_t *attr);
+eint e_thread_rwlock_rdlock(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_wrlock(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_tryrdlock(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_trywrlock(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_unlock(e_thread_rwlock_t *rwlock);
 eint e_thread_cond_init(e_thread_cond_t *, e_thread_condattr_t *);
 eint e_thread_cond_broadcast(e_thread_cond_t *);
 eint e_thread_cond_wait(e_thread_cond_t *, e_thread_mutex_t *);

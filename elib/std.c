@@ -1,4 +1,6 @@
 #include <time.h>
+#define _GNU_SOURCE
+#include <string.h>
 #include "std.h"
 #include "elist.h"
 
@@ -61,6 +63,41 @@ eint e_thread_mutex_destroy(e_thread_mutex_t *mutex)
 {
 	CloseHandle(mutex->handle);
 	return 0;
+}
+
+eint e_thread_rwlock_rdlock(e_thread_rwlock_t *rwlock)
+{
+	return -1;
+}
+
+eint e_thread_rwlock_wrlock(e_thread_rwlock_t *rwlock)
+{
+	return -1;
+}
+
+eint e_thread_rwlock_tryrdlock(e_thread_rwlock_t *rwlock)
+{
+	return -1;
+}
+
+eint e_thread_rwlock_trywrlock(e_thread_rwlock_t *rwlock)
+{
+	return -1;
+}
+
+eint e_thread_rwlock_unlock(e_thread_rwlock_t *rwlock)
+{
+	return -1;
+}
+
+eint pthread_rwlock_destroy(e_thread_rwlock_t *rwlock)
+{
+	return -1;
+}
+
+eint pthread_rwlock_init(e_thread_rwlock_t *rwlock, e_thread_rwlockattr_t *attr)
+{
+	return -1;
 }
 
 eint e_thread_cond_init(e_thread_cond_t *cond, e_thread_condattr_t *attr)
@@ -201,6 +238,41 @@ eint e_thread_mutex_unlock(e_thread_mutex_t *mutex)
 eint e_thread_mutex_destroy(e_thread_mutex_t *mutex)
 {
 	return pthread_mutex_destroy(mutex);
+}
+
+eint e_thread_rwlock_rdlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_rdlock(rwlock);
+}
+
+eint e_thread_rwlock_wrlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_wrlock(rwlock);
+}
+
+eint e_thread_rwlock_tryrdlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_tryrdlock(rwlock);
+}
+
+eint e_thread_rwlock_trywrlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_trywrlock(rwlock);
+}
+
+eint e_thread_rwlock_unlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_unlock(rwlock);
+}
+
+eint e_thread_rwlock_destroy(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_destroy(rwlock);
+}
+
+eint e_thread_rwlock_init(e_thread_rwlock_t *rwlock, e_thread_rwlockattr_t *attr)
+{
+	return pthread_rwlock_init(rwlock, attr);
 }
 
 eint e_thread_cond_init(e_thread_cond_t *cond, e_thread_condattr_t *attr)
