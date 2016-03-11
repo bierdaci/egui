@@ -15,13 +15,13 @@ typedef enum {false = 0, true = 1} bool;
 #ifndef __ELIB_STD_H__
 #endif
 typedef enum {efalse = 0, etrue = 1} ebool;
-typedef long				elong;
-typedef short				eint16;
-typedef int					eint;
-typedef int					eint32;
-typedef short				eshort;
+typedef signed long				elong;
+typedef signed short			eint16;
+typedef signed int				eint;
+typedef signed int				eint32;
+typedef signed short			eshort;
 
-typedef char				echar;
+typedef signed   char		echar;
 typedef unsigned char		euchar;
 typedef unsigned char		ebyte;
 typedef signed   char		eint8;

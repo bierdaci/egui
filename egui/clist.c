@@ -269,6 +269,9 @@ static void ibar_prev_hlight(GuiClist *cl)
 static void reset_adjust(GuiClist *cl)
 {
 	eint total_h = cl->item_n * cl->ibar_h;
+	eint total_w = 0;
+	int i;
+
 	if (total_h > cl->view_h) {
 		if (total_h - cl->offset_y < cl->view_h) {
 			cl->offset_y = total_h - cl->view_h;
@@ -283,6 +286,22 @@ static void reset_adjust(GuiClist *cl)
 		cl->offset_y   = 0;
 		cl->top        = index_to_item(cl, 0);
 		egui_update_async(cl->view);
+	}
+
+	for (i = 0; i < cl->col_n; i++)
+		total_w += cl->titles[i].width;
+
+	if (total_w > cl->view_w) {
+		if (total_w - cl->offset_x < cl->view_w) {
+			cl->offset_x = total_w - cl->view_w;
+		}
+		egui_adjust_reset_hook(cl->hadj,
+			(efloat)cl->offset_x, (efloat)cl->view_w,
+			(efloat)total_w, 1, 0);
+	}
+	else {
+		egui_adjust_reset_hook(cl->hadj, 0, 1, 1, 0, 0);
+		cl->offset_x = 0;
 	}
 }
 
@@ -307,20 +326,26 @@ static void clist_grid_draw_bk(eHandle hobj, GuiClist *cl,
 static void clist_draw_title(eHandle hobj, GuiClist *cl, GalDrawable drawable, GalPB pb)
 {
 	eint i, x;
+	eint total_w = 0;
 
-	egal_set_foreground(pb, 0x8fb6fb);
-	egal_fill_rect(drawable, pb, 0, 0, cl->view_w, cl->tbar_h);
+	for (i = 0; i < cl->col_n; i++)
+		total_w += cl->titles[i].width;
+
+	egal_set_foreground(cl->pb, 0x8fb6fb);
+	egal_fill_rect(cl->drawable, cl->pb, 0, 0, total_w, cl->tbar_h);
 
 	for (x = 0, i = 0; i < cl->col_n; i++) {
 		ClsTitle *title = cl->titles + i;
 		if (title->name) {
 			GalRect rc = {x, 0, title->width, cl->tbar_h};
 
-			egal_set_foreground(pb, 0x0);
-			egui_draw_strings(drawable, pb, 0, title->name, &rc, LF_VCenter | LF_HLeft);
+			egal_set_foreground(cl->pb, 0x0);
+			egui_draw_strings(cl->drawable, cl->pb, 0, title->name, &rc, LF_VCenter | LF_HLeft);
 		}
 		x += title->width;
 	}
+	egal_draw_drawable(drawable, pb, 0, 0,
+			cl->drawable, cl->pb, cl->offset_x, 0, cl->view_w, cl->tbar_h);
 }
 
 static void clist_grid_draw(eHandle hobj,
@@ -354,24 +379,28 @@ static void update_ibar(GuiClist *cl, ClsItemBar *ibar)
 
 	eint y = ibar->index * cl->ibar_h - cl->offset_y;
 	eint x = 0;
-	eint i = 0;
+	eint i;
+
+	eint total_w = 0;
+	for (i = 0; i < cl->col_n; i++)
+		total_w += cl->titles[i].width;
 
 	e_signal_emit(OBJECT_OFFSET(cl), SIG_CLIST_DRAW_GRID_BK,
 			cl->drawable, cl->pb,
 			0,
-			cl->view_w, cl->ibar_h,
+			total_w, cl->ibar_h,
 			cl->hlight == ibar,
 			WIDGET_STATUS_FOCUS(wid), ibar->index % 2);
 
-	for (; i < cl->col_n; i++) {
+	for (i = 0; i < cl->col_n; i++) {
 		e_signal_emit(OBJECT_OFFSET(cl), SIG_CLIST_DRAW_GRID,
 				cl->drawable, cl->pb, cl->font,
 				ibar, i, x, cl->titles[i].width, cl->ibar_h);
 		x += cl->titles[i].width;
 	}
 
-	egal_draw_drawable(wid->drawable, wid->pb, cl->offset_x, y, 
-			cl->drawable, cl->pb, 0, 0, cl->view_w, cl->ibar_h);
+	egal_draw_drawable(wid->drawable, wid->pb, 0, y, 
+			cl->drawable, cl->pb, cl->offset_x, 0, cl->view_w, cl->ibar_h);
 }
 
 static eint clist_update(eHandle hobj, GuiClist *cl, ClsItemBar *ibar)
@@ -388,6 +417,11 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 	eint oy = cl->offset_y;
 	eint iy = 0;
 	eint index = 0;
+	eint total_w = 0;
+	int i;
+
+	for (i = 0; i < cl->col_n; i++)
+		total_w += cl->titles[i].width;
 
 	if (ib) iy = ib->index * cl->ibar_h;
 
@@ -399,7 +433,7 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 		e_signal_emit(OBJECT_OFFSET(cl), SIG_CLIST_DRAW_GRID_BK,
 				cl->drawable, cl->pb,
 				0,
-				cl->view_w, cl->ibar_h,
+				total_w, cl->ibar_h,
 				cl->hlight == ib,
 				GUI_STATUS_FOCUS(hobj), index);
 
@@ -410,10 +444,10 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 			ix += cl->titles[id].width;
 		}
 		egal_draw_drawable(wid->drawable, wid->pb,
-				ox,
+				0,
 				iy - oy,
 				cl->drawable, cl->pb,
-				0, 0, cl->view_w, cl->ibar_h);
+				ox, 0, cl->view_w, cl->ibar_h);
 
 		ib  = ibar_next(cl, ib);
 		iy += cl->ibar_h;
@@ -425,9 +459,9 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 		while (iy < view_h) {
 			e_signal_emit(OBJECT_OFFSET(cl), SIG_CLIST_DRAW_GRID_BK,
 					cl->drawable, cl->pb,
-					0, cl->view_w, cl->ibar_h,
+					0, total_w, cl->ibar_h,
 					0, 0, index++);
-			egal_draw_drawable(wid->drawable, wid->pb, 0, iy, 
+			egal_draw_drawable(wid->drawable, wid->pb, 0, iy,
 					cl->drawable, cl->pb, 0, 0, cl->view_w, cl->ibar_h);
 			iy += cl->ibar_h;
 		}
@@ -672,10 +706,11 @@ static eint clist_vadjust_update(eHandle hobj, efloat value)
 
 static eint clist_hadjust_update(eHandle hobj, efloat value)
 {
-	//eHandle    own = GUI_ADJUST_DATA(hobj)->owner;
-	//GuiClist   *cl = GUI_CLIST_DATA(own);
-	//cl->offset_x   = value;
-	//egui_update(cl->view);
+	eHandle    own = GUI_ADJUST_DATA(hobj)->owner;
+	GuiClist   *cl = GUI_WIDGET_DATA(own)->extra_data;
+	cl->offset_x   = (eint)value;
+	egui_update(cl->tbar);
+	egui_update(cl->view);
     return 0;
 }
 
@@ -1099,6 +1134,7 @@ static eint clist_init(eHandle hobj, eValist vp)
 
 	const echar **titles = e_va_arg(vp, const echar **);
 	eint             num = e_va_arg(vp, eint);
+	eint h = TITLE_BAR_H > ITEM_BAR_H ? TITLE_BAR_H : ITEM_BAR_H;
 
 	cl->tbar_h   = TITLE_BAR_H;
 	cl->ibar_h   = ITEM_BAR_H;
@@ -1117,7 +1153,7 @@ static eint clist_init(eHandle hobj, eValist vp)
 #ifdef __TOUCHSCREEN
 	cl->touch_sel = NULL;
 #endif
-	cl->drawable = egal_drawable_new(1000, cl->ibar_h, false);
+	cl->drawable = egal_drawable_new(1000, h, false);
 	cl->pb       = egal_pb_new(cl->drawable, NULL);
 
 	egui_set_expand(hobj, true);
@@ -1147,7 +1183,6 @@ static eint clist_init(eHandle hobj, eValist vp)
 
 	cl->hadj  = egui_adjust_new(0, 1, 1, 0, 0);
 	cl->hsbar = egui_hscrollbar_new(true);
-	egui_hide(cl->hsbar, true);
 	egui_adjust_set_owner(cl->hadj, cl->view);
 	e_signal_connect(cl->hadj, SIG_ADJUST_UPDATE, clist_hadjust_update);
 	egui_adjust_hook(cl->hadj, cl->hsbar);

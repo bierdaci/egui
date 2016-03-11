@@ -130,6 +130,7 @@ static INLINE eint e_closedir(DIR *dir)
 #endif
 
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg);
+eint e_thread_join(e_thread_t thread, void **retval);
 eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr);
 eint e_thread_mutex_lock(e_thread_mutex_t *mutex);
 eint e_thread_mutex_trylock(e_thread_mutex_t *mutex);

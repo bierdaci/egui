@@ -96,13 +96,6 @@ static void ft2_draw_glyphs(GalDrawable drawable, GalPB pb, GalFont obj,
 	FT_Bitmap     *bitmap;
 	eint i, w = 0;
 
-	if (!image) {
-		GalVisualInfo info;
-		egal_get_visual_info(drawable, &info);
-		image = egal_image_new(info.w, ft2font->metrics.height, true);
-		ft2font->image = image;
-	}
-
 	egal_fill_image(image, 0, area->x, 0, area->w, image->h);
 	for (i = 0; i < len; i++) {
 		FT_Glyph glyph;
@@ -155,6 +148,7 @@ static eint ft2_init(GalFont obj, eValist vp)
 	ft2font->metrics.height  = face->size->metrics.height / 64;
 	ft2font->metrics.ascent  = face->size->metrics.ascender / 64;
 	ft2font->metrics.descent = face->size->metrics.descender / 64;
+	ft2font->image = egal_image_new(1000, ft2font->metrics.height, true);
 
 	return 0;
 }

@@ -33,6 +33,11 @@ eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
 	return 0;
 }
 
+eint e_thread_join(e_thread_t thread, void **retval)
+{
+	return -1;
+}
+
 eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr)
 {
 	mutex->handle = CreateMutex(NULL, FALSE, NULL);
@@ -213,6 +218,11 @@ eint e_closedir(DIR *dir)
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
 {
 	return pthread_create(thread, NULL, routine, arg);
+}
+
+eint e_thread_join(e_thread_t thread, void **retval)
+{
+	return pthread_join(thread, retval);
 }
 
 eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr)

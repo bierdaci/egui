@@ -73,9 +73,22 @@ else
 fi
 
 if test "x$enable_freetype" = "xyes"; then
-	AC_CHECK_LIB(freetype, FT_New_Face,
-				 [AC_CHECK_HEADER(freetype2/freetype/freetype.h, build_freetype_support=yes, build_freetype_support=no)],
-				 AC_MSG_WARN(*** freetype loader will not be built (FREETYPE library not found) ***))
+	AC_CHECK_LIB([freetype], [FT_Init_FreeType],[build_freetype_support=yes],)
+	AC_CHECK_HEADERS([ft2build.h],[HAVE_FT2BUILD_H=1])
+	if test "x${HAVE_FT2BUILD_H}" '=' "x";then
+		AC_CHECK_HEADERS([freetype2/freetype.h],[HAVE_FREETYPE_FREETYPE_H=1])
+	fi
+	if test "x${HAVE_FREETYPE_FREETYPE_H}" '=' "x";then
+		AC_CHECK_HEADERS([freetype2/freetype/freetype.h],[HAVE_FREETYPE_FREETYPE_H=1])
+	fi
+fi
+
+AC_CHECK_LIB(fontconfig, FcPatternBuild,
+			 [AC_CHECK_HEADER(fontconfig/fontconfig.h, fontconfig_support=yes, fontconfig_support=no)],
+			 AC_MSG_WARN(*** fontconfig library not found ***))
+
+if test "x$fontconfig_support" = "xyes"; then
+	SYSTEM_LIBS="$SYSTEM_LIBS -lfontconfig"
 fi
 
 if test "x$build_freetype_support" = "xyes"; then

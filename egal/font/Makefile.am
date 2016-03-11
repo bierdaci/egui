@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir) -I../ -I/usr/include/freetype2
+INCLUDES = -I$(top_srcdir) -I../ -I/usr/include/freetype2 -I/usr/include/freetype2/freetype
 
 noinst_LTLIBRARIES = libfont.la
 

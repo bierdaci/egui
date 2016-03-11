@@ -1367,7 +1367,7 @@ static eint x11_window_get_attr(GalWindow window, GalWindowAttr *attr)
 	return 0;
 }
 
-static euint x11_set_foreground(GalPB pb, euint color)
+static eint x11_set_foreground(GalPB pb, euint color)
 {
 	GalPBX11 *xpb = X11_PB_DATA(pb);
 	xpb->attr.foreground = color;
@@ -1376,7 +1376,7 @@ static euint x11_set_foreground(GalPB pb, euint color)
 	return 0;
 }
 
-static euint x11_set_background(GalPB pb, euint color)
+static eint x11_set_background(GalPB pb, euint color)
 {
 	GalPBX11 *xpb = X11_PB_DATA(pb);
 	xpb->attr.background = color;
@@ -1592,7 +1592,7 @@ static void x11_pixmap_init(GalDrawable draw, eint w, eint h, bool alpha)
 	if (alpha)
 		depth = 32;
 	else
-		depth = 24;
+		depth = x11_vinfo->depth;
 
 	xid = XCreatePixmap(x11_dpy, x11_root->xid, w, h, depth);
 
