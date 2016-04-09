@@ -734,7 +734,8 @@ static bool x11_create_child_window(GalWindowX11 *parent)
 
 	list_for_each(pos, &parent->child_head) {
 		GalWindowX11 *child = list_entry(pos, GalWindowX11, list);
-		x11_create_window(parent, child);
+		if (child->xid == 0)
+			x11_create_window(parent, child);
 	}
 	return true;
 }
@@ -758,6 +759,23 @@ static void x11_destory_window(GalWindowX11 *xwin)
 		XDestroyWindow(x11_dpy, xwin->xid);
 }
 
+static bool x11_map_child_window(GalWindowX11 *parent)
+{
+	list_t *pos;
+
+	if (parent->attr.visible && parent->xid) {
+		XMapWindow(x11_dpy, parent->xid);
+		XMoveWindow(x11_dpy, parent->xid, parent->x, parent->y);
+		
+		list_for_each(pos, &parent->child_head) {
+			GalWindowX11 *child = list_entry(pos, GalWindowX11, list);
+			x11_map_child_window(child);
+		}
+	}
+
+	return true;
+}
+
 static eint x11_window_put(GalWindow win1, GalWindow win2, eint x, eint y)
 {
 	GalWindowX11 *parent = X11_WINDOW_DATA(win1);
@@ -770,16 +788,21 @@ static eint x11_window_put(GalWindow win1, GalWindow win2, eint x, eint y)
 	child->y = y;
 	child->parent = parent;
 	x11_list_add(parent, child);
-	if (parent->xid != 0)
+	if (parent->xid != 0 && child->xid == 0)
 		x11_create_window(parent, child);
+	else
+		x11_map_child_window(child);
+
 	return 0;
 }
 
 static eint x11_window_show(GalWindow window)
 {
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
-	if (xwin->xid)
+	if (xwin->xid) {
 		XMapWindow(x11_dpy, xwin->xid);
+		XMoveWindow(x11_dpy, xwin->xid, xwin->x, xwin->y);
+	}
 	return 0;
 }
 
@@ -823,6 +846,7 @@ static eint x11_window_remove(GalWindow window)
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
 	if (xwin->xid)
 		XUnmapWindow(x11_dpy, xwin->xid);
+	xwin->parent = NULL;
 	return 0;
 }
 

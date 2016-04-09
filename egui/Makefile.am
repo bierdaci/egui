@@ -32,6 +32,7 @@ libegui_la_SOURCES = \
 					notebook.c \
 					filesel.c \
 					ddlist.c \
+					drawable.c \
 					progressbar.c
 
 # libegui_la_LIBADD =  ../elib/libelib.la ../egal/libegal.la

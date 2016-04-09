@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
+
+#include "std.h"
 #include "elist.h"
+
+#define FREE(node) e_slice_free1(sizeof(elistnode_t) + lt->size, node)
 
 void e_list_init(elist_t *lt, int size)
 {
@@ -8,13 +12,27 @@ void e_list_init(elist_t *lt, int size)
 	lt->tail  = 0;
 	lt->sort  = 0;
 	lt->count = 0;
+	lt->dir   = 0;
 	lt->size  = size;
 }
 
 elist_t *e_list_new(int size)
 {
-	elist_t *lt = malloc(sizeof(elist_t));
+	elist_t *lt = e_calloc(sizeof(elist_t), 1);
 	e_list_init(lt, size);
+	return lt;
+}
+
+elist_t *e_list_new_by_sort(int size, eint (*sort)(elistnode_t *, elistnode_t *, void *), eint mode, eint dir)
+{
+	elist_t *lt = e_calloc(sizeof(elist_t), 1);
+	lt->head  = 0;
+	lt->tail  = 0;
+	lt->count = 0;
+	lt->size  = size;
+	lt->sort  = sort;
+	lt->mode  = mode;
+	lt->dir   = dir;
 	return lt;
 }
 
@@ -129,15 +147,21 @@ void e_list_remove(elist_t *lt, elistnode_t *node)
 
 elistnode_t *e_list_alloc_node(elist_t *lt, void *data)
 {
-	elistnode_t *node = malloc(sizeof(elistnode_t) + lt->size);
+	elistnode_t *node = (elistnode_t *)e_slice_alloc(sizeof(elistnode_t) + lt->size);
 	memcpy(node + 1, data, lt->size);
+	return node;
+}
+
+elistnode_t *e_list_alloc_node_size(elist_t *lt, void *data, eint size)
+{
+	elistnode_t *node = (elistnode_t *)e_slice_alloc(sizeof(elistnode_t) + size);
+	memcpy(node + 1, data, size);
 	return node;
 }
 
 void e_list_free_node(elist_t *lt, elistnode_t *node)
 {
-	e_list_remove(lt, node);
-	free(node);
+	FREE(node);
 }
 
 void e_list_empty(elist_t *lt)
@@ -146,7 +170,7 @@ void e_list_empty(elist_t *lt)
 	while (node) {
 		elistnode_t *t = node;
 		node = node->next;
-		free(t);
+		FREE(t);
 	}
 	lt->count = 0;
 	lt->head  = 0;
@@ -159,9 +183,9 @@ void e_list_add_by_copy(elist_t *lt, void *data)
 	e_list_insert_tail(lt, node);
 }
 
-void e_list_add_by_copy_size(elist_t *lt, void *data, int size)
+void e_list_add_by_copy_size(elist_t *lt, void *data, eint size)
 {
-	elistnode_t *node = e_list_alloc_node(lt, data);
+	elistnode_t *node = e_list_alloc_node_size(lt, data, size);
 	e_list_insert_tail(lt, node);
 }
 
@@ -193,18 +217,22 @@ void e_list_add_data_to_head(elist_t *lt, void *data)
 void e_list_out_data_from_head(elist_t *lt, void *buf)
 {
 	if (lt->head) {
+		elistnode_t *node = lt->head;
 		if (buf)
-			memcpy(buf, e_list_get_data(lt->head), lt->size);
-		e_list_free_node(lt, lt->head);
+			memcpy(buf, e_list_get_data(node), lt->size);
+		e_list_remove(lt, node);
+		e_list_free_node(lt, node);
 	}
 }
 
 void e_list_out_data_from_tail(elist_t *lt, void *buf)
 {
 	if (lt->tail) {
+		elistnode_t *node = lt->tail;
 		if (buf)
-			memcpy(buf, e_list_get_data(lt->tail), lt->size);
-		e_list_free_node(lt, lt->tail);
+			memcpy(buf, e_list_get_data(node), lt->size);
+		e_list_remove(lt, node);
+		e_list_free_node(lt, node);
 	}
 }
 
@@ -239,12 +267,14 @@ void *e_list_prev_data(elist_t *lt, void *data)
 
 void e_list_free_data(elist_t *lt, void *data)
 {
-	e_list_free_node(lt, (elistnode_t *)data - 1);
+	elistnode_t *node = (elistnode_t *)data - 1;
+	e_list_remove(lt, node);
+	e_list_free_node(lt, node);
 }
 
 void e_list_add_data_by_sort(elist_t *lt, void *data)
 {
-	elistnode_t *node = lt->head;
+	elistnode_t *node;
 	elistnode_t *new  = e_list_alloc_node(lt, data);
 	int ret = -1;
 
@@ -253,10 +283,21 @@ void e_list_add_data_by_sort(elist_t *lt, void *data)
 		return;
 	}
 
-	while (node) {
-		if ((ret = lt->sort(node, new, lt->data)) >= 0)
-			break;
-		node = node->next;
+	if (lt->dir == 0) {
+		node = lt->head;
+		while (node) {
+			if ((ret = lt->sort(node, new, lt->data)) >= 0)
+				break;
+			node = node->next;
+		}
+	}
+	else {
+		node = lt->tail;
+		while (node) {
+			if ((ret = lt->sort(node, new, lt->data)) >= 0)
+				break;
+			node = node->prev;
+		}
 	}
 
 	if (node) {
@@ -269,7 +310,7 @@ void e_list_add_data_by_sort(elist_t *lt, void *data)
 	}
 	else {
 		if (lt->mode < 0) {
-			free(new);
+			FREE(new);
 			return;
 		}
 		ret = lt->mode;

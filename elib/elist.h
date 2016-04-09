@@ -23,11 +23,13 @@ typedef struct {
     elistnode_t *tail;
 	void(*free)(void *);
 	eint mode;
+	eint dir;
 	eint (*sort)(elistnode_t *, elistnode_t *, void *);
 	void *data;
 } elist_t;
 
 elist_t *e_list_new(int size);
+elist_t *e_list_new_by_sort(int size, eint (*sort)(elistnode_t *, elistnode_t *, void *), eint, eint);
 void e_list_init(elist_t *elist, int size);
 void e_list_insert_head(elist_t *elist, elistnode_t *new);
 void e_list_insert_tail(elist_t *elist, elistnode_t *new);

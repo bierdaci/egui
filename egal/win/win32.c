@@ -998,6 +998,7 @@ static eint w32_window_remove(GalWindow window)
 		ShowWindow(xwin->hwnd, SW_HIDE);
 		SetParent(xwin->hwnd, w32_root->hwnd);
 	}
+	xwin->hwnd = NULL;
 	return 0;
 }
 
