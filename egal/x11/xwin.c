@@ -415,8 +415,8 @@ static int translate_key(XKeyEvent *event)
 static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 {
 	switch (event->type) {
-		//case GraphicsExpose:
-		//	return false;
+		case GraphicsExpose:
+			return false;
 		case Expose:
 		{
 			XExposeEvent *e = &event->xexpose;
@@ -451,6 +451,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 					ent->e.resize.h = e->height;
 				}
 			}
+
 			return true;
 		}
 		case KeyPress:
@@ -562,6 +563,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 	return false;
 }
 
+static void x11_get_pointer(GalWindow, eint *, eint *, eint *, eint *, GalModifierType *);
 static GalWindow x11_wait_event(GalEvent *gent, bool recv)
 {
 	XEvent xent;
@@ -580,6 +582,17 @@ static GalWindow x11_wait_event(GalEvent *gent, bool recv)
 					cairo_xlib_surface_set_size(xface->surface, gent->e.configure.rect.w, gent->e.configure.rect.h);
 				}
 #endif
+				if (gent->type == GAL_ET_FOCUS_IN) {
+					GalWindowX11 *xwin = X11_WINDOW_DATA(gent->window);
+					if (xwin && xwin->attr.type != GalWindowChild) {
+						XMotionEvent *e = &xent.xmotion;
+						unsigned int xmask;
+						e->state = 0;
+						xent.type = MotionNotify;
+						x11_get_pointer(gent->window, &e->x_root, &e->y_root, &e->x, &e->y, &xmask);
+						XSendEvent(x11_dpy, xent.xany.window, false, xmask, &xent);
+					}
+				}
 				return gent->window;
 			}
 		}

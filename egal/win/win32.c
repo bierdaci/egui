@@ -513,10 +513,22 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_SETFOCUS:
+		{
+			POINT pt;
 			gent.type = GAL_ET_FOCUS_IN;
 			gent.window = find_window(wnd);
 			egal_add_event_to_queue(&gent);
+			GetCursorPos(&pt);
+			gent.e.mouse.root_x  = pt.x;
+			gent.e.mouse.root_y  = pt.y;
+			ScreenToClient(wnd, &point);
+			gent.e.mouse.point.x = pt.x;
+			gent.e.mouse.point.y = pt.y;
+			gent.e.mouse.state   = 0;
+			gent.type = GAL_ET_MOUSEMOVE;
+			egal_add_event_to_queue(&gent);
 			break;
+		}
 
 		case WM_KILLFOCUS:
 			gent.type = GAL_ET_FOCUS_OUT;

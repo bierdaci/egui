@@ -169,13 +169,9 @@ static eint button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 	egal_ungrab_pointer(GUI_WIDGET_DATA(top)->window);
 #endif
 	if (button->down) {
-		GuiWidget *wid = GUI_WIDGET_DATA(hobj);
-		eint x = mevent->point.x;
-		eint y = mevent->point.y;
 		button->down = false;
-		if (x >= 0 && x < wid->rect.w && y >= 0 && y < wid->rect.h) {
+		if (button->enter)
 			e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
-		}
 		egui_update(hobj);
 	}
 
@@ -444,12 +440,148 @@ eGeneType egui_genetype_radio_button(void)
 	return gtype;
 }
 
+static eint check_button_init(eHandle hobj, eValist vp)
+{
+	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
+	GuiButton *bn  = GUI_BUTTON_DATA(hobj);
+	eint w, h;
+
+	bn->label   = e_va_arg(vp, const echar *);
+	bn->p.check = e_va_arg(vp, bool);
+
+	egui_strings_extent(0, bn->label, &w, &h);
+	wid->min_w  = check_img_y->w + w + 7;
+	wid->min_h  = check_img_y->h > h ? check_img_y->h : h + 2;
+	wid->max_w  = 1;
+	wid->max_h  = 1;
+	wid->rect.w = wid->min_w;
+	wid->rect.h = wid->min_h;
+	wid->fg_color = 0xffffff;
+
+	widget_set_status(wid, GuiStatusTransparent);
+
+	return 0;
+}
+
+static eint check_button_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
+{
+	GuiButton *btn = GUI_BUTTON_DATA(hobj);
+	GalRect    rc  = {wid->offset_x + check_img_y->w + 5, wid->offset_y, wid->min_w, wid->min_h};
+	GalImage  *img;
+
+	if (btn->enter) {
+		egal_set_foreground(wid->pb, 0xc7baa2);
+		egal_fill_rect(wid->drawable, ent->pb, wid->offset_x, wid->offset_y, wid->min_w, wid->min_h);
+	}
+
+	if (btn->p.check)
+		img = check_img_y;
+	else
+		img = check_img_n;
+
+	egal_composite_image(wid->drawable, wid->pb,
+			wid->offset_x, wid->offset_y + (wid->min_h - img->h) / 2, img, 0, 0, img->w, img->h);
+
+	if (GUI_STATUS_FOCUS(hobj)) {
+		egal_set_foreground(wid->pb, 0xff00ff);
+		egal_draw_rect(wid->drawable, wid->pb,
+				wid->offset_x + img->w + 4, wid->offset_y + 1,
+				wid->min_w - img->w - 5,  wid->min_h - 2);
+	}
+
+	egal_set_foreground(wid->pb, wid->fg_color);
+	egui_draw_strings(wid->drawable, wid->pb, 0, btn->label, &rc,  LF_HLeft | LF_VCenter);
+	return 0;
+}
+
+static eint check_button_lbuttondown(eHandle hobj, GalEventMouse *mevent)
+{
+	GUI_BUTTON_DATA(hobj)->down = true;
+	egui_update(hobj);
+	return 0;
+}
+
+static eint check_button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
+{
+	GuiButton *button = GUI_BUTTON_DATA(hobj);
+	if (button->down) {
+		button->down = false;
+		if (button->enter) {
+			button->p.check = !button->p.check;
+			egui_update(hobj);
+			e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
+		}
+	}
+	return 0;
+}
+
+static eint check_button_keydown(eHandle hobj, GalEventKey *ent)
+{
+	GuiButton *bn = GUI_BUTTON_DATA(hobj);
+	if (!bn->key_down && 
+			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
+		bn->key_down = true;
+	}
+	return 0;
+}
+
+static eint check_button_keyup(eHandle hobj, GalEventKey *ent)
+{
+	GuiButton *button = GUI_BUTTON_DATA(hobj);
+
+	if (button->key_down &&
+			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
+		button->key_down = false;
+		button->p.check = !button->p.check;
+		egui_update(hobj);
+		e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
+	}
+	return 0;
+}
+
+static void check_button_init_orders(eGeneType new, ePointer this)
+{
+	eCellOrders     *c = e_genetype_orders(new, GTYPE_CELL);
+	GuiEventOrders  *e = e_genetype_orders(new, GTYPE_EVENT);
+	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
+
+	c->init        = check_button_init;
+	w->expose      = check_button_expose;
+	w->move_resize = button_move_resize;
+
+	e->keyup       = check_button_keyup;
+	e->keydown     = check_button_keydown;
+	e->lbuttonup   = check_button_lbuttonup;
+	e->lbuttondown = check_button_lbuttondown;
+}
+
+eGeneType egui_genetype_check_button(void)
+{
+	static eGeneType gtype = 0;
+
+	if (!gtype) {
+		GuiResItem *res = egui_res_find(GUI_RES_HANDLE, _("button"));
+		eGeneInfo info = {
+			0,
+			check_button_init_orders,
+			0,
+			NULL, NULL, NULL,
+		};
+
+		check_img_y = egui_res_find_item(res,  _("radio_ye"));
+		check_img_n = egui_res_find_item(res,  _("radio_no"));
+
+		gtype = e_register_genetype(&info, GTYPE_BUTTON, NULL);
+	}
+	return gtype;
+}
+
 eHandle egui_radio_button_new(const echar *label, eHandle group)
 {
 	return e_object_new(GTYPE_RADIO_BUTTON, label, group);
 }
 
-eHandle egui_check_button_new(const echar *label)
+eHandle egui_check_button_new(const echar *label, bool is_check)
 {
-	return e_object_new(GTYPE_LABEL_BUTTON, label);
+	return e_object_new(GTYPE_CHECK_BUTTON, label, is_check);
 }
