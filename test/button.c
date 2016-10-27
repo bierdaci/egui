@@ -9,9 +9,9 @@ static eint timer_test_cb(eTimer timer, euint n, ePointer data)
 {
 	eHandle hobj = (eHandle)data;
 	if (GUI_STATUS_VISIBLE(hobj))
-		egui_hide(hobj, true);
+		egui_hide(hobj, etrue);
 	else
-		egui_show(hobj, true);
+		egui_show(hobj, etrue);
 	return -1;
 }
 
@@ -33,7 +33,7 @@ static eint test_printf(eHandle hobj, ePointer data)
 	return 0;
 }
 
-static bool test_clicked(eHandle hobj, ePointer data)
+static ebool test_clicked(eHandle hobj, ePointer data)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(data);
 	//egui_update(hobj);
@@ -57,7 +57,7 @@ static bool test_clicked(eHandle hobj, ePointer data)
 	else
 		egui_show(data);
 */
-	return true;
+	return etrue;
 }
 void egui_desk_set_expose(GuiWidget *wid, void (*expose)(GuiWidget *, GalEventExpose *));
 static GalImage *image = NULL;

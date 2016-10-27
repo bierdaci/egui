@@ -13,7 +13,7 @@ static void vbox_add_label(eHandle vbox, const echar *text)
 	eHandle hbox, label;
 
 	hbox = egui_hbox_new();
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 	egui_add_spacing(hbox, 20);
 
 	label = egui_label_new(text);
@@ -53,7 +53,7 @@ int main(int argc, char *const argv[])
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 
 	vbox_add_label(vbox, _("hello"));
 	vbox_add_label(vbox, _("world 123"));

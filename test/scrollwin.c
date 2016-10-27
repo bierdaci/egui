@@ -13,9 +13,9 @@ static eint bn_clicked(eHandle hobj, ePointer data)
 {
 	eHandle obj = (eHandle)data;
 	if (GUI_STATUS_VISIBLE(obj))
-		egui_hide(obj, false);
+		egui_hide(obj, efalse);
 	else
-		egui_show(obj, false);
+		egui_show(obj, efalse);
 	return 0;
 }
 
@@ -32,16 +32,16 @@ int main(int argc, char *const argv[])
 	egui_request_resize(win, 300, 300);
 
 	frame = egui_frame_new(_("frame"));
-	egui_set_expand(frame, true);
+	egui_set_expand(frame, etrue);
 	egui_add(win, frame);
 
 	vbox = egui_vbox_new();
 	hbox = egui_hbox_new();
-	egui_set_expand(vbox, true);
-	egui_set_expand(hbox, true);
+	egui_set_expand(vbox, etrue);
+	egui_set_expand(hbox, etrue);
 
-	vscrollbar = egui_vscrollbar_new(true);
-	hscrollbar = egui_hscrollbar_new(true);
+	vscrollbar = egui_vscrollbar_new(etrue);
+	hscrollbar = egui_hscrollbar_new(etrue);
 
 	scrollwin = egui_scrollwin_new();
 
@@ -72,7 +72,7 @@ static void add_box_button(eHandle scrollwin)
 	eHandle bn1, bn2, bn3;
 
 	box = egui_vbox_new();
-	egui_set_expand(box, true);
+	egui_set_expand(box, etrue);
 	egui_box_set_layout(box, BoxLayout_SPREAD);
 	egui_box_set_spacing(box, 10);
 	egui_box_set_align(box, BoxAlignStart);
@@ -82,7 +82,7 @@ static void add_box_button(eHandle scrollwin)
 	vbox = egui_hbox_new();
 	egui_box_set_layout(vbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(vbox, 10);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	button1 = egui_button_new(80, 40);
 	button2 = egui_button_new(80, 40);
 	button3 = egui_button_new(80, 40);
@@ -95,7 +95,7 @@ static void add_box_button(eHandle scrollwin)
 	egui_box_set_layout(hbox1, BoxLayout_CENTER);
 	egui_box_set_spacing(hbox1, 20);
 	egui_box_set_align(hbox1, BoxAlignEnd);
-	//egui_set_expand(hbox1, true);
+	//egui_set_expand(hbox1, etrue);
 
 	vbox1 = egui_vbox_new();
 	egui_box_set_layout(vbox1, BoxLayout_EDGE);
@@ -124,14 +124,14 @@ static void add_box_button(eHandle scrollwin)
 	egui_add(hbox1, vbox3);
 
 	hbox = egui_hbox_new();
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 	egui_box_set_layout(hbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(hbox, 10);
 
 	vbox2 = egui_hbox_new();
 	egui_box_set_layout(vbox2, BoxLayout_EDGE);
 	egui_box_set_spacing(vbox2, 20);
-	egui_set_expand(vbox2, true);
+	egui_set_expand(vbox2, etrue);
 	button1 = egui_button_new(80, 40);
 	button2 = egui_button_new(80, 40);
 	button3 = egui_button_new(80, 40);
@@ -144,7 +144,7 @@ static void add_box_button(eHandle scrollwin)
 	vbox3 = egui_vbox_new();
 	egui_box_set_layout(vbox3, BoxLayout_SPREAD);
 	egui_box_set_spacing(vbox3, 10);
-	egui_set_expand(vbox3, true);
+	egui_set_expand(vbox3, etrue);
 	button1 = egui_button_new(80, 40);
 	button2 = egui_button_new(80, 40);
 	button3 = egui_button_new(80, 40);

@@ -14,9 +14,9 @@ static eint bn_clicked(eHandle hobj, ePointer data)
 {
 	eHandle obj = (eHandle)data;
 	if (GUI_STATUS_VISIBLE(obj))
-		egui_hide(obj, true);
+		egui_hide(obj, etrue);
 	else
-		egui_show(obj, true);
+		egui_show(obj, etrue);
 	return 0;
 }
 
@@ -47,7 +47,7 @@ int main(int argc, char *const argv[])
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 	/*
 	box = egui_vbox_new();
-	egui_set_expand(box, true);
+	egui_set_expand(box, etrue);
 	egui_box_set_layout(box, BoxLayout_SPREAD);
 	egui_box_set_spacing(box, 10);
 	egui_box_set_align(box, BoxAlignStart);

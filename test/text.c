@@ -12,7 +12,7 @@ static void bn_insert_text(eHandle hobj, ePointer data)
 
 static void bn_clear_text(eHandle hobj, ePointer data)
 {
-	//static bool only = false;
+	//static ebool only = efalse;
 	//only = !only;
 	//egui_text_set_only_read((eHandle)data, only);
 	egui_text_clear((eHandle)data);
@@ -27,9 +27,9 @@ static eint bn_underlines(eHandle hobj, ePointer data)
 static eint bn_hscrollbar(eHandle hobj, ePointer data)
 {
 	if (GUI_STATUS_VISIBLE(data))
-		egui_hide((eHandle)data, true);
+		egui_hide((eHandle)data, etrue);
 	else
-		egui_show((eHandle)data, true);
+		egui_show((eHandle)data, etrue);
 	return 0;
 }
 
@@ -48,20 +48,20 @@ int main(int argc, char *const argv[])
 	egui_box_set_align(vbox, BoxAlignEnd);
 	egui_box_set_spacing(vbox, 10);
 	egui_box_set_layout(vbox, BoxLayout_SPREAD);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 
 	vbox1 = egui_vbox_new();
-	egui_set_expand(vbox1, true);
+	egui_set_expand(vbox1, etrue);
 	text = egui_text_new(400, 400);
-	vscrollbar = egui_vscrollbar_new(true);
-	hscrollbar = egui_hscrollbar_new(true);
+	vscrollbar = egui_vscrollbar_new(etrue);
+	hscrollbar = egui_hscrollbar_new(etrue);
 	egui_hook_v(text, vscrollbar);
 
 	egui_add(vbox1, text);
 	egui_add(vbox1, hscrollbar);
 
 	hbox = egui_hbox_new();
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 
 	egui_add(hbox, vbox1);
 	egui_add(hbox, vscrollbar);

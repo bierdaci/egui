@@ -35,11 +35,11 @@ int main(int argc, char *const argv[])
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 
 	frame = egui_frame_new(_("frame vbox"));
-	egui_set_expand(frame, true);
+	egui_set_expand(frame, etrue);
 	egui_add(win, frame);
 
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_box_set_layout(vbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(vbox, 10);
 	//egui_box_set_align(vbox, BoxAlignStart);
@@ -47,7 +47,7 @@ int main(int argc, char *const argv[])
 	egui_add(frame, vbox);
 
 	frame = egui_frame_new(_("frame hbox4"));
-	egui_set_expand_h(frame, true);
+	egui_set_expand_h(frame, etrue);
 	egui_add(vbox, frame);
 
 	hbox = egui_hbox_new();
@@ -64,7 +64,7 @@ int main(int argc, char *const argv[])
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(hbox, 10);
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 	button1 = egui_button_new(80, 40);
 	button2 = egui_button_new(80, 40);
 	button3 = egui_button_new(80, 40);
@@ -73,14 +73,14 @@ int main(int argc, char *const argv[])
 	egui_add(hbox, button3);
 
 	frame = egui_frame_new(_("frame hbox1"));
-	egui_set_expand_h(frame, true);
+	egui_set_expand_h(frame, etrue);
 	egui_add(frame, hbox);
 	egui_add(vbox, frame);
 
 	hbox = egui_hbox_new();
 	//egui_box_set_layout(hbox, BoxLayout_END);
 	egui_box_set_spacing(hbox, 10);
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 	button1 = egui_button_new(80, 40);
 	button2 = egui_button_new(80, 40);
 	button3 = egui_button_new(80, 40);
@@ -89,14 +89,14 @@ int main(int argc, char *const argv[])
 	egui_add(hbox, button3);
 
 	frame = egui_frame_new(_("frame hbox2"));
-	egui_set_expand(frame, true);
+	egui_set_expand(frame, etrue);
 	egui_add(frame, hbox);
 	egui_add(vbox, frame);
 
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(hbox, 10);
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 	button1 = egui_button_new(80, 40);
 	button2 = egui_button_new(80, 40);
 	button3 = egui_button_new(80, 40);
@@ -105,7 +105,7 @@ int main(int argc, char *const argv[])
 	egui_add(hbox, button3);
 
 	frame = egui_frame_new(_("frame hbox3"));
-	//egui_set_expand(frame, true);
+	//egui_set_expand(frame, etrue);
 	egui_add(frame, hbox);
 	egui_add(vbox, frame);
 

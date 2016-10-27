@@ -43,7 +43,7 @@ int main(int argc, char *const argv[])
 
 	vbox = egui_vbox_new();
 	egui_box_set_layout(vbox, BoxLayout_START);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_box_set_spacing(vbox, 20);
 	egui_add(win, vbox);
 

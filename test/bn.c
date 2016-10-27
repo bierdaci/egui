@@ -22,7 +22,7 @@ int main(int argc, char *const argv[])
 
 	vbox = egui_vbox_new();
 	egui_box_set_layout(vbox, BoxLayout_CENTER);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(win, vbox);
 
 	bn = egui_label_button_new(_("hello"));

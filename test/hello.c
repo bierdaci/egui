@@ -12,7 +12,7 @@ eHandle image;
 static int x = 0;
 static int y = 0;
 static int change = 0;
-bool key_down = false;
+ebool key_down = efalse;
 
 struct block_struct {
 	int w, h;
@@ -142,7 +142,7 @@ struct block_struct block5_4 =
 
 struct change_block_s t_block5 = {5, {&block5_1, &block5_2, &block5_3, &block5_4}};
 
-void draw_block(int line, int row, bool T)
+void draw_block(int line, int row, ebool T)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(image);
 
@@ -155,7 +155,7 @@ void draw_block(int line, int row, bool T)
 
 }
 
-void draw_test(struct block_struct *bs, int x, int y, bool T)
+void draw_test(struct block_struct *bs, int x, int y, ebool T)
 {
 	int i, j;
 	for (j = 0; j < 4; j++)
@@ -168,43 +168,43 @@ void draw_test(struct block_struct *bs, int x, int y, bool T)
 	}
 }
 
-bool check_crack_x(int lr)
+ebool check_crack_x(int lr)
 {
 
 	int i, j;
 	for (i = 0; i < cur_block->blocks[change]->h; i++) {
 		for (j = 0; j < cur_block->blocks[change]->w; j++)
 		 	if (block_size[i+y][j+x+lr] && cur_block->blocks[change]->block[i][j])
-				return true;
+				return etrue;
 	}
-	return false;
+	return efalse;
 
 }
 
-bool check_crack_y(void)
+ebool check_crack_y(void)
 {
 	int i, j;
 	for (i = 0; i < cur_block->blocks[change]->h; i++) {
 		for (j = 0; j < cur_block->blocks[change]->w; j++)
 		 	if (block_size[i+y+1][j+x] && cur_block->blocks[change]->block[i][j])
-				return true;
+				return etrue;
 	}
-	return false;
+	return efalse;
 }
 
 static eint timer_cb(eTimer timer, euint num, ePointer args)
 {
     static int  count = 0;	
-	bool b = false;
+	ebool b = efalse;
 	int i, j;
 
 
 	count += num;
-	draw_test(cur_block->blocks[change], x, y, false);
+	draw_test(cur_block->blocks[change], x, y, efalse);
 
 	
 	if (y + cur_block->blocks[change]->h == _HIGH || check_crack_y())
-		b = true;
+		b = etrue;
 
 	if (!b)
 	{
@@ -216,7 +216,7 @@ static eint timer_cb(eTimer timer, euint num, ePointer args)
 			count = 0;
 		}
 	}
-	draw_test(cur_block->blocks[change], x, y, true);
+	draw_test(cur_block->blocks[change], x, y, etrue);
 	if (b) {
 		int _w = cur_block->blocks[change]->w;
 		int _h = cur_block->blocks[change]->h;
@@ -254,9 +254,9 @@ static eint timer_cb(eTimer timer, euint num, ePointer args)
 static eint image_keydown(eHandle hobj, GalEventKey *ent)
 {
 	int t;
-    draw_test(cur_block->blocks[change], x, y, false);
+    draw_test(cur_block->blocks[change], x, y, efalse);
 	if (ent->code == GAL_KC_Down) {
-		key_down = true;
+		key_down = etrue;
 	}
 	else if (ent->code == GAL_KC_Right) {
 		if (x + cur_block->blocks[change]->w < _WIDTH && !check_crack_x(1))
@@ -273,7 +273,7 @@ static eint image_keydown(eHandle hobj, GalEventKey *ent)
 		   x--;
 	}
 
-	draw_test(cur_block->blocks[change], x, y, true);
+	draw_test(cur_block->blocks[change], x, y, etrue);
 
 	return -1;
 }
@@ -281,7 +281,7 @@ static eint image_keydown(eHandle hobj, GalEventKey *ent)
 static eint image_keyup(eHandle hobj, GalEventKey *ent)
 {
 
-	key_down = false;
+	key_down = efalse;
 	return -1;
 }
 
@@ -293,14 +293,14 @@ static eint bn_clicked(eHandle hobj, ePointer data)
 
 	GuiWidget *wid = GUI_WIDGET_DATA((eHandle)data);
 	
-	draw_block(x, y, true);
+	draw_block(x, y, etrue);
 	egal_set_foreground(wid->pb, 0x00ffdd);
 	egal_fill_rect(wid->drawable, wid->pb, x, y, 20 ,20);
 	if (ox != x || oy != y)
 	{
 		egal_set_foreground(wid->pb, 0x0);
 		egal_fill_rect(wid->drawable, wid->pb, ox, oy, 20, 20);
-		draw_block(ox, oy, false);
+		draw_block(ox, oy, efalse);
 
 		ox = x;
 		oy = y;
@@ -336,7 +336,7 @@ static eint image_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
 		{
 			if (block_size[i][j])
 			{
-				draw_block(j, i, true);
+				draw_block(j, i, etrue);
 			}
 		}
 	}
@@ -355,7 +355,7 @@ int main(int argc, char *const argv[])
 
 	vbox = egui_vbox_new();
 	egui_box_set_layout(vbox, BoxLayout_START);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_box_set_spacing(vbox, 20);
 	egui_add(win, vbox);
 
@@ -372,7 +372,7 @@ int main(int argc, char *const argv[])
 
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_SPREAD);
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_box_set_spacing(hbox, 20);
 	egui_add(vbox,  hbox);
 	

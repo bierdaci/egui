@@ -12,9 +12,9 @@ static eint open_chat_win(eHandle hobj, ePointer data)
 {
 	eHandle chat = (eHandle)data;
 	if (GUI_STATUS_VISIBLE(chat))
-		egui_hide(chat, false);
+		egui_hide(chat, efalse);
 	else
-		egui_show(chat, false);
+		egui_show(chat, efalse);
 	return 0;
 }
 
@@ -27,7 +27,7 @@ int main(int argc, const char *argv[])
 
 	win  = egui_window_new();
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(win, vbox);
 
 	chat = chat_win_new();
@@ -40,7 +40,7 @@ int main(int argc, const char *argv[])
 	e_signal_connect(lv, SIG_2CLICKED, open_chat_win, (ePointer)chat);
 	egui_clist_title_hide(lv);
 	egui_request_resize(lv, 150, 400);
-	clist_vsbar_set_auto(lv, true);
+	clist_vsbar_set_auto(lv, etrue);
 	egui_add(vbox, lv);
 
 	egui_main();
@@ -74,7 +74,7 @@ static eHandle chat_win_new()
 	
 	win = egui_window_new();
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(win, vbox);
 
 	view_text = egui_text_new(450, 200);
@@ -88,8 +88,8 @@ static eHandle chat_win_new()
 	egui_add(hbox, bn);
 	egui_add(vbox, hbox);
 
-	egui_text_set_only_read(view_text, true);
-//	egui_hide(win, false);
+	egui_text_set_only_read(view_text, etrue);
+//	egui_hide(win, efalse);
 
 	return win;
 }

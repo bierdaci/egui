@@ -7,15 +7,15 @@ static void win_expose_bg(eHandle hobj, GuiWidget *wid, GalEventExpose *exp)
 	egal_fill_rect(wid->drawable, exp->pb, exp->rect.x, exp->rect.y, exp->rect.w, exp->rect.h);
 }
 
-static bool bn1_clicked(eHandle hobj, ePointer data)
+static ebool bn1_clicked(eHandle hobj, ePointer data)
 {
 	//egui_remove((eHandle)data);
 	//e_object_unref((eHandle)data);
 	if (GUI_STATUS_VISIBLE((eHandle)data))
-		egui_hide((eHandle)data, true);
+		egui_hide((eHandle)data, etrue);
 	else
-		egui_show((eHandle)data, true);
-	return true;
+		egui_show((eHandle)data, etrue);
+	return etrue;
 }
 
 int main(int argc, char *const argv[])
@@ -32,7 +32,7 @@ int main(int argc, char *const argv[])
 	vbox = egui_vbox_new();
 	egui_box_set_layout(vbox, BoxLayout_CENTER);
 	egui_box_set_spacing(vbox, 10);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(win, vbox);
 
 	gif  = egal_pixbuf_anim_new_from_file(_("2.gif"), 1.0, 1.0);

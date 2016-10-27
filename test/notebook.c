@@ -24,28 +24,28 @@ int main(int argc, char *const argv[])
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 	egui_request_resize(win, 400, 400);
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 
 	notebook = egui_notebook_new();
 
 	button1 = egui_button_new(100, 100);
 	frame   = egui_frame_new(_("frame1"));
-	egui_set_expand(frame, true);
+	egui_set_expand(frame, etrue);
 	egui_add(frame, button1);
 	egui_notebook_append_page(notebook, frame, _("tab1"));
 	button1 = egui_button_new(100, 100);
 	frame   = egui_frame_new(_("frame2"));
-	//egui_set_expand(frame, true);
+	//egui_set_expand(frame, etrue);
 	egui_add(frame, button1);
 	egui_notebook_append_page(notebook, frame, _("tab2"));
 	button1 = egui_button_new(100, 100);
 	frame   = egui_frame_new(_("frame3"));
-	//egui_set_expand(frame, true);
+	//egui_set_expand(frame, etrue);
 	egui_add(frame, button1);
 	egui_notebook_append_page(notebook, frame, _("tab3"));
 	button1 = egui_button_new(100, 100);
 	frame   = egui_frame_new(_("frame4"));
-	//egui_set_expand(frame, true);
+	//egui_set_expand(frame, etrue);
 	egui_add(frame, button1);
 	egui_notebook_append_page(notebook, frame, _("tab4"));
 
@@ -54,7 +54,7 @@ int main(int argc, char *const argv[])
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(hbox, 10);
-	egui_set_expand(hbox, true);
+	egui_set_expand(hbox, etrue);
 	button1 = egui_label_button_new(_("top"));
 	button2 = egui_label_button_new(_("left"));
 	button3 = egui_label_button_new(_("...."));

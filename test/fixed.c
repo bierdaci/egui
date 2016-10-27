@@ -30,9 +30,9 @@ static void btn1_set_strings(eHandle hobj, ePointer data)
 
 static void btn2_set_strings(eHandle hobj, ePointer data)
 {
-	static bool set = false;
+	static ebool set = efalse;
 	if (!set) {
-		set = true;
+		set = etrue;
 		layout_set_strings((eHandle)data, _("12345\nasdfklasdjf;a你功阿辣四嘉阿斯顿立刻就ie\n你委屈大1324123412341234\n"
 					"\n\nlksdfj;aslkdfjaskldfjaslkdfjas\ndkfasd124jlkjadsfkj低回是阿斯看风景阿斯可叫阿斯蒂芬........"));
 	}
@@ -77,8 +77,8 @@ int main(int argc, char *const argv[])
 	btn3   = egui_button_new(80, 40);
 	egui_put(fixed, btn3, 600, 600);
 
-	vscrollbar = egui_vscrollbar_new(false);
-	hscrollbar = egui_hscrollbar_new(false);
+	vscrollbar = egui_vscrollbar_new(efalse);
+	hscrollbar = egui_hscrollbar_new(efalse);
 
 	egui_request_resize(vscrollbar, 0, 500);
 	egui_request_resize(hscrollbar, 400, 0);

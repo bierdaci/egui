@@ -47,7 +47,7 @@ int main(int argc, char *const argv[])
 	win  = egui_window_new(GUI_WINDOW_TOPLEVEL);
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(win, vbox);
 
 	bar = menu_bar_new_with_entrys(win, menu_entrys, sizeof(menu_entrys) / sizeof(GuiMenuEntry));

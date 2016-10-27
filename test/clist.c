@@ -53,7 +53,7 @@ int main(int argc, char *const argv[])
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 	egui_request_resize(win, 400, 400);
 	vbox = egui_vbox_new();
-	egui_set_expand (vbox, true);
+	egui_set_expand (vbox, etrue);
 	egui_box_set_layout (vbox, BoxLayout_SPREAD);
 	egui_box_set_spacing(vbox, 10);
 

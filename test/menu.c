@@ -28,7 +28,7 @@ int main(int argc, char *const argv[])
 	win  = egui_window_new(GUI_WINDOW_TOPLEVEL);
 	e_signal_connect(win, SIG_DESTROY, egui_quit);
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(win, vbox);
 
 	egui_accelkey_connect(win, _("<Ctrl><shift>A"), test_AccelKeyCB, 0);
@@ -143,7 +143,7 @@ static eHandle menu1_new(eHandle win)
 
 	item = egui_menu_item_new_with_label(_("Save as"));
 	egui_add(menu, item);
-	egui_menu_item_set_check(item, true);
+	egui_menu_item_set_check(item, etrue);
 
 	item = egui_menu_item_new_with_label(_("Copy"));
 	egui_add(menu, item);

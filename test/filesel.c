@@ -4,7 +4,7 @@
 
 static eint filesel_clicked(eHandle hobj, ePointer data)
 {
-	egui_show((eHandle)data, true);
+	egui_show((eHandle)data, etrue);
 	return 0;
 }
 
