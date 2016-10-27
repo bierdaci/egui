@@ -30,7 +30,7 @@ static void adjust_init_gene(eGeneType new)
 	adjust_signal_update = e_signal_new("adjust_update",
 			new,
 			STRUCT_OFFSET(GuiAdjustOrders, update),
-			false, 0, "%f");
+			efalse, 0, "%f");
 }
 
 static void adjust_reset_hook(eHandle hobj, efloat value, efloat min, efloat max, efloat step_inc, efloat page_inc)

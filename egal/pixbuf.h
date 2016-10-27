@@ -17,7 +17,7 @@ struct _GalPixbuf {
 	int w, h;
 	int rowbytes;
 	int pixelbytes;
-	bool alpha;
+	ebool alpha;
 	euchar *pixels;
 };
 
@@ -31,8 +31,8 @@ struct _GalPixbufFrame {
 
 	GalPixbufFrameAction action;
 
-	bool need_recomposite;
-	bool bg_transparent;
+	ebool need_recomposite;
+	ebool bg_transparent;
 
 	GalPixbuf *composited;
 	GalPixbuf *revert;
@@ -55,16 +55,16 @@ struct _GalPixbufAnim {
 	euchar bg_blue;
 
 	int  loop;
-	bool loading;
+	ebool loading;
 };
 
-GalPixbuf *egal_pixbuf_new(bool alpha, eint w, eint h);
+GalPixbuf *egal_pixbuf_new(ebool alpha, eint w, eint h);
 void       egal_pixbuf_free(GalPixbuf *);
 GalPixbuf *egal_pixbuf_copy(GalPixbuf *);
 GalPixbuf *egal_pixbuf_new_from_file(const echar *filename, efloat, efloat);
 GalPixbuf *egal_pixbuf_new_subpixbuf(GalPixbuf *, eint xoffset, eint yoffset, eint width, eint height);
 GalPixbufAnim *egal_pixbuf_anim_new_from_file(const echar *filename, efloat x_scale, efloat y_scale);
-bool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf);
+ebool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf);
 
 euint8 pixbuf_read_pixel8(GalPixbuf *pixbuf, eint x, eint y);
 euint16 pixbuf_read_pixel16(GalPixbuf *pixbuf, eint x, eint y);

@@ -21,7 +21,7 @@ struct _LayoutLine {
 	eint nwrap;
 	eint id;
 	eint max_w;
-	bool is_lf;
+	ebool is_lf;
 	eint over;
 	eint lack;
 	eint offset_x;
@@ -131,7 +131,7 @@ static eint layout_hadjust_update(eHandle hobj, efloat value)
 static eint layout_init_data(eHandle hobj, ePointer this)
 {
 	GuiLayout  *layout = this;
-	layout->is_wrap    = false;
+	layout->is_wrap    = efalse;
 	layout->table_size = DEFAULT_TABLE_SIZE;
 	layout->vadj       = egui_adjust_new(0, 1, 1, 0, 0);
 	layout->hadj       = egui_adjust_new(0, 1, 1, 0, 0);
@@ -154,7 +154,7 @@ static LayoutLine *layout_line_new(void)
 	line->nichar      = 0;
 	line->chars       = NULL;
 	line->nwrap       = 0;
-	line->is_lf       = false;
+	line->is_lf       = efalse;
 	line->nchar       = 0;
 	line->id          = 0;
 	line->over        = 0;
@@ -178,23 +178,23 @@ static LayoutLine *layout_line_new(void)
 
 #define ioffset_char(line, ioff) line->chars[line->coffsets[ioff]]
 
-static bool ioffset_line_end(LayoutLine *line, eint ioff)
+static ebool ioffset_line_end(LayoutLine *line, eint ioff)
 {
 	if (line->chars[line->coffsets[ioff]] == '\n'
 			|| ioff >= line->nichar)
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
-static bool ioffset_is_latin(LayoutLine *line, eint ioff)
+static ebool ioffset_is_latin(LayoutLine *line, eint ioff)
 {
 	echar c = line->chars[line->coffsets[ioff]];
 	if (c < 128
 			&& c != ' '
 			&& c != '\t'
 			&& !ioffset_line_end(line, ioff))
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
 static eint latin_word_width(LayoutLine *line, eint o, eint *j, eint max_w)
@@ -425,7 +425,7 @@ static eint layout_line_insert(GuiLayout *layout, const echar *text, eint clen)
 	} while (ichar != '\n' && len < clen);
 
 	if (ichar == '\n') {
-		line->is_lf = true;
+		line->is_lf = etrue;
 		layout->nline ++;
 	}
 
@@ -514,7 +514,7 @@ static void layout_configure(GuiLayout *layout)
 			layout->max_w = line->max_w;
 		line = line->next;
 	}
-	layout->configure = true;
+	layout->configure = etrue;
 
 	if (layout->hadj) {
 		if (layout->max_w > layout->w) {
@@ -562,29 +562,29 @@ static void __layout_set_text(eHandle hobj, const echar *text, eint len)
 
 	layout->top       = NULL;
 	layout->scroll_y  = 0;
-	layout->configure = false;
+	layout->configure = efalse;
 }
 
 static void __layout_set_font(eHandle hobj, GalFont font)
 {
 	GuiLayout *layout = GUI_LAYOUT_DATA(hobj);
 	layout->font      = font;
-	layout->configure = false;
+	layout->configure = efalse;
 }
 
 static void __layout_set_table_size(eHandle hobj, eint size)
 {
 	GuiLayout *layout  = GUI_LAYOUT_DATA(hobj);
 	layout->table_size = size;
-	layout->configure  = false;
+	layout->configure  = efalse;
 }
 
 static void __layout_set_wrap(eHandle hobj)
 {
 	GuiLayout *layout  = GUI_LAYOUT_DATA(hobj);
 	if (!layout->is_wrap) {
-		layout->is_wrap   = true;
-		layout->configure = false;
+		layout->is_wrap   = etrue;
+		layout->configure = efalse;
 	}
 }
 
@@ -592,15 +592,15 @@ static void __layout_unset_wrap(eHandle hobj)
 {
 	GuiLayout *layout  = GUI_LAYOUT_DATA(hobj);
 	if (layout->is_wrap) {
-		layout->is_wrap   = false;
-		layout->configure = false;
+		layout->is_wrap   = efalse;
+		layout->configure = efalse;
 	}
 }
 
 static void line_set_align(GuiLayout *layout, LayoutFlags align)
 {
-	bool is_halign = !layout->is_wrap;
-	bool is_valign = layout->total_h < layout->h;
+	ebool is_halign = !layout->is_wrap;
+	ebool is_valign = layout->total_h < layout->h;
 	LayoutFlags valign = align & LF_VBottom;
 	LayoutFlags halign = align & LF_HRight;
 
@@ -630,7 +630,7 @@ static void __layout_set_align(eHandle hobj, LayoutFlags flags)
 	if (layout->align != flags) {
 		layout->align = flags;
 		line_set_align(layout, flags);
-		layout->configure = false;
+		layout->configure = efalse;
 	}
 }
 
@@ -639,7 +639,7 @@ static void __layout_set_extent(eHandle hobj, eint w, eint h)
 	GuiLayout *layout = GUI_LAYOUT_DATA(hobj);
 	layout->w = w;
 	layout->h = h;
-	layout->configure = false;
+	layout->configure = efalse;
 }
 
 static void __layout_set_offset(eHandle hobj, eint x, eint y)
@@ -647,14 +647,14 @@ static void __layout_set_offset(eHandle hobj, eint x, eint y)
 	GuiLayout *layout = GUI_LAYOUT_DATA(hobj);
 	layout->offset_x  = x;
 	layout->offset_y  = y;
-	layout->configure = false;
+	layout->configure = efalse;
 }
 
 static void __layout_set_spacing(eHandle hobj, eint spacing)
 {
 	GuiLayout *layout = GUI_LAYOUT_DATA(hobj);
 	layout->spacing   = spacing;
-	layout->configure = false;
+	layout->configure = efalse;
 }
 
 static void layout_draw_wrap(GalDrawable drawable, GalPB pb,

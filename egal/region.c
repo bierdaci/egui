@@ -40,7 +40,7 @@ typedef void (*voidProcp2)(GalRegion *region,
 	 (r).y2 >  (y) && \
 	 (r).y1 <= (y))
 
-static bool section_is_intersect(const GalSection *psrc1, const GalSection *psrc2)
+static ebool section_is_intersect(const GalSection *psrc1, const GalSection *psrc2)
 {
 	int l, t, r, b;
 
@@ -50,9 +50,9 @@ static bool section_is_intersect(const GalSection *psrc1, const GalSection *psrc
 	b = (psrc1->y2 < psrc2->y2) ? psrc1->y2 : psrc2->y2;
 
 	if (l >= r || t >= b)
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
 static void set_section_empty(GalSection *sec)
@@ -103,35 +103,35 @@ static void offset_section(GalSection *sec, int x, int y)
     sec->y2 += y;
 }
 
-bool egal_region_pt_in(GalRegion *region, int x, int y)
+ebool egal_region_pt_in(GalRegion *region, int x, int y)
 {
 	int y1;
 	GalRegionSec *chain = region->head;
 
 	if (!region->head || y >= region->tail->sec.y2 || y < region->head->sec.y1)
-		return false;
+		return efalse;
 
 	chain = region->head;
 	while (chain && y >= chain->sec.y2)
 		chain = chain->next;
 
-	if (!chain) return false;
+	if (!chain) return efalse;
 
 	y1 = chain->sec.y1;
 	while (chain && chain->sec.y1 == y1) {
 		if (INSEGMENT(chain->sec, x, y))
-			return true;
+			return etrue;
 		chain = chain->next;
 	}
 
-	return false;
+	return efalse;
 }
 
-bool egal_region_rect_in(GalRegion *region, const GalRect *prc)
+ebool egal_region_rect_in(GalRegion *region, const GalRect *prc)
 {
 	GalRegionSec *chain = region->head;
 	GalSection    sec;
-	bool ret = false;
+	ebool ret = efalse;
 
 	rect_to_section(prc, &sec);
 
@@ -157,7 +157,7 @@ bool egal_region_rect_in(GalRegion *region, const GalRect *prc)
 				continue;
 			}
 
-			ret = true;
+			ret = etrue;
 			break;
 		}
 	}
@@ -181,12 +181,12 @@ void egal_region_get_bound(GalRegion *region, GalRect *prc)
 	egal_rect_normalize(prc);
 }
 
-bool egal_region_is_empty(const GalRegion * region)
+ebool egal_region_is_empty(const GalRegion * region)
 {
 	if (region->head == NULL)
-		return true;
+		return etrue;
 
-	return false;
+	return efalse;
 }
 
 void egal_region_empty(GalRegion *region)
@@ -234,20 +234,20 @@ void egal_region_destroy(GalRegion *region)
 	e_free(region);
 }
 
-bool egal_region_set_rect(GalRegion *region, const GalRect *prc)
+ebool egal_region_set_rect(GalRegion *region, const GalRect *prc)
 {
 	GalRegionSec *chain;
 	GalSection sec;
 
 	if (RECT_IS_EMPTY(prc))
-		return false;
+		return efalse;
 
 	rect_to_section(prc, &sec);
 	egal_region_empty(region);
 
 	chain = region_section_new();
 	if (chain == NULL)
-		return false;
+		return efalse;
 
 	chain->sec = sec;
 	chain->next = NULL;
@@ -256,20 +256,20 @@ bool egal_region_set_rect(GalRegion *region, const GalRect *prc)
 	region->head = region->tail = chain;
 	region->bound = sec;
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_copy(GalRegion *dreg, const GalRegion *sreg)
+ebool egal_region_copy(GalRegion *dreg, const GalRegion *sreg)
 {
 	GalRegionSec *pcr;
 	GalRegionSec *new, *prev;
 
 	if (dreg == sreg)
-		return false;
+		return efalse;
 
 	egal_region_empty(dreg);
 	if (!(pcr = sreg->head))
-		return true;
+		return etrue;
 
 	new = region_section_new();
 
@@ -294,7 +294,7 @@ bool egal_region_copy(GalRegion *dreg, const GalRegion *sreg)
 
 	dreg->bound = sreg->bound; 
 
-	return true;
+	return etrue;
 }
 
 GalRegion *egal_region_copy1(const GalRegion *region)
@@ -707,48 +707,48 @@ static void region_subtract_O(GalRegion *region,
 	}
 }
 
-bool egal_region_intersect(GalRegion *dst, const GalRegion *src1, const GalRegion *src2)
+ebool egal_region_intersect(GalRegion *dst, const GalRegion *src1, const GalRegion *src2)
 {
 	if (!src1->head || !src2->head  ||
 			!EXTENTCHECK(&src1->bound, &src2->bound)) {
 		egal_region_empty(dst);
-		return false;
+		return efalse;
 	}
 	else
 		region_op(dst, src1, src2, region_intersect_O, NULL, NULL);
 
 	region_set_extents(dst);
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_subtract(GalRegion *rgnD, const GalRegion *rgnM, const GalRegion *rgnS)
+ebool egal_region_subtract(GalRegion *rgnD, const GalRegion *rgnM, const GalRegion *rgnS)
 {
 	if (!rgnM->head || !rgnS->head  ||
 			!EXTENTCHECK(&rgnM->bound, &rgnS->bound)) {
 		egal_region_copy(rgnD, rgnM);
-		return true;
+		return etrue;
 	}
 
 	region_op(rgnD, rgnM, rgnS, region_subtract_O, region_subtract_non_O1, NULL);
 
 	region_set_extents(rgnD);
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_union(GalRegion *dst, const GalRegion *src1, const GalRegion *src2)
+ebool egal_region_union(GalRegion *dst, const GalRegion *src1, const GalRegion *src2)
 {
 	if (src1 == src2 || !src1->head) {
 		if (dst != src2)
 			egal_region_copy(dst, src2);
-		return true;
+		return etrue;
 	}
 
 	if (!src2->head) {
 		if (dst != src1)
 			egal_region_copy(dst, src1);
-		return true;
+		return etrue;
 	}
 
 	if ((src1->head == src1->tail) &&
@@ -759,7 +759,7 @@ bool egal_region_union(GalRegion *dst, const GalRegion *src1, const GalRegion *s
 	{
 		if (dst != src1)
 			egal_region_copy(dst, src1);
-		return true;
+		return etrue;
 	}
 
 	if ((src2->head == src2->tail) &&
@@ -770,17 +770,17 @@ bool egal_region_union(GalRegion *dst, const GalRegion *src1, const GalRegion *s
 	{
 		if (dst != src2)
 			egal_region_copy(dst, src2);
-		return true;
+		return etrue;
 	}
 
 	region_op(dst, src1, src2, region_union_O, region_union_non_O, region_union_non_O);
 
 	region_set_extents(dst);
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_xor(GalRegion *dst, const GalRegion *src1, const GalRegion *src2)
+ebool egal_region_xor(GalRegion *dst, const GalRegion *src1, const GalRegion *src2)
 {
 	GalRegion tmpa, tmpb;
 
@@ -794,16 +794,16 @@ bool egal_region_xor(GalRegion *dst, const GalRegion *src1, const GalRegion *src
 	egal_region_empty(&tmpa);
 	egal_region_empty(&tmpb);
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_union_rect(GalRegion *dst, const GalRect *prc)
+ebool egal_region_union_rect(GalRegion *dst, const GalRect *prc)
 {
 	GalRegion region;
 	GalRegionSec chain;
 
 	if (RECT_IS_EMPTY(prc))
-		return false;
+		return efalse;
 
 	rect_to_section(prc, &chain.sec);
 	chain.next = NULL;
@@ -816,17 +816,17 @@ bool egal_region_union_rect(GalRegion *dst, const GalRect *prc)
 
 	egal_region_union(dst, dst, &region);
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_intersect_rect(GalRegion *dst, const GalRect *prc)
+ebool egal_region_intersect_rect(GalRegion *dst, const GalRect *prc)
 {
 	GalRegion region;
 	GalRegionSec chain;
 
 	if (RECT_IS_EMPTY(prc)) {
 		egal_region_empty(dst);
-		return true;
+		return etrue;
 	}
 
 	rect_to_section(prc, &chain.sec);
@@ -839,17 +839,17 @@ bool egal_region_intersect_rect(GalRegion *dst, const GalRect *prc)
 
 	egal_region_intersect(dst, dst, &region);
 
-	return true;
+	return etrue;
 }
 
-bool egal_region_subtract_rect(GalRegion *dst, const GalRect *prc)
+ebool egal_region_subtract_rect(GalRegion *dst, const GalRect *prc)
 {
 	GalRegion region;
 	GalRegionSec chain;
 
 	rect_to_section(prc, &chain.sec);
 	if (RECT_IS_EMPTY(prc) || !section_is_intersect(&dst->bound, &chain.sec))
-		return false;
+		return efalse;
 
 	chain.next = NULL;
 	chain.prev = NULL;
@@ -860,7 +860,7 @@ bool egal_region_subtract_rect(GalRegion *dst, const GalRect *prc)
 
 	egal_region_subtract(dst, dst, &region);
 
-	return true;
+	return etrue;
 }
 
 void egal_region_offset(GalRegion *region, int x, int y)

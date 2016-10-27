@@ -38,14 +38,14 @@ struct _PNGContext {
 	euint fatal_error_occurred : 1;
 };
 
-static bool setup_png_transformations(PNGContext *lc, png_structp png_read_ptr, png_infop png_info_ptr)
+static ebool setup_png_transformations(PNGContext *lc, png_structp png_read_ptr, png_infop png_info_ptr)
 {
 	int bit_depth, filter_type, interlace_type, compression_type;
 
 	bit_depth = png_get_bit_depth(png_read_ptr, png_info_ptr);
 	if (bit_depth < 1 || bit_depth > 16) {
 		printf("Bits per channel of PNG pixbuf is invalid.");
-		return false;
+		return efalse;
 	}
 
 	png_get_IHDR(png_read_ptr, png_info_ptr,
@@ -87,26 +87,26 @@ static bool setup_png_transformations(PNGContext *lc, png_structp png_read_ptr, 
 
 	if (lc->width == 0 || lc->height == 0) {
 		printf("Transformed PNG has zero width or height.");
-		return false;
+		return efalse;
 	}
 
 	if (bit_depth != 8) {
 		printf("Bits per channel of transformed PNG is not 8.");
-		return false;
+		return efalse;
 	}
 
 	if (!(lc->color_type == PNG_COLOR_TYPE_RGB
 				|| lc->color_type == PNG_COLOR_TYPE_RGB_ALPHA)) {
 		printf("Transformed PNG not RGB or RGBA.");
-		return false;
+		return efalse;
 	}
 
 	lc->channels = png_get_channels(png_read_ptr, png_info_ptr);
 	if (!(lc->channels == 3 || lc->channels == 4)) {
 		printf("Transformed PNG has unsupported number of channels, must be 3 or 4.");
-		return false;
+		return efalse;
 	}
-	return true;
+	return etrue;
 }
 
 static png_voidp png_malloc_callback(png_structp o, png_size_t size)
@@ -125,7 +125,7 @@ static ePointer png_load_begin(void)
 
 	lc = e_calloc(sizeof(PNGContext), 1);
 
-	lc->fatal_error_occurred = false;
+	lc->fatal_error_occurred = efalse;
 	lc->first_row_seen_in_chunk = -1;
 	lc->last_row_seen_in_chunk = -1;
 	lc->first_pass_seen_in_chunk = -1;
@@ -194,11 +194,11 @@ static GalPixbuf *png_load_end(ePointer context)
 	return pixbuf;
 }
 
-static bool png_load_increment(ePointer context, const euchar *buf, png_size_t size)
+static ebool png_load_increment(ePointer context, const euchar *buf, png_size_t size)
 {
 	PNGContext *lc = context;
 
-	if (!lc) return false;
+	if (!lc) return efalse;
 
 	lc->first_row_seen_in_chunk = -1;
 	lc->last_row_seen_in_chunk = -1;
@@ -207,14 +207,14 @@ static bool png_load_increment(ePointer context, const euchar *buf, png_size_t s
 	lc->max_row_seen_in_chunk = -1;
 
 	if (setjmp(lc->png_read_ptr->jmpbuf))
-		return false;
+		return efalse;
 	else
 		png_process_data(lc->png_read_ptr, lc->png_info_ptr, (png_bytep)buf, size);
 
 	if (lc->fatal_error_occurred)
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
 static void
@@ -222,7 +222,7 @@ png_info_callback(png_structp png_read_ptr, png_infop png_info_ptr)
 {
 	PNGContext *lc;
 	PixbufContext *con;
-	bool have_alpha = false;
+	ebool have_alpha = efalse;
 
 	lc = png_get_progressive_ptr(png_read_ptr);
 
@@ -230,12 +230,12 @@ png_info_callback(png_structp png_read_ptr, png_infop png_info_ptr)
 		return;
 
 	if (!setup_png_transformations(lc, png_read_ptr, png_info_ptr)) {
-		lc->fatal_error_occurred = true;
+		lc->fatal_error_occurred = etrue;
 		return;
 	}
 
 	if (lc->color_type & PNG_COLOR_MASK_ALPHA)
-		have_alpha = true;
+		have_alpha = etrue;
 
 	con = (PixbufContext *)lc;
 #ifdef WIN32
@@ -261,7 +261,7 @@ png_row_callback(png_structp png_read_ptr, png_bytep new_row, png_uint_32 row_nu
 		return;
 
 	if (row_num >= lc->height) {
-		lc->fatal_error_occurred = true;
+		lc->fatal_error_occurred = etrue;
 		return;
 	}
 
@@ -308,7 +308,7 @@ png_error_callback(png_structp png_read_ptr, png_const_charp error_msg)
 
 	lc = png_get_error_ptr(png_read_ptr);
 
-	lc->fatal_error_occurred = true;
+	lc->fatal_error_occurred = etrue;
 
 	longjmp(png_read_ptr->jmpbuf, 1);
 }
@@ -343,7 +343,7 @@ static void png_info_callback_head(png_structp png_read_ptr, png_infop png_info_
 	pixbuf->h = height;
 }
 
-static bool png_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
+static ebool png_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 {
 	png_structp png_read_ptr;
 	png_infop   png_info_ptr;
@@ -362,18 +362,18 @@ static bool png_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 			png_error_callback,
 			png_warning_callback);
 #endif
-	if (!png_read_ptr) return false;
+	if (!png_read_ptr) return efalse;
 
 	if (setjmp(png_read_ptr->jmpbuf)) {
 		if (png_info_ptr)
 			png_destroy_read_struct(&png_read_ptr, NULL, NULL);
-		return false;
+		return efalse;
 	}
 
 	png_info_ptr = png_create_info_struct(png_read_ptr);
 	if (!png_info_ptr) {
 		png_destroy_read_struct(&png_read_ptr, NULL, NULL);
-		return false;
+		return efalse;
 	}
 
 	png_set_progressive_read_fn(png_read_ptr,
@@ -384,7 +384,7 @@ static bool png_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 	png_process_data(png_read_ptr, png_info_ptr, data, len);
 
 	png_destroy_read_struct(&png_read_ptr, &png_info_ptr, NULL);
-	return true;
+	return etrue;
 }
 
 void _gal_pixbuf_png_fill_vtable(GalPixbufModule *module)
@@ -398,15 +398,15 @@ void _gal_pixbuf_png_fill_vtable(GalPixbufModule *module)
 }
 
 #if 0
-static bool
+static ebool
 png_text_to_pixbuf_option(png_text text_ptr, char **key, char **value)
 {
-	bool is_ascii = true;
+	ebool is_ascii = etrue;
 	euint i;
 
 	for (i = 0; i < text_ptr.text_length; i++)
 		if (text_ptr.text[i] & 0x80) {
-			is_ascii = false;
+			is_ascii = efalse;
 			break;
 		}
 
@@ -417,12 +417,12 @@ png_text_to_pixbuf_option(png_text text_ptr, char **key, char **value)
 
 	if (*value) {
 		*key = g_strconcat("tEXt::", text_ptr.key, NULL);
-		return true;
+		return etrue;
 	}
 	else {
 		//g_warning("Couldn't convert text chunk value to UTF-8.");
 		*key = NULL;
-		return false;
+		return efalse;
 	}
 }
 static void
@@ -473,10 +473,10 @@ static void png_save_to_callback_flush_func(png_structp png_ptr)
 {
 }
 
-static bool real_save_png(GalPixbuf *pixbuf, 
+static ebool real_save_png(GalPixbuf *pixbuf, 
 		euchar           **keys,
 		euchar           **values,
-		bool          to_callback,
+		ebool          to_callback,
 		FILE             *f,
 		GalPixbufSaveFunc save_func,
 		ePointer          user_data)
@@ -495,7 +495,7 @@ static bool real_save_png(GalPixbuf *pixbuf,
 	euint bpc;
 	euint num_keys;
 	euint compression = -1;
-	bool success = true;
+	ebool success = etrue;
 	SaveToFunctionIoPtr to_callback_ioptr;
 
 	num_keys = 0;
@@ -513,12 +513,12 @@ static bool real_save_png(GalPixbuf *pixbuf,
 							GDK_PIXBUF_ERROR,
 							GDK_PIXBUF_ERROR_BAD_OPTION,
 							_("Keys for PNG text chunks must have at least 1 and at most 79 characters."));
-					return false;
+					return efalse;
 				}
 				for (i = 0; i < len; i++) {
 					if ((euchar)key[i] > 127) {
 						printf("Keys for PNG text chunks must be ASCII characters.");
-						return false;
+						return efalse;
 					}
 				}
 				num_keys++;
@@ -532,7 +532,7 @@ static bool real_save_png(GalPixbuf *pixbuf,
 							GDK_PIXBUF_ERROR_BAD_OPTION,
 							_("PNG compression level must be a value between 0 and 9; value '%s' could not be parsed."),
 							*viter);
-					return false;
+					return efalse;
 				}
 				if (compression < 0 || compression > 9) {
 					/* This is a user-visible error;
@@ -544,7 +544,7 @@ static bool real_save_png(GalPixbuf *pixbuf,
 							GDK_PIXBUF_ERROR_BAD_OPTION,
 							_("PNG compression level must be a value between 0 and 9; value '%d' is not allowed."),
 							compression);
-					return false;
+					return efalse;
 				}
 			} else {
 				g_warning ("Unrecognized parameter (%s) passed to PNG saver.", *kiter);
@@ -585,7 +585,7 @@ static bool real_save_png(GalPixbuf *pixbuf,
 				for (i = 0; i < num_keys; i++)
 					e_free(text_ptr[i].text);
 				e_free(text_ptr);
-				return false;
+				return efalse;
 			}
 		}
 	}
@@ -602,17 +602,17 @@ static bool real_save_png(GalPixbuf *pixbuf,
 			png_simple_error_callback,
 			png_simple_warning_callback);
 	if (png_ptr == NULL) {
-		success = false;
+		success = efalse;
 		goto cleanup;
 	}
 
 	info_ptr = png_create_info_struct (png_ptr);
 	if (info_ptr == NULL) {
-		success = false;
+		success = efalse;
 		goto cleanup;
 	}
 	if (setjmp(png_ptr->jmpbuf)) {
-		success = false;
+		success = efalse;
 		goto cleanup;
 	}
 
@@ -673,19 +673,19 @@ cleanup:
 	return success;
 }
 
-static bool
+static ebool
 png_save(FILE *f, GalPixbuf *pixbuf, euchar **keys, euchar **values)
 {
-	return real_save_png(pixbuf, keys, values, error, false, f, NULL, NULL);
+	return real_save_png(pixbuf, keys, values, error, efalse, f, NULL, NULL);
 }
 
-static bool
+static ebool
 png_save_to_callback(GalPixbufSaveFunc save_func,
 		ePointer           user_data,
 		GalPixbuf          *pixbuf, 
 		euchar          **keys,
 		euchar          **values)
 {
-	return real_save_png(pixbuf, keys, values, true, NULL, save_func, user_data);
+	return real_save_png(pixbuf, keys, values, etrue, NULL, save_func, user_data);
 }
 #endif

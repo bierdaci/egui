@@ -13,7 +13,7 @@ void egal_get_pointer(GalWindow window, eint *rootx, eint *rooty, eint *winx, ei
 	GAL_WINDOW_ORDERS(window)->get_pointer(window, rootx, rooty, winx, winy, mask);
 }
 
-GalGrabStatus egal_grab_pointer(GalWindow window, bool owner_events, GalCursor cursor)
+GalGrabStatus egal_grab_pointer(GalWindow window, ebool owner_events, GalCursor cursor)
 {
 	return GAL_WINDOW_ORDERS(window)->grab_pointer(window, owner_events, cursor);
 }
@@ -23,7 +23,7 @@ GalGrabStatus egal_ungrab_pointer(GalWindow window)
 	return GAL_WINDOW_ORDERS(window)->ungrab_pointer(window);
 }
 
-GalGrabStatus egal_grab_keyboard(GalWindow window, bool owner_events)
+GalGrabStatus egal_grab_keyboard(GalWindow window, ebool owner_events)
 {
 	return GAL_WINDOW_ORDERS(window)->grab_keyboard(window, owner_events);
 }
@@ -343,7 +343,7 @@ GalWindow egal_root_window(void)
 	return _gwm.root_window;
 }
 
-GalImage *egal_image_new(eint w, eint h, bool alpha)
+GalImage *egal_image_new(eint w, eint h, ebool alpha)
 {
 	if (_gwm.image_new)
 		return _gwm.image_new(w, h, alpha);
@@ -356,7 +356,7 @@ void egal_image_free(GalImage *image)
 		_gwm.image_free(image);
 }
 
-GalDrawable egal_drawable_new(eint w, eint h, bool alpha)
+GalDrawable egal_drawable_new(eint w, eint h, ebool alpha)
 {
 	if (_gwm.drawable_new)
 		return _gwm.drawable_new(w, h, alpha);
@@ -398,7 +398,7 @@ GalCursor egal_cursor_new_pixbuf(GalPixbuf *pixbuf, eint x, eint y)
 	return 0;
 }
 
-GalWindow egal_window_wait_event(GalEvent *event, bool recv)
+GalWindow egal_window_wait_event(GalEvent *event, ebool recv)
 {
 	if (_gwm.wait_event)
 		return _gwm.wait_event(event, recv);
@@ -431,7 +431,7 @@ eint egal_window_init(void)
 			GalPBAttr attribute;
 			attribute.func = i;
 #ifdef _GAL_SUPPORT_CAIRO
-			attribute.use_cairo = true;
+			attribute.use_cairo = etrue;
 #endif
 			default_pbs[i] = egal_pb_new(0, &attribute);
 		}

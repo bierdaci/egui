@@ -43,8 +43,8 @@ struct _GuiLayout {
 	GalFont font;
 	eHandle vadj, hadj;
 
-	bool configure:1;
-	bool is_wrap:1;
+	ebool configure:1;
+	ebool is_wrap:1;
 	LayoutFlags align:6;
 };
 

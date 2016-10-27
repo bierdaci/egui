@@ -7,13 +7,6 @@
 #undef  MIN
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 
-#ifndef __ELIB_BOOL
-#define __ELIB_BOOL
-typedef enum {false = 0, true = 1} bool;
-#endif
-
-#ifndef __ELIB_STD_H__
-#endif
 typedef enum {efalse = 0, etrue = 1} ebool;
 typedef signed long				elong;
 typedef signed short			eint16;

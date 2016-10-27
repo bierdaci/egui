@@ -54,7 +54,7 @@ int gettimeofday(struct timeval *tp, void *tzp);
 #define e_thread_mutexattr_t	ePointer
 #define e_thread_rwlockattr_t	ePointer
 #define e_thread_mutex_t		handle_sem_t
-#define e_thread_rwlock_t		handle_sel_t
+#define e_thread_rwlock_t		handle_sem_t
 #define e_thread_cond_t			CRITICAL_SECTION
 #define e_thread_condattr_t		CRITICAL_SECTION
 #define e_sem_t					handle_sem_t
@@ -90,6 +90,8 @@ struct dirent {
 };
 
 #define __dirfd(dp)    ((dp)->dd_fd)
+
+extern FILE _iob[3];
 
 DIR *e_opendir(const echar *);
 struct dirent *e_readdir(DIR *);
@@ -178,7 +180,7 @@ static INLINE ePointer e_malloc(euint size)
 {
 	if (!size)
 		return NULL;
-	return e_heap_malloc(ALIGN_WORD(size), false);
+	return e_heap_malloc(ALIGN_WORD(size), efalse);
 }
 
 static INLINE ePointer e_realloc(ePointer ptr, euint size)
@@ -189,13 +191,13 @@ static INLINE ePointer e_realloc(ePointer ptr, euint size)
 	}
 	if (ptr)
 		return e_heap_realloc(ptr, ALIGN_WORD(size));
-	return e_heap_malloc(ALIGN_WORD(size), false);
+	return e_heap_malloc(ALIGN_WORD(size), efalse);
 }
 
 static INLINE ePointer e_calloc(euint nmemb, euint size)
 {
 	eint    nsize = ALIGN_WORD(size) * nmemb;
-	ePointer addr = e_heap_malloc(nsize, false);
+	ePointer addr = e_heap_malloc(nsize, efalse);
 	e_memset(addr, 0, nsize);
 	return addr;
 }

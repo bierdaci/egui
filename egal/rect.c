@@ -30,32 +30,32 @@ void egal_rect_offset(GalRect *prc, int x, int y)
     prc->y += y;
 }
 
-bool egal_rect_is_empty(const GalRect *prc)
+ebool egal_rect_is_empty(const GalRect *prc)
 {
-	if (prc->w == 0) return true;
-	if (prc->h == 0) return true;
-	return false;
+	if (prc->w == 0) return etrue;
+	if (prc->h == 0) return etrue;
+	return efalse;
 }
 
-bool egal_rect_equal(const GalRect *prc1, const GalRect *prc2)
+ebool egal_rect_equal(const GalRect *prc1, const GalRect *prc2)
 {
-	if (prc1->x != prc2->x) return false;
-	if (prc1->y != prc2->y) return false;
-	if (prc1->w != prc2->w) return false;
-	if (prc1->h != prc2->h) return false;
+	if (prc1->x != prc2->x) return efalse;
+	if (prc1->y != prc2->y) return efalse;
+	if (prc1->w != prc2->w) return efalse;
+	if (prc1->h != prc2->h) return efalse;
 
-	return true;
+	return etrue;
 }
 
-bool egal_rect_point_in(const GalRect *prc, int x, int y)
+ebool egal_rect_point_in(const GalRect *prc, int x, int y)
 {
 	int x1 = prc->x;
 	int y1 = prc->y;
 	int x2 = prc->x + prc->w;
 	int y2 = prc->y + prc->h;
 	if (x >= x1 && x < x2 && y >= y1 && y < y2)
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
 void egal_rect_normalize(GalRect *prc)
@@ -70,7 +70,7 @@ void egal_rect_normalize(GalRect *prc)
 	}
 }
 
-bool egal_rect_is_covered(const GalRect *prc1, const GalRect *prc2)
+ebool egal_rect_is_covered(const GalRect *prc1, const GalRect *prc2)
 {
 	int x1 = prc1->x + prc1->w;
 	int y1 = prc1->y + prc1->h;
@@ -78,12 +78,12 @@ bool egal_rect_is_covered(const GalRect *prc1, const GalRect *prc2)
 	int y2 = prc2->y + prc2->h;
 
 	if (prc1->x < prc2->x || prc1->y < prc2->y || x1 > x2 || y1 > y2)
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
-bool egal_rect_intersect(GalRect *pdrc, const GalRect *psrc1, const GalRect *psrc2)
+ebool egal_rect_intersect(GalRect *pdrc, const GalRect *psrc1, const GalRect *psrc2)
 {
 	int l, t, r, b;
 	int r1 = psrc1->x + psrc1->w;
@@ -96,17 +96,17 @@ bool egal_rect_intersect(GalRect *pdrc, const GalRect *psrc1, const GalRect *psr
 	b = (b1 < b2) ? b1 : b2;
 
 	if (l >= r || t >= b)
-		return false;
+		return efalse;
 
 	pdrc->x = l;
 	pdrc->y = t;
 	pdrc->w = r - l;
 	pdrc->h = b - t;
 
-	return true;
+	return etrue;
 }
 
-bool egal_rect_is_intersect(const GalRect *psrc1, const GalRect *psrc2)
+ebool egal_rect_is_intersect(const GalRect *psrc1, const GalRect *psrc2)
 {
 	int l, t, r, b;
 	int r1 = psrc1->x + psrc1->w;
@@ -120,9 +120,9 @@ bool egal_rect_is_intersect(const GalRect *psrc1, const GalRect *psrc2)
 	b = (b1 < b2) ? b1 : b2;
 
 	if (l >= r || t >= b)
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
 void egal_rect_get_bound(GalRect *pdrc,  const GalRect *psrc1, const GalRect *psrc2)

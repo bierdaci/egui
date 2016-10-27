@@ -30,7 +30,7 @@ struct _GuiMenu {
 	eTimer  close_timer;
 	eint    old_offset_x;
 	eint    old_offset_y;
-	bool    is_bar;
+	ebool    is_bar;
 	eHandle owner;
 	MenuPositionCB cb;	
 };
@@ -63,7 +63,7 @@ struct _GuiMenuItem {
 	union {
 		GuiMenuRadio *radio;
 		eHandle submenu;
-		bool check;
+		ebool check;
 	} p;
 };
 
@@ -85,7 +85,7 @@ void egui_menu_append(eHandle menu, eHandle item);
 void egui_menu_popup(eHandle hobj);
 eHandle egui_menu_item_new_with_label(const echar *);
 void egui_menu_item_set_radio_group(eHandle, eHandle);
-void egui_menu_item_set_check(eHandle, bool);
+void egui_menu_item_set_check(eHandle, ebool);
 void egui_menu_item_set_submenu(eHandle, eHandle);
 void egui_menu_item_radio_select(eHandle);
 void egui_menu_add_separator(eHandle hobj);

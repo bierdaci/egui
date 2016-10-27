@@ -37,7 +37,7 @@ static void clist_draw_title (eHandle, GuiClist *, GalDrawable, GalPB);
 static void clist_grid_draw(eHandle,
 		GalDrawable, GalPB, GalFont, ClsItemBar *, int, int, int, int);
 static void clist_grid_draw_bk(eHandle, GuiClist *,
-		GalDrawable, GalPB, int, int, int, bool, bool, int);
+		GalDrawable, GalPB, int, int, int, ebool, ebool, int);
 static void update_ibar(GuiClist *, ClsItemBar *);
 static eint clist_update(eHandle, GuiClist *, ClsItemBar *);
 static eint clist_insert_ibar(eHandle,  GuiClist *, ClsItemBar *);
@@ -79,35 +79,35 @@ static void clist_init_gene(eGeneType new)
 	signal_clist_insert = e_signal_new("clist_insert",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, insert),
-			true, 0, "%p");
+			etrue, 0, "%p");
 	signal_clist_update = e_signal_new("clist_update",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, update),
-			true, 0, "%p");
+			etrue, 0, "%p");
 	signal_clist_cmp = e_signal_new("clist_cmp",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, cmp),
-			false, 0,
+			efalse, 0,
 			"%n %p %p");
 	signal_clist_draw_title = e_signal_new("draw_title",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, draw_title),
-			true, 0,
+			etrue, 0,
 			"%n %n");
 	signal_clist_draw_grid = e_signal_new("draw_grid",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, draw_grid),
-			false, 0,
+			efalse, 0,
 			"%n %n %n %n %d %d %d %d");
 	signal_clist_draw_grid_bk = e_signal_new("draw_grid_bk",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, draw_grid_bk),
-			true, 0,
+			etrue, 0,
 			"%n %n %d %d %d %d %d %d");
 	signal_clist_find = e_signal_new("clist_find",
 			new,
 			STRUCT_OFFSET(GuiClistOrders, find),
-			false, 0, "%p %p");
+			efalse, 0, "%p %p");
 }
 
 static void (*hbox_set_min)(eHandle, eint, eint);
@@ -209,7 +209,7 @@ static ClsItemBar *point_to_item(GuiClist *cl, GalPoint *point)
 	return ibar;
 }
 
-static void set_hlight(GuiClist *cl, ClsItemBar *ibar, bool update)
+static void set_hlight(GuiClist *cl, ClsItemBar *ibar, ebool update)
 {
 	ClsItemBar *old;
 	eint pos;
@@ -249,7 +249,7 @@ static void ibar_next_hlight(GuiClist *cl)
 	if (!(ibar = ibar_next(cl, cl->hlight)))
 		return;
 
-	set_hlight(cl, ibar, true);
+	set_hlight(cl, ibar, etrue);
 
 	e_signal_emit(OBJECT_OFFSET(cl), SIG_CLICKED, ibar);
 }
@@ -261,7 +261,7 @@ static void ibar_prev_hlight(GuiClist *cl)
 	if (!(ibar = ibar_prev(cl, cl->hlight)))
 		return;
 
-	set_hlight(cl, ibar, true);
+	set_hlight(cl, ibar, etrue);
 
 	e_signal_emit(OBJECT_OFFSET(cl), SIG_CLICKED, ibar);
 }
@@ -307,7 +307,7 @@ static void reset_adjust(GuiClist *cl)
 
 static void clist_grid_draw_bk(eHandle hobj, GuiClist *cl,
 		GalDrawable drawable, GalPB pb,
-		int x, int w, int h, bool light, bool focus, int index)
+		int x, int w, int h, ebool light, ebool focus, int index)
 {
 	if (light) {
 		if (focus)
@@ -409,7 +409,7 @@ static eint clist_update(eHandle hobj, GuiClist *cl, ClsItemBar *ibar)
 	return 0;
 }
 
-static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
+static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, ebool bk)
 {
 	GuiClist   *cl = wid->extra_data;
 	ClsItemBar *ib = cl->top;
@@ -472,7 +472,7 @@ static void view_draw(eHandle hobj, GuiWidget *wid, GalRect *area, bool bk)
 
 static eint view_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *ent)
 {
-	view_draw(hobj, widget, &ent->rect, true);
+	view_draw(hobj, widget, &ent->rect, etrue);
 	return 0;
 }
 
@@ -489,7 +489,7 @@ static eint view_resize(eHandle hobj, GuiWidget *widget, GalEventResize *resize)
 	if (info.w < resize->w) {
 		e_object_unref(cl->drawable);
 		e_object_unref(cl->pb);
-		cl->drawable = egal_drawable_new(info.w + 500, cl->ibar_h, false);
+		cl->drawable = egal_drawable_new(info.w + 500, cl->ibar_h, efalse);
 		cl->pb       = egal_pb_new(cl->drawable, NULL);
 	}
 
@@ -753,7 +753,7 @@ static void __clist_delete(eHandle hobj, GuiClist *cl, ClsItemBar *ibar)
 	ibar_free(cl, list_entry(del, ClsItemBar, list));
 
 	if (cl->hlight)
-		set_hlight(cl, cl->hlight, false);
+		set_hlight(cl, cl->hlight, efalse);
 
 	reset_adjust(cl);
 }
@@ -862,7 +862,7 @@ ClsItemBar *egui_clist_append(eHandle hobj, ClsItemGrid *grids)
 
 	if (!cl->hlight) {
 		cl->hlight = ibar;
-		set_hlight(cl, cl->hlight, false);
+		set_hlight(cl, cl->hlight, efalse);
 	}
 	reset_adjust(cl);
 
@@ -886,7 +886,7 @@ ClsItemBar *egui_clist_append_valist(eHandle hobj, ...)
 
 	if (!cl->hlight) {
 		cl->hlight = ibar;
-		set_hlight(cl, cl->hlight, false);
+		set_hlight(cl, cl->hlight, efalse);
 	}
 	reset_adjust(cl);
 
@@ -947,7 +947,7 @@ static void ibar_cmp_insert(eHandle hobj, GuiClist *cl, ClsItemBar *new, eint p)
 
 	if (!cl->hlight) {
 		cl->hlight = new;
-		set_hlight(cl, cl->hlight, false);
+		set_hlight(cl, cl->hlight, efalse);
 	}
 	reset_adjust(cl);
 }
@@ -1009,7 +1009,7 @@ ClsItemBar *egui_clist_hlight_insert(eHandle hobj, ClsItemGrid *grids)
 
 	cl->hlight = new;
 	reset_adjust(cl);
-	set_hlight(cl, cl->hlight, false);
+	set_hlight(cl, cl->hlight, efalse);
 
 	return new;
 }
@@ -1019,7 +1019,7 @@ void egui_clist_set_hlight(eHandle hobj, ClsItemBar *ibar)
 	GuiClist *cl = GUI_CLIST_DATA(hobj);
 
 	cl->hlight = ibar;
-	set_hlight(cl, cl->hlight, true);
+	set_hlight(cl, cl->hlight, etrue);
 }
 
 void egui_clist_unset_hlight(eHandle hobj)
@@ -1055,7 +1055,7 @@ ClsItemBar *egui_clist_hlight_insert_valist(eHandle hobj, ...)
 	}
 
 	cl->hlight = new;
-	set_hlight(cl, cl->hlight, false);
+	set_hlight(cl, cl->hlight, efalse);
 	reset_adjust(cl);
 
 	return new;
@@ -1110,7 +1110,7 @@ void egui_clist_set_item_height(eHandle hobj, eint h)
 
 	e_object_unref(cl->drawable);
 	e_object_unref(cl->pb);
-	cl->drawable = egal_drawable_new(info.w, h, false);
+	cl->drawable = egal_drawable_new(info.w, h, efalse);
 	cl->pb       = egal_pb_new(cl->drawable, NULL);
 	cl->ibar_h   = h;
 	reset_adjust(cl);
@@ -1118,12 +1118,12 @@ void egui_clist_set_item_height(eHandle hobj, eint h)
 
 void egui_clist_title_show(eHandle hobj)
 {
-	egui_show(GUI_CLIST_DATA(hobj)->tbar, true);
+	egui_show(GUI_CLIST_DATA(hobj)->tbar, etrue);
 }
 
 void egui_clist_title_hide(eHandle hobj)
 {
-	egui_hide(GUI_CLIST_DATA(hobj)->tbar, true);
+	egui_hide(GUI_CLIST_DATA(hobj)->tbar, etrue);
 }
 
 static eint clist_init(eHandle hobj, eValist vp)
@@ -1153,12 +1153,12 @@ static eint clist_init(eHandle hobj, eValist vp)
 #ifdef __TOUCHSCREEN
 	cl->touch_sel = NULL;
 #endif
-	cl->drawable = egal_drawable_new(1000, h, false);
+	cl->drawable = egal_drawable_new(1000, h, efalse);
 	cl->pb       = egal_pb_new(cl->drawable, NULL);
 
-	egui_set_expand(hobj, true);
+	egui_set_expand(hobj, etrue);
 	cl->vbox = egui_vbox_new();
-	egui_set_expand(cl->vbox, true);
+	egui_set_expand(cl->vbox, etrue);
 
 	cl->tbar = e_object_new(GTYPE_TBAR);
 	wid = GUI_WIDGET_DATA(cl->tbar);
@@ -1182,13 +1182,13 @@ static eint clist_init(eHandle hobj, eValist vp)
 	e_signal_emit(cl->view, SIG_REALIZE);
 
 	cl->hadj  = egui_adjust_new(0, 1, 1, 0, 0);
-	cl->hsbar = egui_hscrollbar_new(true);
+	cl->hsbar = egui_hscrollbar_new(etrue);
 	egui_adjust_set_owner(cl->hadj, cl->view);
 	e_signal_connect(cl->hadj, SIG_ADJUST_UPDATE, clist_hadjust_update);
 	egui_adjust_hook(cl->hadj, cl->hsbar);
 
 	cl->vadj  = egui_adjust_new(0, 1, 1, 0, 0);
-	cl->vsbar = egui_vscrollbar_new(true);
+	cl->vsbar = egui_vscrollbar_new(etrue);
 	egui_adjust_set_owner(cl->vadj, cl->view);
 	e_signal_connect(cl->vadj, SIG_ADJUST_UPDATE, clist_vadjust_update);
 	egui_adjust_hook(cl->vadj, cl->vsbar);

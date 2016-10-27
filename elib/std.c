@@ -6,6 +6,10 @@
 
 #ifdef WIN32
 
+//static FILE _iob0 = __iob_func()[0];
+//static FILE _iob1 = __iob_func()[1];
+//static FILE _iob2 = __iob_func()[2];
+FILE _iob[3] = {0, 0, 0};
 int gettimeofday(struct timeval *tp, void *tzp)
 {
     time_t clock;

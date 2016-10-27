@@ -38,8 +38,8 @@ struct _UserProfile {
 	echar   name[MAX_USERNAME];
 	eHandle chat;
 	ChatWin *cwin;
-	bool online;
-	bool outlander;
+	ebool online;
+	ebool outlander;
 	UnreadData *uhead;
 	UnreadData *utail;
 	eTimer timer;
@@ -118,24 +118,24 @@ static void chat_win_new(eHandle win)
 	ChatWin *chat = CHAT_WIN_DATA(win);
 	
 	chat->vbox = egui_vbox_new();
-	egui_set_expand(chat->vbox, true);
+	egui_set_expand(chat->vbox, etrue);
 	egui_add(win, chat->vbox);
 
 	chat->view_hbox = egui_hbox_new();
 	chat->view_text = egui_text_new(450, 200);
-	chat->view_vbar = egui_vscrollbar_new(true);
+	chat->view_vbar = egui_vscrollbar_new(etrue);
 	egui_add(chat->view_hbox, chat->view_text);
 	egui_add(chat->view_hbox, chat->view_vbar);
-	egui_set_expand(chat->view_hbox, true);
+	egui_set_expand(chat->view_hbox, etrue);
 	egui_hook_v(chat->view_text, chat->view_vbar);
 	e_signal_connect1(chat->view_text, SIG_RECV_MSG, append_text_cb, chat);
 
 	chat->edit_hbox = egui_hbox_new();
 	chat->edit_text = egui_text_new(300, 200);
-	chat->edit_vbar = egui_vscrollbar_new(true);
+	chat->edit_vbar = egui_vscrollbar_new(etrue);
 	egui_add(chat->edit_hbox, chat->edit_text);
 	egui_add(chat->edit_hbox, chat->edit_vbar);
-	egui_set_expand(chat->edit_hbox, true);
+	egui_set_expand(chat->edit_hbox, etrue);
 	egui_hook_v(chat->edit_text, chat->edit_vbar);
 
 	egui_set_min(chat->view_text, 100, 100);
@@ -145,7 +145,7 @@ static void chat_win_new(eHandle win)
 	egui_add_spacing(chat->vbox, 20);
 	egui_add(chat->vbox, chat->edit_hbox);
 	chat->hbox = egui_hbox_new();
-	egui_set_expand_h(chat->hbox, true);
+	egui_set_expand_h(chat->hbox, etrue);
 	egui_box_set_layout(chat->hbox, BoxLayout_END);
 	chat->bn  = egui_label_button_new(_("send"));
 	e_signal_connect1(chat->bn, SIG_CLICKED, send_message, chat);
@@ -154,7 +154,7 @@ static void chat_win_new(eHandle win)
 	egui_add(chat->vbox, chat->hbox);
 	egui_add_spacing(chat->vbox, 5);
 
-	egui_text_set_only_read(chat->view_text, true);
+	egui_text_set_only_read(chat->view_text, etrue);
 }
 
 static eint (*window_init)(eHandle, eValist);
@@ -169,7 +169,7 @@ static eint chat_init(eHandle hobj, eValist va)
 
 static void chat_destroy(eHandle hobj)
 {
-	egui_hide(hobj, false);
+	egui_hide(hobj, efalse);
 }
 
 static void chat_init_orders(eGeneType new, ePointer data)
@@ -203,7 +203,7 @@ static eHandle add_clist  = 0;
 static eHandle search_dlg = 0;
 static void add_clist_draw_bk(eHandle hobj, GuiClist *cl,
 		GalDrawable drawable, GalPB pb,
-		int x, int w, int h, bool light, bool focus, int index)
+		int x, int w, int h, ebool light, ebool focus, int index)
 {
 	if (light) {
 		if (focus)
@@ -223,14 +223,14 @@ static eint add_user_cb(eHandle hobj, ePointer data)
 
 	client_add_friend(sfd, clist_get_grid_data((eHandle)data, ibar, 0));
 
-	egui_hide(add_dlg, false);
+	egui_hide(add_dlg, efalse);
 
 	return 0;
 }
 
 static eint clicked_hide(eHandle hobj, ePointer data)
 {
-	egui_hide((eHandle)data, false);
+	egui_hide((eHandle)data, efalse);
 	return 0;
 }
 
@@ -250,8 +250,8 @@ int ui_notify_add_dlg(char *data)
 		ibar = egui_clist_ibar_new_valist(fri_clist, name);
 		UserProfile *user = e_calloc(1, sizeof(UserProfile));
 		ibar->add_data    = user;
-		user->online      = true;
-		user->outlander   = false;
+		user->online      = etrue;
+		user->outlander   = efalse;
 		e_strcpy(user->name, (const echar *)name);
 		egui_clist_insert_ibar(fri_clist, ibar);
 	}
@@ -282,7 +282,7 @@ int ui_accept_add_dlg(char *name)
 	return 0;
 }
 
-int ui_add_user(const char *name, bool online)
+int ui_add_user(const char *name, ebool online)
 {
 	static eHandle bn1;
 	if (add_dlg == 0) {
@@ -294,7 +294,7 @@ int ui_add_user(const char *name, bool online)
 		vbox = egui_vbox_new();
 		egui_box_set_align(vbox, BoxAlignStart);
 		egui_box_set_spacing(vbox, 5);
-		egui_set_expand(vbox, true);
+		egui_set_expand(vbox, etrue);
 		egui_add(add_dlg, vbox);
 
 		label = egui_simple_label_new(_("search result:"));
@@ -306,7 +306,7 @@ int ui_add_user(const char *name, bool online)
 		egui_add(vbox, add_clist);
 
 		hbox = egui_hbox_new();
-		egui_set_expand_h(hbox, true);
+		egui_set_expand_h(hbox, etrue);
 		egui_box_set_spacing(hbox, 10);
 		egui_box_set_layout(hbox, BoxLayout_END);
 
@@ -319,14 +319,14 @@ int ui_add_user(const char *name, bool online)
 
 		egui_add(vbox, hbox);
 	}
-	egui_hide_async(search_dlg, false);
+	egui_hide_async(search_dlg, efalse);
 	egui_clist_empty(add_clist);
 	if (name) {
 		ClsItemBar *ibar = egui_clist_ibar_new_valist(add_clist, name);
 		egui_clist_insert_ibar(add_clist, ibar);
 	}
 	egui_set_focus(bn1);
-	egui_show_async(add_dlg, false);
+	egui_show_async(add_dlg, efalse);
 	return 0;
 }
 
@@ -343,7 +343,7 @@ static eint search_user_cb(eHandle hobj, ePointer data)
 
 static eint cancel_cb(eHandle hobj, ePointer data)
 {
-	egui_hide(search_dlg, false);
+	egui_hide(search_dlg, efalse);
 	return 0;
 }
 
@@ -373,13 +373,13 @@ static eint dlg_search_user(eHandle hobj, ePointer data)
 		egui_box_set_border_width(search_dlg, 5);
 		vbox = egui_vbox_new();
 		egui_box_set_layout(vbox, BoxLayout_SPREAD);
-		egui_set_expand(vbox, true);
+		egui_set_expand(vbox, etrue);
 		egui_add(search_dlg, vbox);
 
 		vbox1 = egui_vbox_new();
 		egui_box_set_align(vbox1, BoxAlignStart);
 		egui_box_set_layout(vbox1, BoxLayout_CENTER);
-		egui_set_expand(vbox1, true);
+		egui_set_expand(vbox1, etrue);
 
 		label = egui_simple_label_new(_("entry username:"));
 		egui_add(vbox1, label);
@@ -393,7 +393,7 @@ static eint dlg_search_user(eHandle hobj, ePointer data)
 		egui_add_spacing(vbox, 10);
 
 		hbox2 = egui_hbox_new();
-		egui_set_expand_h(hbox2, true);
+		egui_set_expand_h(hbox2, etrue);
 		egui_box_set_spacing(hbox2, 10);
 		egui_box_set_layout(hbox2, BoxLayout_END);
 		bn1 = egui_label_button_new(_("search"));
@@ -434,7 +434,7 @@ static eint open_chat_win(ClsItemBar *ibar, UserProfile *user)
 		}
 		user->utail = NULL;
 	}
-	egui_show(user->chat, false);
+	egui_show(user->chat, efalse);
 	egui_move(user->chat, 500, 200);
 	egui_request_resize(user->chat, 450, 450);
 	if (user->timer) {
@@ -471,7 +471,7 @@ static eint menu_delete_friend(eHandle hobj, ePointer data)
 	return 0;
 }
 
-void *ui_friend_to_clist(const char *name, bool online, bool outlander)
+void *ui_friend_to_clist(const char *name, ebool online, ebool outlander)
 {
 	ClsItemBar*ibar = egui_clist_find(fri_clist, (ePointer)name);
 
@@ -496,7 +496,7 @@ void *ui_friend_to_clist(const char *name, bool online, bool outlander)
 	return ibar;
 }
 
-void ui_change_online(const char *name, bool online)
+void ui_change_online(const char *name, ebool online)
 {
 	ClsItemBar  *ibar = egui_clist_find(fri_clist, (ePointer)name);
 	UserProfile *user = ibar->add_data;
@@ -529,7 +529,7 @@ void ui_recv_realmsg(const char *name, const char *msg)
 {
 	ClsItemBar *ibar = egui_clist_find(fri_clist, (ePointer)name);
 	if (!ibar)
-		ibar = ui_friend_to_clist(name, true, true);
+		ibar = ui_friend_to_clist(name, etrue, etrue);
 
 	if (ibar) {
 		UserProfile *user = ibar->add_data;
@@ -655,13 +655,13 @@ static eint sysmsg_bn_init(eHandle hobj, eValist vp)
 
 static eint sysmsg_bn_enter(eHandle hobj, eint x, eint y)
 {
-	GUI_BUTTON_DATA(hobj)->enter = true;
+	GUI_BUTTON_DATA(hobj)->enter = etrue;
 	return 0;
 }
 
 static eint sysmsg_bn_leave(eHandle hobj)
 {
-	GUI_BUTTON_DATA(hobj)->enter = false;
+	GUI_BUTTON_DATA(hobj)->enter = efalse;
 	return 0;
 }
 
@@ -749,7 +749,7 @@ static void sysmsg_accept_add(char *name)
 	ads->vbox = egui_vbox_new();
 	egui_box_set_align(ads->vbox, BoxAlignStart);
 	egui_box_set_spacing(ads->vbox, 5);
-	egui_set_expand(ads->vbox, true);
+	egui_set_expand(ads->vbox, etrue);
 	egui_add(ads->dlg, ads->vbox);
 
 	egui_add_spacing(ads->vbox, 10);
@@ -758,11 +758,11 @@ static void sysmsg_accept_add(char *name)
 	e_strcpy(buf + 1, (echar *)name);
 	e_strcat(buf, _("\" request add friend"));
 	ads->label = egui_simple_label_new(buf);
-	egui_set_expand_h(ads->label, true);
+	egui_set_expand_h(ads->label, etrue);
 	egui_add(ads->vbox, ads->label);
 
 	ads->vbox1  = egui_vbox_new();
-	egui_set_expand_h(ads->vbox1, true);
+	egui_set_expand_h(ads->vbox1, etrue);
 	egui_box_set_align(ads->vbox1, BoxAlignStart);
 	egui_box_set_spacing(ads->vbox1, 5);
 	ads->radio1 = egui_radio_button_new(_("accept and add"), 0);
@@ -777,7 +777,7 @@ static void sysmsg_accept_add(char *name)
 	egui_add(ads->vbox, ads->vbox1);
 
 	ads->hbox = egui_hbox_new();
-	egui_set_expand_h(ads->hbox, true);
+	egui_set_expand_h(ads->hbox, etrue);
 	egui_box_set_spacing(ads->hbox, 5);
 	egui_box_set_layout(ads->hbox, BoxLayout_END);
 	ads->bn1  = egui_label_button_new(_("OK"));
@@ -788,12 +788,12 @@ static void sysmsg_accept_add(char *name)
 	egui_add(ads->hbox, ads->bn2);
 	egui_add(ads->vbox, ads->hbox);
 
-	egui_show_async(ads->dlg, false);
+	egui_show_async(ads->dlg, efalse);
 }
 
 static void destroy_hide_dlg(eHandle hobj)
 {
-	egui_hide(hobj, false);
+	egui_hide(hobj, efalse);
 }
 
 static eint clicked_accept_recv_file(eHandle hobj, ePointer data)
@@ -819,7 +819,7 @@ static eint clicked_accept_recv_file(eHandle hobj, ePointer data)
 	ts->total_size = dh->size;
 	ibar->add_data = ts;
 	egui_signal_emit1(transfer_clist, SIG_CLIST_INSERT, ibar);
-	egui_show_async(transfer_dlg, false);
+	egui_show_async(transfer_dlg, efalse);
 	client_accept_transfer(sfd, dh, (const char *)save_path);
 
 	e_signal_emit(dlg, SIG_DESTROY);
@@ -845,7 +845,7 @@ static void sysmsg_recv_file_dlg(ePointer data)
 	vbox = egui_vbox_new();
 	egui_box_set_spacing(vbox, 5);
 	egui_box_set_align(vbox, BoxAlignStart);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(dlg, vbox);
 
 	buf[0] = '\"';
@@ -857,7 +857,7 @@ static void sysmsg_recv_file_dlg(ePointer data)
 
 	vbox1 = egui_vbox_new();
 	egui_box_set_align(vbox1, BoxAlignStart);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(vbox, vbox1);
 
 	e_strcpy(buf, _("name: "));
@@ -878,7 +878,7 @@ static void sysmsg_recv_file_dlg(ePointer data)
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_END);
 	egui_box_set_spacing(hbox, 5);
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_add(vbox, hbox);
 
 	bn1 = egui_label_button_new(_("Accept"));
@@ -889,7 +889,7 @@ static void sysmsg_recv_file_dlg(ePointer data)
 	egui_add(hbox, bn2);
 
 	egui_request_resize(dlg, 300, 160);
-	egui_show(dlg, false);
+	egui_show(dlg, efalse);
 }
 
 static eint sysmsg_bn_cb(eHandle hobj, ePointer data)
@@ -952,7 +952,7 @@ static eint send_file_cb(eHandle hobj, ePointer data)
 	ts->total_size = size;
 	ibar->add_data = ts;
 	egui_clist_insert_ibar(transfer_clist, ibar);
-	egui_show_async(transfer_dlg, false);
+	egui_show_async(transfer_dlg, efalse);
 	return 0;
 }
 
@@ -1011,13 +1011,13 @@ static eint menu_send_file_cb(eHandle hobj, ePointer data)
 		egui_move(filesel, 400, 250);
 		e_signal_connect(filesel, SIG_CLICKED, send_file_cb);
 	}
-	egui_show(filesel, false);
+	egui_show(filesel, efalse);
 	return 0;
 }
 
 static void transfer_clist_draw_bk(eHandle hobj, GuiClist *cl,
 		GalDrawable drawable, GalPB pb,
-		int x, int w, int h, bool light, bool focus, int index)
+		int x, int w, int h, ebool light, ebool focus, int index)
 {
 	if (light) {
 		if (focus)
@@ -1098,7 +1098,7 @@ static eHandle transfer_file_dlg_new(void)
 	e_signal_connect(dlg, SIG_DESTROY, destroy_hide_dlg);
 	vbox = egui_vbox_new();
 	egui_box_set_spacing(vbox, 5);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(dlg, vbox);
 
 	transfer_clist = egui_clist_new(titles, 6);
@@ -1117,7 +1117,7 @@ static eHandle transfer_file_dlg_new(void)
 	
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_END);
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_add(vbox, hbox);
 
 	bn = egui_label_button_new(_("close"));	
@@ -1146,7 +1146,7 @@ static eint main_window(const char *name, const char *passwd)
 
 	egui_window_set_name(win, _(name));
 	vbox = egui_vbox_new();
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_box_set_spacing(vbox, 5);
 	egui_add(win, vbox);
 
@@ -1177,7 +1177,7 @@ static eint main_window(const char *name, const char *passwd)
 
 	hbox = egui_hbox_new();
 	egui_box_set_layout(hbox, BoxLayout_START);
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_add(vbox, hbox);
 	egui_add_spacing(vbox, 5);
 
@@ -1232,20 +1232,20 @@ static void login_account_dlg(void)
 
 	vbox = egui_vbox_new();
 	egui_box_set_spacing(vbox, 5);
-	egui_set_expand(vbox, true);
+	egui_set_expand(vbox, etrue);
 	egui_add(dlg, vbox);
 
 	frame = egui_frame_new(_(""));
-	egui_set_expand(frame, true);
+	egui_set_expand(frame, etrue);
 	egui_add(vbox, frame);
 
 	vbox1 = egui_vbox_new();
 	egui_box_set_spacing(vbox1, 10);
-	egui_set_expand(vbox1, true);
+	egui_set_expand(vbox1, etrue);
 	egui_add(frame, vbox1);
 
 	hbox = egui_hbox_new();
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_add(vbox1, hbox);
 
 	label = egui_simple_label_new(_("username:"));
@@ -1255,13 +1255,13 @@ static void login_account_dlg(void)
 	egui_add(hbox, entry1);
 
 	hbox = egui_hbox_new();
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_add(vbox1, hbox);
 
 	label  = egui_simple_label_new(_("password:"));
 	egui_add(hbox, label);
 	entry2 = egui_entry_new(200);
-	egui_entry_set_visibility(entry2, false);
+	egui_entry_set_visibility(entry2, efalse);
 	egui_set_max_text(entry2, 18);
 	egui_add(hbox, entry2);
 	e_signal_connect1(entry1, SIG_CLICKED, clicked_change_focus, (ePointer)entry2);
@@ -1269,7 +1269,7 @@ static void login_account_dlg(void)
 	hbox = egui_hbox_new();
 	egui_box_set_layout (hbox, BoxLayout_END);
 	egui_box_set_spacing(hbox, 5);
-	egui_set_expand_h(hbox, true);
+	egui_set_expand_h(hbox, etrue);
 	egui_add(vbox, hbox);
 
 	bn = egui_label_button_new(_("login"));
@@ -1282,7 +1282,7 @@ static void login_account_dlg(void)
 	egui_add_spacing(hbox, 15);
 
 	egui_set_focus(entry1);
-	egui_show(dlg, false);
+	egui_show(dlg, efalse);
 }
 
 int main(int argc, char* const argv[])

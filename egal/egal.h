@@ -13,7 +13,7 @@
 #define EVENT_QUEUE_MAX		1000
 
 eint egal_init(eint, char *const[]);
-bool egal_wait_event(GalEvent *);
+ebool egal_wait_event(GalEvent *);
 
 eint egal_event_init(void);
 void egal_add_event_to_queue(GalEvent *);

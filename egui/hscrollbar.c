@@ -45,7 +45,7 @@ eGeneType egui_genetype_hscrollbar(void)
 	return gtype;
 }
 
-static bool __hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint val)
+static ebool __hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint val)
 {
 	GalRect rc;
 
@@ -55,7 +55,7 @@ static bool __hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint val)
 		val = (b->bar_span << SCALE) - b->steps;
 
 	if (val == 0)
-		return false;
+		return efalse;
 
 	b->steps += val;
 	b->drag_rn.rect.x = b->bn_size + (b->steps >> SCALE);
@@ -73,10 +73,10 @@ static bool __hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint val)
 	rc.w = b->drag_size + ((val + 0xffff) >> SCALE);
 
 	egui_update_rect(hobj, &rc);
-	return true;
+	return etrue;
 }
 
-static bool hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint steps)
+static ebool hscrollbar_update(eHandle hobj, GuiScrollBar *b, eint steps)
 {
 	return __hscrollbar_update(hobj, b, steps - b->steps);
 }
@@ -187,19 +187,19 @@ static eint hscrollbar_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *e
 	return 0;
 }
 
-static bool bn1_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
+static ebool bn1_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
 {
 	if (!bar->bn_rn1.is_down) {
-		bar->bn_rn1.is_down = true;
+		bar->bn_rn1.is_down = etrue;
 		egui_update_rect(hobj, &bar->bn_rn1.rect);
 	}
 	return __hscrollbar_update(hobj, bar, -bar->bn_steps);
 }
 
-static bool bn2_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
+static ebool bn2_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
 {
 	if (!bar->bn_rn2.is_down) {
-		bar->bn_rn2.is_down = true;
+		bar->bn_rn2.is_down = etrue;
 		egui_update_rect(hobj, &bar->bn_rn2.rect);
 	}
 	return __hscrollbar_update(hobj, bar, bar->bn_steps);
@@ -207,35 +207,35 @@ static bool bn2_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
 
 static void bn1_up(eHandle hobj, GuiScrollBar *bar)
 {
-	bar->bn_rn1.is_down = false;
+	bar->bn_rn1.is_down = efalse;
 	egui_update_rect(hobj, &bar->bn_rn1.rect);
 }
 
 static void bn2_up(eHandle hobj, GuiScrollBar *bar)
 {
-	bar->bn_rn2.is_down = false;
+	bar->bn_rn2.is_down = efalse;
 	egui_update_rect(hobj, &bar->bn_rn2.rect);
 }
 
-static bool slot_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
+static ebool slot_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
 {
-	return false;
+	return efalse;
 }
 
-static bool  drag_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
+static ebool  drag_down(eHandle hobj, GuiScrollBar *bar, eint x, eint y)
 {
 	bar->old = x;
-	return false;
+	return efalse;
 }
 
-static bool drag_move(eHandle hobj, GuiScrollBar *b, eint x, eint y)
+static ebool drag_move(eHandle hobj, GuiScrollBar *b, eint x, eint y)
 {
 	eint val = (x - b->old) << SCALE;
 	if (__hscrollbar_update(hobj, b, val)) {
 		b->old = x;
-		return true;
+		return etrue;
 	}
-	return false;
+	return efalse;
 }
 
 static eint hscrollbar_init(eHandle hobj, eValist vp)
@@ -243,7 +243,7 @@ static eint hscrollbar_init(eHandle hobj, eValist vp)
 	GuiScrollBar *b = GUI_SCROLLBAR_DATA(hobj);
 	GuiWidget    *w = GUI_WIDGET_DATA(hobj);
 
-	b->auto_hide = e_va_arg(vp, bool);
+	b->auto_hide = e_va_arg(vp, ebool);
 
 	b->bn_size = left_image->w;
 	b->bn_rn1.rect.x  = 0;
@@ -285,7 +285,7 @@ static eint hscrollbar_init(eHandle hobj, eValist vp)
 	return 0;
 }
 
-eHandle egui_hscrollbar_new(bool a)
+eHandle egui_hscrollbar_new(ebool a)
 {
 	return e_object_new(GTYPE_HSCROLLBAR, a);
 }

@@ -16,13 +16,13 @@ void egal_rect_empty(GalRect *prc);
 void egal_rect_set(GalRect *prc, int x, int y, int w, int h);
 void egal_rect_inflate(GalRect *prc, int cx, int cy);
 void egal_rect_offset(GalRect *prc, int x, int y);
-bool egal_rect_is_empty(const GalRect *prc);
-bool egal_rect_equal(const GalRect *prc1, const GalRect *prc2);
+ebool egal_rect_is_empty(const GalRect *prc);
+ebool egal_rect_equal(const GalRect *prc1, const GalRect *prc2);
 void egal_rect_normalize(GalRect *prc);
-bool egal_rect_is_covered(const GalRect *prc1, const GalRect *prc2);
-bool egal_rect_intersect(GalRect *pdrc, const GalRect *psrc1, const GalRect *psrc2);
-bool egal_rect_is_intersect(const GalRect *psrc1, const GalRect *psrc2);
-bool egal_rect_point_in(const GalRect *prc, int x, int y);
+ebool egal_rect_is_covered(const GalRect *prc1, const GalRect *prc2);
+ebool egal_rect_intersect(GalRect *pdrc, const GalRect *psrc1, const GalRect *psrc2);
+ebool egal_rect_is_intersect(const GalRect *psrc1, const GalRect *psrc2);
+ebool egal_rect_point_in(const GalRect *prc, int x, int y);
 void egal_rect_get_bound(GalRect *,  const GalRect *, const GalRect *);
 
 #endif

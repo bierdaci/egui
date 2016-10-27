@@ -4,7 +4,7 @@
 #include "bin.h"
 #include "box.h"
 
-static void hbox_request_layout(eHandle, eHandle, eint, eint, bool, bool);
+static void hbox_request_layout(eHandle, eHandle, eint, eint, ebool, ebool);
 static void hbox_init_orders(eGeneType new, ePointer this);
 static void hbox_add(eHandle pobj, eHandle cobj);
 static void hbox_add_spacing(eHandle pobj, eint size);
@@ -349,7 +349,7 @@ static void hbox_set_min(eHandle hobj, eint w, eint h)
 	__hbox_set_min(GUI_WIDGET_DATA(hobj), GUI_BOX_DATA(hobj));
 }
 
-static void __hbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool add)
+static void __hbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool fixed, ebool add)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	GuiBox    *box = GUI_BOX_DATA(hobj);
@@ -385,7 +385,7 @@ static void __hbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint r
 	}
 }
 
-static void hbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool add)
+static void hbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool fixed, ebool add)
 {
 	__hbox_request_layout(hobj, cobj, req_w, req_h, fixed, add);
 }
@@ -394,14 +394,14 @@ static void hbox_add(eHandle pobj, eHandle cobj)
 {
 	egui_box_add(pobj, cobj);
 
-	__hbox_request_layout(pobj, 0, 0, 0, false, true);
+	__hbox_request_layout(pobj, 0, 0, 0, efalse, etrue);
 }
 
 static void hbox_add_spacing(eHandle pobj, eint size)
 {
 	egui_box_add_spacing(pobj, size);
 
-	__hbox_request_layout(pobj, 0, 0, 0, false, true);
+	__hbox_request_layout(pobj, 0, 0, 0, efalse, etrue);
 }
 
 eHandle egui_hbox_new(void)

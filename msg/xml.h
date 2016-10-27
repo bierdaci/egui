@@ -13,7 +13,7 @@
 #define		MAX_VAR			256
 #define		MAX_BUF			1024
 
-typedef enum {false = 0, true = 1} bool;
+typedef enum {efalse = 0, etrue = 1} ebool;
 typedef enum {TypeLeaf, TypeNode, TypeComment, TypeDeclare} XmlElementType;
 typedef enum {ERROR_OK, ERROR_ERR} XmlErrorType;
 

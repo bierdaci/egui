@@ -87,7 +87,7 @@ static void scrollwin_add(eHandle hobj, eHandle cobj)
 	}
 }
 
-static void scrollwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool a)
+static void scrollwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool fixed, ebool a)
 {
 	GuiBin *bin = GUI_BIN_DATA(hobj);
 

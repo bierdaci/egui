@@ -16,7 +16,7 @@ void e_slice_free1(euint size, ePointer mem);
 void e_slice_set_level(euint size, euint level);
 
 
-ePointer e_heap_malloc(elong, bool);
+ePointer e_heap_malloc(elong, ebool);
 void e_heap_free(ePointer);
 ePointer e_heap_realloc(ePointer ptr, euint size);
 

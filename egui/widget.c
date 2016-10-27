@@ -34,17 +34,17 @@ eGeneType egui_genetype_widget(void)
 	return gtype;
 }
 
-static bool widget_can_map(GuiWidget *wid)
+static ebool widget_can_map(GuiWidget *wid)
 {
 	while (wid->parent) {
 		wid = GUI_WIDGET_DATA(wid->parent);
 		if (!WIDGET_STATUS_VISIBLE(wid))
-			return false;
+			return efalse;
 		if (wid->window)
-			return true;
+			return etrue;
 	}
 
-	return false;
+	return efalse;
 }
 
 static void widget_set_min(eHandle hobj, eint w, eint h)
@@ -113,9 +113,9 @@ static void widget_realize(eHandle hobj, GuiWidget *wid)
 	attr.height = wid->rect.h;
 	attr.type   = GalWindowChild;
 	attr.wclass = GAL_INPUT_OUTPUT;
-	attr.output_event = true;
+	attr.output_event = etrue;
 	if (GUI_STATUS_VISIBLE(hobj))
-		attr.visible = true;
+		attr.visible = etrue;
 
 	wid->window   = egal_window_new(&attr);
 	wid->drawable = wid->window;
@@ -209,36 +209,36 @@ static void widget_init_gene(eGeneType new)
 	widget_signal_hide = e_signal_new("hide",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, hide),
-			false, 0, NULL);
+			efalse, 0, NULL);
 	widget_signal_show = e_signal_new("show",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, show),
-			false, 0, NULL);
+			efalse, 0, NULL);
 
 	widget_signal_realize = e_signal_new("realize",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, realize),
-			true, 0, NULL);
+			etrue, 0, NULL);
 	widget_signal_resize = e_signal_new("resize",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, resize),
-			true, 0, "%p");
+			etrue, 0, "%p");
 	widget_signal_expose = e_signal_new("expose",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, expose),
-			true, 0, "%p");
+			etrue, 0, "%p");
 	widget_signal_configure = e_signal_new("configure",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, configure),
-			true, 0, "%p");
+			etrue, 0, "%p");
 	widget_signal_expose_bg = e_signal_new("expose_bg",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, expose_bg),
-			true, 0, "%p");
+			etrue, 0, "%p");
 	widget_signal_destroy = e_signal_new("destroy",
 			new,
 			STRUCT_OFFSET(GuiWidgetOrders, destroy),
-			false, 0, NULL);
+			efalse, 0, NULL);
 }
 
 eGeneType egui_genetype_font(void)

@@ -6,10 +6,10 @@
 #include "win32.h"
 #include "xcursors.h"
 
-static GalWindow   w32_wait_event(GalEvent *, bool);
+static GalWindow   w32_wait_event(GalEvent *, ebool);
 static GalWindow   w32_window_new(GalWindowAttr *);
-static GalDrawable w32_drawable_new(eint, eint, bool);
-static GalImage   *w32_image_new(eint, eint, bool);
+static GalDrawable w32_drawable_new(eint, eint, ebool);
+static GalImage   *w32_image_new(eint, eint, ebool);
 static GalPB w32_pb_new(GalDrawable, GalPBAttr *);
 static GalCursor w32_cursor_new(GalCursorType);
 static GalCursor w32_cursor_new_name(const echar *);
@@ -19,7 +19,7 @@ static void w32_image_free(GalImage *);
 static void w32_composite(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 static void w32_composite_image(GalDrawable, GalPB, int, int, GalImage *, int, int, int, int);
 static void w32_draw_drawable(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
-static bool w32_create_child_window(GalWindow32 *);
+static ebool w32_create_child_window(GalWindow32 *);
 
 static HMODULE hmodule;
 static HDC display_hdc;
@@ -521,7 +521,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			GetCursorPos(&pt);
 			gent.e.mouse.root_x  = pt.x;
 			gent.e.mouse.root_y  = pt.y;
-			ScreenToClient(wnd, &point);
+			ScreenToClient(wnd, &pt);
 			gent.e.mouse.point.x = pt.x;
 			gent.e.mouse.point.y = pt.y;
 			gent.e.mouse.state   = 0;
@@ -623,7 +623,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				int len = ImmGetCompositionString(himc, GCS_RESULTSTR, NULL, 0);
 				ImmGetCompositionString(himc, GCS_RESULTSTR, buf, len);
 				gent.type = GAL_ET_IME_INPUT;
-				while (len  > sizeof(eHandle) * 7) {
+				while (len > sizeof(eHandle) * 7) {
 					len -= sizeof(eHandle) * 7;
 					gent.e.imeinput.len = sizeof(eHandle) * 7;
 					memcpy(gent.e.imeinput.data, buf, sizeof(eHandle) * 7);
@@ -818,7 +818,7 @@ static void makeCurrent32(GalWindow32 *win32)
 }
 #endif
 
-static bool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
+static ebool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 {
 	GalWindow  window = OBJECT_OFFSET(child);
 	eint   depth  = 0;
@@ -889,15 +889,15 @@ static bool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 		GalDrawable32 *xdraw = W32_DRAWABLE_DATA(window);
 		xdraw->w        = child->w;
 		xdraw->h        = child->h;
-		xdraw->isdev	= true;
+		xdraw->isdev	= etrue;
 		xdraw->handle   = child->hwnd;
 		xdraw->depth    = depth;
 	}
 
-	return true;
+	return etrue;
 }
 
-static bool w32_create_child_window(GalWindow32 *parent)
+static ebool w32_create_child_window(GalWindow32 *parent)
 {
 	list_t *pos;
 
@@ -905,7 +905,7 @@ static bool w32_create_child_window(GalWindow32 *parent)
 		GalWindow32 *child = list_entry(pos, GalWindow32, list);
 		w32_create_window(parent, child);
 	}
-	return true;
+	return etrue;
 }
 
 static void w32_destory_window(GalWindow32 *xwin)
@@ -978,13 +978,13 @@ static eint w32_window_move(GalWindow window, eint x, eint y)
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
 	if (xwin->attr.type == GalWindowChild)
-		MoveWindow(xwin->hwnd, x, y, xwin->w, xwin->h, true);
+		MoveWindow(xwin->hwnd, x, y, xwin->w, xwin->h, etrue);
 	else {
 		RECT rect = {0, 0, xwin->w-1, xwin->h-1};
 		int dwStyle = GetWindowLong(xwin->hwnd, GWL_STYLE);
 		int dwExStyle = GetWindowLong(xwin->hwnd, GWL_EXSTYLE);
 		AdjustWindowRectEx(&rect, dwStyle, FALSE, dwExStyle);
-		MoveWindow(xwin->hwnd, x, y, rect.right - rect.left + 1, rect.bottom - rect.top + 1, true);
+		MoveWindow(xwin->hwnd, x, y, rect.right - rect.left + 1, rect.bottom - rect.top + 1, etrue);
 	}
 	xwin->x = x;
 	xwin->y = y;
@@ -1024,7 +1024,7 @@ static eint w32_window_resize(GalWindow window, eint w, eint h)
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
 	if (xwin->attr.type == GalWindowChild)
-		MoveWindow(xwin->hwnd, xwin->x, xwin->y, w, h, true);
+		MoveWindow(xwin->hwnd, xwin->x, xwin->y, w, h, etrue);
 	else {
 		POINT pt;
 		RECT rect;
@@ -1058,7 +1058,7 @@ static eint w32_window_move_resize(GalWindow window, eint x, eint y, eint w, ein
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
 	if (xwin->attr.type == GalWindowChild)
-		MoveWindow(xwin->hwnd, x, y, w, h, true);
+		MoveWindow(xwin->hwnd, x, y, w, h, etrue);
 	else {
 		DWORD dwStyle;
 		DWORD dwExStyle;
@@ -1152,7 +1152,7 @@ static void w32_get_pointer(GalWindow window,
 	if (win_y) *win_y = point.y;
 }
 
-static GalGrabStatus w32_grab_pointer(GalWindow window, bool owner_events, GalCursor cursor)
+static GalGrabStatus w32_grab_pointer(GalWindow window, ebool owner_events, GalCursor cursor)
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
 	if (w_grab_mouse) {
@@ -1191,7 +1191,7 @@ static GalGrabStatus w32_ungrab_pointer(GalWindow window)
 	return 0;
 }
 
-static GalGrabStatus w32_grab_keyboard(GalWindow window, bool owner_events)
+static GalGrabStatus w32_grab_keyboard(GalWindow window, ebool owner_events)
 {
 	GalWindow32 *xwin = W32_WINDOW_DATA(window);
 	while (xwin->parent)
@@ -1212,10 +1212,10 @@ static GalGrabStatus w32_ungrab_keyboard(GalWindow window)
 	return 0;
 }
 
-static INLINE bool xpb_init_gc(GalPB32 *xpb)
+static INLINE ebool xpb_init_gc(GalPB32 *xpb)
 {
 	if (xpb->draw->handle == 0)
-		return false;
+		return efalse;
 
 	if (xpb->hdc == 0) {
 		xpb->hdc = GetDC(xpb->draw->handle);
@@ -1224,7 +1224,7 @@ static INLINE bool xpb_init_gc(GalPB32 *xpb)
 		if (xpb->colorbrush)
 			SelectObject(xpb->hdc, xpb->colorbrush);
 	}
-	return true;
+	return etrue;
 }
 
 static void w32_draw_drawable(GalDrawable dst,
@@ -1623,7 +1623,7 @@ static eint w32_window_init(eHandle hobj, GalWindowAttr *attr)
 		w32_list_add(w32_root, xwin);
 	}
 	else {
-		W32_DRAWABLE_DATA(hobj)->isdev = true;
+		W32_DRAWABLE_DATA(hobj)->isdev = etrue;
 	}
 
 	return 0;
@@ -1636,7 +1636,7 @@ static GalWindow w32_window_new(GalWindowAttr *attr)
 	return window;
 }
 
-static GalImage *w32_image_new(eint w, eint h, bool alpha)
+static GalImage *w32_image_new(eint w, eint h, ebool alpha)
 {
 	BITMAPINFO bitinfo;
 	BITMAP b;
@@ -1700,7 +1700,7 @@ eGeneType w32_genetype_bitmap(void)
 	return gtype;
 }
 
-static void w32_create_bitmap(GalDrawable drawable, eint w, eint h, bool alpha)
+static void w32_create_bitmap(GalDrawable drawable, eint w, eint h, ebool alpha)
 {
 	GalDrawable32 *xdraw = W32_DRAWABLE_DATA(drawable);
 	struct {
@@ -1739,12 +1739,12 @@ static void w32_create_bitmap(GalDrawable drawable, eint w, eint h, bool alpha)
 
 	xdraw->w        = w;
 	xdraw->h        = h;
-	xdraw->isdev	= false;
+	xdraw->isdev	= efalse;
 	xdraw->handle   = (HWND)hbitmap;
 	xdraw->depth    = depth;
 }
 
-static GalDrawable w32_drawable_new(eint w, eint h, bool alpha)
+static GalDrawable w32_drawable_new(eint w, eint h, ebool alpha)
 {
 	GalDrawable drawable = e_object_new(w32_genetype_bitmap());
 	w32_create_bitmap(drawable, w, h, alpha);

@@ -134,7 +134,7 @@ static eint scrollbar_lbuttondown(eHandle hobj, GalEventMouse *event)
 			egui_set_focus(adj->owner);
 	}
 #ifdef WIN32
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, etrue, 0);
 #endif
 	return 0;
 }
@@ -209,15 +209,15 @@ static void scrollbar_reset(eHandle hobj)
 			e_signal_emit(adjust, SIG_ADJUST_UPDATE, (efloat)a->value);
 
 		if (b->auto_hide && b->adj_span == 0)
-			egui_hide_async(hobj, true);
+			egui_hide_async(hobj, etrue);
 		else {
 			if (b->auto_hide && b->adj_span > 0)
-				egui_show_async(hobj, true);
+				egui_show_async(hobj, etrue);
 			egui_update_async(hobj);
 		}
 	}
 	else if (b->auto_hide)
-		egui_hide_async(hobj, true);
+		egui_hide_async(hobj, etrue);
 }
 
 static void scrollbar_set(eHandle hobj)

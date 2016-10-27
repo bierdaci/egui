@@ -143,7 +143,7 @@ static struct {
 	{ CANCELTRANS,	server_cancel_transfer	},
 };
 
-static bool cred_cmp(void *cred1, void *cred2, int len)
+static ebool cred_cmp(void *cred1, void *cred2, int len)
 {
 	return(memcmp(cred1, cred2, len) == 0);
 }
@@ -257,11 +257,11 @@ static TrHandler *tr_find_thread(void *cred, int clen)
 	return tr;
 }
 
-static bool is_timeout(TrHandler *tr, time_t curtime)
+static ebool is_timeout(TrHandler *tr, time_t curtime)
 {
 	if (curtime - tr->start_time > TRTIMEOUT)
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
 static void clear_timeout_thread(void)
@@ -610,7 +610,7 @@ static int server_refuse_transfer(User *user, void *data, int len)
 	return -1;
 }
 
-static int add_user_to_friend(User *user, User *user1, bool wait)
+static int add_user_to_friend(User *user, User *user1, ebool wait)
 {
 	Command cm;
 	struct iovec mvec[2];
@@ -669,7 +669,7 @@ static int server_add_friend(User *user, void *data, int len)
 		return -1;
 
 	if (find_friend_by_name(wuser, user->name))
-		return add_user_to_friend(user, wuser, false);
+		return add_user_to_friend(user, wuser, efalse);
 
 	update_wait(user, wuser);
 
@@ -735,17 +735,17 @@ static int server_reply_friend(User *user, void *data, int len)
 	list_t *pos;
 
 	strcpy(cm.cmd, REPLYFRIEND);
-	cm.len = sizeof(user->name) + sizeof(bool);
+	cm.len = sizeof(user->name) + sizeof(ebool);
 	list_for_each(pos, &user->friend_h) {
 		Friend *fri = list_entry(pos, Friend, list);
-		bool online = (fri->user->fd >= 0);
+		ebool online = (fri->user->fd >= 0);
 
 		mvec[0].iov_base = &cm;
 		mvec[0].iov_len  = sizeof(cm);
 		mvec[1].iov_base = fri->user->name;
 		mvec[1].iov_len  = sizeof(fri->user->name);
 		mvec[2].iov_base = &online;
-		mvec[2].iov_len  = sizeof(bool);
+		mvec[2].iov_len  = sizeof(ebool);
 
 		writev(user->fd, mvec, 3);
 	}
@@ -787,15 +787,15 @@ static int server_search_user(User *user, void *data, int len)
 
 	strcpy(cm.cmd, REPLYSEARCH);
 	if (u) {
-		bool online = u->fd > 0 ? true : false;
+		ebool online = u->fd > 0 ? etrue : efalse;
 		n = 3;
 		strcpy(name, u->name);
-		cm.len = MAX_USERNAME + sizeof(bool);
+		cm.len = MAX_USERNAME + sizeof(ebool);
 
 		mvec[1].iov_base = name;
 		mvec[1].iov_len  = len;
 		mvec[2].iov_base = &online;
-		mvec[2].iov_len  = sizeof(bool);
+		mvec[2].iov_len  = sizeof(ebool);
 	}
 	else {
 		n      = 1;
@@ -820,11 +820,11 @@ static int server_accept_and_add(User *user, void *data, int len)
 	if (find_friend_by_name(d_user, user->name))
 		return 0;
 
-	if (add_user_to_friend(d_user, user, true) < 0)
+	if (add_user_to_friend(d_user, user, etrue) < 0)
 		return 0;
 	if (find_friend_by_name(user, name))
 		return 0;
-	return add_user_to_friend(user, d_user, false);
+	return add_user_to_friend(user, d_user, efalse);
 }
 
 static int server_accept_add(User *user, void *data, int len)
@@ -840,7 +840,7 @@ static int server_accept_add(User *user, void *data, int len)
 	if (find_friend_by_name(d_user, user->name))
 		return 0;
 
-	return add_user_to_friend(d_user, user, true);
+	return add_user_to_friend(d_user, user, etrue);
 }
 
 static int server_refuse_add(User *user, void *data, int len)

@@ -66,16 +66,16 @@ static struct {
 	{"&quot;",	'\"'}
 };
 
-static inline bool is_matching(char c, const char *pattern)
+static inline ebool is_matching(char c, const char *pattern)
 {
 	char b;
 	int i = 0;
 
 	while ((b = pattern[i++])) {
 		if (b == c) 
-			return true;
+			return etrue;
 	}
-	return false;
+	return efalse;
 }
 
 static int m_strcmp(char *src, char *dst, const char *br)
@@ -786,7 +786,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 {
 	int i; 
 	int ret = 0;
-	bool is_lf = true;
+	ebool is_lf = etrue;
 	XmlElement *elm = NULL;
 
 	while ((elm = xml_next_element(xml, parent, elm))) {
@@ -794,7 +794,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 			int b;
 			if (is_lf) {
 				fprintf(xml->fp, "\n");
-				is_lf = false;
+				is_lf = efalse;
 			}
 			for (i = 0; i < step; i++) fprintf(xml->fp, "\t");
 			if (xml_write_node(xml, elm)) {
@@ -815,7 +815,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 		else if (XML_IS_COMMENT(elm)) {
 			if (is_lf) {
 				fprintf(xml->fp, "\n");
-				is_lf = false;
+				is_lf = efalse;
 			}
 			for (i = 0; i < step; i++) fprintf(xml->fp, "\t");
 			xml_write_comment(xml, elm);
@@ -825,7 +825,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 		else if (XML_IS_DECLARE(elm)) {
 			if (is_lf) {
 				fprintf(xml->fp, "\n");
-				is_lf = false;
+				is_lf = efalse;
 			}
 			for (i = 0; i < step; i++) fprintf(xml->fp, "\t");
 			xml_write_declare(xml, elm);

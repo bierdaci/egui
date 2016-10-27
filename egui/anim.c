@@ -109,7 +109,7 @@ static eint anim_init(eHandle hobj, eValist vp)
 	d->frame    = anim->frames;
 	d->drawable = wid->drawable;
 	d->pb       = egal_pb_new(d->drawable, NULL);
-	d->image    = egal_image_new(anim->width, anim->height, false);
+	d->image    = egal_image_new(anim->width, anim->height, efalse);
 	d->timer    = e_timer_add(20, anim_timer_cb, (ePointer)hobj);
 
 	return 0;

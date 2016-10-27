@@ -39,10 +39,10 @@ static eGeneType x11_genetype_drawable(void);
 static eGeneType x11_genetype_surface(void);
 
 static void x11_drawable_init(GalDrawable, Window, eint, eint, eint);
-static GalWindow   x11_wait_event(GalEvent *, bool);
+static GalWindow   x11_wait_event(GalEvent *, ebool);
 static GalWindow   x11_window_new(GalWindowAttr *);
-static GalDrawable x11_drawable_new(eint, eint, bool);
-static GalImage   *x11_image_new(eint, eint, bool);
+static GalDrawable x11_drawable_new(eint, eint, ebool);
+static GalImage   *x11_image_new(eint, eint, ebool);
 static GalPB x11_pb_new(GalDrawable, GalPBAttr *);
 static GalCursor x11_cursor_new(GalCursorType);
 static GalCursor x11_cursor_new_name(const echar *);
@@ -84,7 +84,7 @@ struct _GalWindowX11 {
 	GalWindowX11 *parent;
 	Window xid;
 	GalCursor cursor;
-	bool is_configure;
+	ebool is_configure;
 
 	list_t list;
 	list_t child_head;
@@ -412,11 +412,11 @@ static int translate_key(XKeyEvent *event)
 }
 
 
-static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
+static ebool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 {
 	switch (event->type) {
 		case GraphicsExpose:
-			return false;
+			return efalse;
 		case Expose:
 		{
 			XExposeEvent *e = &event->xexpose;
@@ -425,14 +425,14 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.expose.rect.y = e->y;
 			ent->e.expose.rect.w = e->width;
 			ent->e.expose.rect.h = e->height;
-			return true;
+			return etrue;
 		}
 		case ConfigureNotify:
 		{
 			XConfigureEvent *e = &event->xconfigure;
 			GalWindowX11 *xwin = X11_WINDOW_DATA(x11_find_gwin(event->xany.window));
 			if (!xwin->is_configure) {
-				xwin->is_configure = true;
+				xwin->is_configure = etrue;
 				ent->type = GAL_ET_CONFIGURE;
 				ent->e.configure.rect.x = e->x;
 				ent->e.configure.rect.y = e->y;
@@ -452,7 +452,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 				}
 			}
 
-			return true;
+			return etrue;
 		}
 		case KeyPress:
 		{
@@ -461,7 +461,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.key.code  = translate_key(e);
 			ent->e.key.state = e->state;
 			ent->e.key.time  = e->time;
-			return true;
+			return etrue;
 		}
 		case KeyRelease:
 		{
@@ -470,7 +470,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.key.code  = translate_key(e);
 			ent->e.key.state = e->state;
 			ent->e.key.time  = e->time;
-			return true;
+			return etrue;
 		}
 		case ButtonPress:
 		{
@@ -491,7 +491,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.mouse.root_y  = e->y_root;
 			ent->e.mouse.state   = e->state;
 			ent->e.mouse.time    = e->time;
-			return true;
+			return etrue;
 		}
 		case ButtonRelease:
 		{
@@ -503,9 +503,9 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			else if (e->button == Button3)
 				ent->type = GAL_ET_RBUTTONUP;
 			else if (e->button == Button4)
-				return false;
+				return efalse;
 			else if (e->button == Button5)
-				return false;
+				return efalse;
 				
 			ent->e.mouse.point.x = e->x;
 			ent->e.mouse.point.y = e->y;
@@ -513,7 +513,7 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.mouse.root_y  = e->y_root;
 			ent->e.mouse.state   = e->state;
 			ent->e.mouse.time    = e->time;
-			return true;
+			return etrue;
 		}
 		case MotionNotify:
 		{
@@ -524,47 +524,48 @@ static bool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 			ent->e.mouse.root_x  = e->x_root;
 			ent->e.mouse.root_y  = e->y_root;
 			ent->e.mouse.state   = e->state;
-			return true;
+			ent->e.mouse.time    = e->time;
+			return etrue;
 		}
 		case FocusIn:
 		{
 			ent->type = GAL_ET_FOCUS_IN;
-			return true;
+			return etrue;
 		}
 		case FocusOut:
 		{
 			ent->type = GAL_ET_FOCUS_OUT;
-			return true;
+			return etrue;
 		}
 		case EnterNotify:
 			if (event->xcrossing.mode == NotifyNormal) {
 				ent->type = GAL_ET_ENTER;
-				return true;
+				return etrue;
 			}
-			return false;
+			return efalse;
 		case LeaveNotify:
 			if (event->xcrossing.mode == NotifyNormal) {
 				ent->type = GAL_ET_LEAVE;
-				return true;
+				return etrue;
 			}
-			return false;
+			return efalse;
 		case ClientMessage:
 			//XClientMessageEvent *e = &event->xclient;
 			ent->type = GAL_ET_DESTROY;
-			return true;
+			return etrue;
 		case VisibilityNotify:
 		case MapNotify:
 		case UnmapNotify:
 		case ReparentNotify:
 		default:
-			return false;
+			return efalse;
 	}
 
-	return false;
+	return efalse;
 }
 
 static void x11_get_pointer(GalWindow, eint *, eint *, eint *, eint *, GalModifierType *);
-static GalWindow x11_wait_event(GalEvent *gent, bool recv)
+static GalWindow x11_wait_event(GalEvent *gent, ebool recv)
 {
 	XEvent xent;
 
@@ -590,7 +591,7 @@ static GalWindow x11_wait_event(GalEvent *gent, bool recv)
 						e->state = 0;
 						xent.type = MotionNotify;
 						x11_get_pointer(gent->window, &e->x_root, &e->y_root, &e->x, &e->y, &xmask);
-						XSendEvent(x11_dpy, xent.xany.window, false, xmask, &xent);
+						XSendEvent(x11_dpy, xent.xany.window, efalse, xmask, &xent);
 					}
 				}
 				return gent->window;
@@ -605,7 +606,7 @@ static GalWindow x11_wait_event(GalEvent *gent, bool recv)
 	return gent->window;
 }
 
-static bool x11_create_child_window(GalWindowX11 *);
+static ebool x11_create_child_window(GalWindowX11 *);
 static void x11_list_add(GalWindowX11 *parent, GalWindowX11 *child)
 {
 	e_thread_mutex_lock(&parent->lock);
@@ -631,7 +632,7 @@ static void x11_list_del(GalWindowX11 *xwin)
 
 #define EXPOSE_MASK (ExposureMask | VisibilityChangeMask)
 
-static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
+static ebool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 {
 	XSetWindowAttributes xattribs;
 	GalWindow  window  = OBJECT_OFFSET(child);
@@ -672,10 +673,10 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 		else if (child->attr.type == GalWindowDialog) {
 		}
 		else if (child->attr.type == GalWindowTemp) {
-			xattribs.save_under   = true;
+			xattribs.save_under   = etrue;
 			xattribs.cursor       = None;
 			xevent_mask          |= CWSaveUnder | CWOverrideRedirect;
-			xattribs.override_redirect = true;
+			xattribs.override_redirect = etrue;
 		}
 		else if (child->attr.type == GalWindowChild) {
 		}
@@ -695,7 +696,7 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 		depth        = 0;
 		xevent_mask |= CWOverrideRedirect;
 		xattribs.event_mask &= ~EXPOSE_MASK;
-		xattribs.override_redirect = true;
+		xattribs.override_redirect = etrue;
 	}
 
 	child->xid = XCreateWindow(x11_dpy,
@@ -738,10 +739,10 @@ static bool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 	if (child->attr.type == GalWindowDialog)
 		XSetTransientForHint(x11_dpy, child->xid, parent->xid);
 
-	return true;
+	return etrue;
 }
 
-static bool x11_create_child_window(GalWindowX11 *parent)
+static ebool x11_create_child_window(GalWindowX11 *parent)
 {
 	list_t *pos;
 
@@ -750,7 +751,7 @@ static bool x11_create_child_window(GalWindowX11 *parent)
 		if (child->xid == 0)
 			x11_create_window(parent, child);
 	}
-	return true;
+	return etrue;
 }
 
 static void x11_destory_window(GalWindowX11 *xwin)
@@ -772,7 +773,7 @@ static void x11_destory_window(GalWindowX11 *xwin)
 		XDestroyWindow(x11_dpy, xwin->xid);
 }
 
-static bool x11_map_child_window(GalWindowX11 *parent)
+static ebool x11_map_child_window(GalWindowX11 *parent)
 {
 	list_t *pos;
 
@@ -786,7 +787,7 @@ static bool x11_map_child_window(GalWindowX11 *parent)
 		}
 	}
 
-	return true;
+	return etrue;
 }
 
 static eint x11_window_put(GalWindow win1, GalWindow win2, eint x, eint y)
@@ -1107,7 +1108,7 @@ static void x11_get_pointer(GalWindow window,
 	 if (mask)   *mask = xmask;
 }
 
-static GalGrabStatus x11_grab_pointer(GalWindow window, bool owner_events, GalCursor cursor)
+static GalGrabStatus x11_grab_pointer(GalWindow window, ebool owner_events, GalCursor cursor)
 {
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
 	Cursor xcursor = None;
@@ -1126,7 +1127,7 @@ static GalGrabStatus x11_ungrab_pointer(GalWindow window)
 	return XUngrabPointer(x11_dpy, 0);
 }
 
-static GalGrabStatus x11_grab_keyboard(GalWindow window, bool owner_events)
+static GalGrabStatus x11_grab_keyboard(GalWindow window, ebool owner_events)
 {
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
 
@@ -1139,13 +1140,13 @@ static GalGrabStatus x11_ungrab_keyboard(GalWindow window)
 	return XUngrabKeyboard(x11_dpy, 0);
 }
 
-static INLINE bool xpb_init_gc(GalPBX11 *xpb)
+static INLINE ebool xpb_init_gc(GalPBX11 *xpb)
 {
 	if (xpb->xwin->xid == 0)
-		return false;
+		return efalse;
 	if (xpb->gc == 0)
 		xpb->gc = XCreateGC(x11_dpy, xpb->xwin->xid, GCGraphicsExposures | GCFunction, &xpb->values);
-	return true;
+	return etrue;
 }
 
 static void x11_draw_drawable(
@@ -1574,7 +1575,7 @@ static GalWindow x11_window_new(GalWindowAttr *attr)
 	return window;
 }
 
-static GalImage *x11_image_new(eint w, eint h, bool alpha)
+static GalImage *x11_image_new(eint w, eint h, ebool alpha)
 {
 	GalImageX11 *ximg = e_malloc(sizeof(GalImageX11));
 	GalImage    *gimg = (GalImage *)ximg;
@@ -1621,7 +1622,7 @@ static void x11_image_free(GalImage *image)
 	e_free(image);
 }
 
-static void x11_pixmap_init(GalDrawable draw, eint w, eint h, bool alpha)
+static void x11_pixmap_init(GalDrawable draw, eint w, eint h, ebool alpha)
 {
 	Window xid;
 	eint depth;
@@ -1662,7 +1663,7 @@ static eGeneType x11_genetype_pixmap(void)
 	return gtype;
 }
 
-static GalDrawable x11_drawable_new(eint w, eint h, bool alpha)
+static GalDrawable x11_drawable_new(eint w, eint h, ebool alpha)
 {
 	GalDrawable pixmap = e_object_new(x11_genetype_pixmap());
 	x11_pixmap_init(pixmap, w, h, alpha);

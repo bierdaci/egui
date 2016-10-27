@@ -12,7 +12,7 @@ static eint window_init(eHandle, eValist);
 static void window_init_orders(eGeneType, ePointer);
 
 static void window_add(eHandle, eHandle);
-static void window_request_layout(eHandle, eHandle, eint, eint, bool, bool);
+static void window_request_layout(eHandle, eHandle, eint, eint, ebool, ebool);
 static void window_move(eHandle hobj);
 static eint window_expose_bg(eHandle, GuiWidget *, GalEventExpose *);
 static void window_lower(eHandle);
@@ -150,7 +150,7 @@ static void window_destroy(eHandle hobj)
 	while (cw) {
 		GuiWidget *t = cw;
 		cw = cw->next;
-		egui_remove(OBJECT_OFFSET(t), true);
+		egui_remove(OBJECT_OFFSET(t), etrue);
 		e_signal_emit(OBJECT_OFFSET(t), SIG_DESTROY);
 		e_object_unref(OBJECT_OFFSET(t));
 	}
@@ -205,15 +205,15 @@ static eint __window_init(eHandle hobj, GalWindowType type, GuiWindowType win_ty
 	attr.width   = 1;
 	attr.height  = 1;
 	attr.wclass  = GAL_INPUT_OUTPUT;
-	attr.input_event  = true;
-	attr.output_event = true;
+	attr.input_event  = etrue;
+	attr.output_event = etrue;
 	if (win_type == GUI_WINDOW_TOPLEVEL) {
 		widget_set_status(wid, GuiStatusVisible);
-		attr.visible = true;
+		attr.visible = etrue;
 	}
 	else {
 		widget_unset_status(wid, GuiStatusVisible);
-		attr.visible = false;
+		attr.visible = efalse;
 	}
 
 	wid->window   = egal_window_new(&attr);
@@ -222,7 +222,7 @@ static eint __window_init(eHandle hobj, GalWindowType type, GuiWindowType win_ty
 	{
 		GalPBAttr attr;
 		attr.func = GalPBcopy;
-		attr.use_cairo = true;
+		attr.use_cairo = etrue;
 		wid->pb = egal_pb_new(wid->window, &attr);
 	}
 #else
@@ -279,9 +279,9 @@ static eint window_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 	GuiBox *box = GUI_BOX_DATA(hobj);
 
 #ifdef WIN32
-	bool update = false;
+	ebool update = efalse;
 	if (wid->rect.w != resize->w || wid->rect.h != resize->h)
-		update = true;
+		update = etrue;
 #endif
 
 	wid->rect.w = resize->w;
@@ -351,7 +351,7 @@ static void window_add(eHandle hobj, eHandle cobj)
 	}
 }
 
-static void window_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool add)
+static void window_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool fixed, ebool add)
 {
 	GuiBox    *box = GUI_BOX_DATA(hobj);
 	GuiWidget *pw  = GUI_WIDGET_DATA(hobj);

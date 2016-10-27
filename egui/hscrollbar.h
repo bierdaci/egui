@@ -7,6 +7,6 @@
 
 
 eGeneType egui_genetype_hscrollbar(void);
-eHandle egui_hscrollbar_new(bool);
+eHandle egui_hscrollbar_new(ebool);
 
 #endif

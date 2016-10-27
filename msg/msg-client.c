@@ -97,7 +97,7 @@ static void queue_add(DataQueue *node, QueStatus status)
 }
 
 static DataQueue *
-find_queue_by_data(void *data, int len, bool (*cmp)(void *, void *, int))
+find_queue_by_data(void *data, int len, ebool (*cmp)(void *, void *, int))
 {
 	DataQueue *node = NULL;
 	list_t *pos;
@@ -111,12 +111,12 @@ find_queue_by_data(void *data, int len, bool (*cmp)(void *, void *, int))
 	return NULL;
 }
 
-static bool cred_cmp(void *data1, void *data2, int len)
+static ebool cred_cmp(void *data1, void *data2, int len)
 {
 	return(memcmp(data1, data2, len) == 0);
 }
 
-static bool _cred_cmp(void *data1, void *data2, int len)
+static ebool _cred_cmp(void *data1, void *data2, int len)
 {
 	DataInfoHead *dh = (DataInfoHead *)data1;
 	return cred_cmp(&dh->cred, data2, len);
@@ -551,14 +551,14 @@ static int sm_del_friend(void *data, int len)
 
 static int sm_notify_online(void *data, int len)
 {
-	ui_change_online((char *)data, true);
+	ui_change_online((char *)data, etrue);
 	return 0;
 }
 
 static int sm_notify_offline(void *data, int len)
 {
 	printf("offline %s\n", (char *)data);
-	ui_change_online((char *)data, false);
+	ui_change_online((char *)data, efalse);
 	return 0;
 }
 
@@ -585,22 +585,22 @@ static int sm_reply_who(void *data, int len)
 
 static int sm_reply_friend(void *data, int len)
 {
-	bool is = *(bool *)(data + MAX_USERNAME);
+	ebool is = *(ebool *)(data + MAX_USERNAME);
 	printf("all friend: %s  online \"%s\" \n", (char *)data, is ? "yes" : "no");
-	ui_friend_to_clist(data, is, false);
+	ui_friend_to_clist(data, is, efalse);
 	return 0;
 }
 
 static int sm_reply_search(void *data, int len)
 {
 	if (len > 0) {
-		bool is = *(bool *)(data + MAX_USERNAME);
+		ebool is = *(ebool *)(data + MAX_USERNAME);
 		printf("search result: %s  online %d\n", (char *)data, is);
 		ui_add_user((const char *)data, is);
 	}
 	else {
 		printf("search result: unknown\n");
-		ui_add_user(NULL, false);
+		ui_add_user(NULL, efalse);
 	}
 
 	return 0;

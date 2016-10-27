@@ -51,7 +51,11 @@ ePointer egui_res_find_item(GuiResItem *item, const echar *name)
 		e_strcpy(path, res_path);
 	}
 	else {
-		e_strcpy(path, _(getenv("HOME")));
+		char *p = getenv("HOME");
+		if (p)
+			e_strcpy(path, (echar *)p);
+		else
+			path[0] = 0;
 		e_strcat(path, _("\\egui\\res\\"));
 		res_path = e_strdup(path);
 	}

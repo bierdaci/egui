@@ -64,7 +64,11 @@ GalFont egal_default_font(void)
 		}
 		else {
 			echar path[256];
-			e_strcpy(path, _(getenv("HOME")));
+			char *p = getenv("HOME");
+			if (p)
+				e_strcpy(path, (echar *)p);
+			else
+				path[0] = 0;
 #ifdef WIN32
 			e_strcat(path, _("\\egui\\config"));
 #else

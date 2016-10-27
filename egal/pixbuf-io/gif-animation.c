@@ -4,7 +4,7 @@
 static void pixbuf_gif_anim_class_init(GalPixbufGifAnimClass *klass);
 static void pixbuf_gif_anim_finalize(GObject *object);
 
-static bool pixbuf_gif_anim_is_static_image(GalPixbufAnimation *animation);
+static ebool pixbuf_gif_anim_is_static_image(GalPixbufAnimation *animation);
 static GalPixbuf* pixbuf_gif_anim_get_static_image(GalPixbufAnimation *animation);
 
 static void pixbuf_gif_anim_get_size(GalPixbufAnimation *anim, int *width, int *height);
@@ -74,7 +74,7 @@ static void pixbuf_gif_anim_finalize(GObject *object)
 	G_OBJECT_CLASS(parent_class)->finalize (object);
 }
 
-static bool pixbuf_gif_anim_is_static_image(GalPixbufAnimation *animation)
+static ebool pixbuf_gif_anim_is_static_image(GalPixbufAnimation *animation)
 {
 	GalPixbufGifAnim *gif_anim;
 
@@ -146,8 +146,8 @@ static void pixbuf_gif_anim_iter_finalize(GObject *object);
 
 static int pixbuf_gif_anim_iter_get_delay_time(GalPixbufAnimationIter *iter);
 static GalPixbuf* pixbuf_gif_anim_iter_get_pixbuf(GalPixbufAnimationIter *iter);
-static bool pixbuf_gif_anim_iter_on_currently_loading_frame(GalPixbufAnimationIter *iter);
-static bool pixbuf_gif_anim_iter_advance(GalPixbufAnimationIter *iter, const GTimeVal *current_time);
+static ebool pixbuf_gif_anim_iter_on_currently_loading_frame(GalPixbufAnimationIter *iter);
+static ebool pixbuf_gif_anim_iter_advance(GalPixbufAnimationIter *iter, const GTimeVal *current_time);
 
 static ePointer iter_parent_class;
 
@@ -203,7 +203,7 @@ static void pixbuf_gif_anim_iter_finalize(GObject *object)
 	G_OBJECT_CLASS(iter_parent_class)->finalize(object);
 }
 
-static bool pixbuf_gif_anim_iter_advance(
+static ebool pixbuf_gif_anim_iter_advance(
 		GalPixbufAnimationIter *anim_iter, const GTimeVal *current_time)
 {
 	GalPixbufGifAnimIter *iter;
@@ -317,7 +317,7 @@ void pixbuf_gif_anim_frame_composite(GalPixbufGifAnim *gif_anim, GalPixbufFrame 
 				goto next;
 
 			if (t->prev == NULL) {
-				t->composited = egal_pixbuf_new(true, gif_anim->width, gif_anim->height);
+				t->composited = egal_pixbuf_new(etrue, gif_anim->width, gif_anim->height);
 
 				if (t->composited == NULL)
 					return;
@@ -473,7 +473,7 @@ GalPixbuf* pixbuf_gif_anim_iter_get_pixbuf(GalPixbufAnimationIter *anim_iter)
 	return frame->composited;
 }
 
-static bool pixbuf_gif_anim_iter_on_currently_loading_frame(GalPixbufAnimationIter *anim_iter)
+static ebool pixbuf_gif_anim_iter_on_currently_loading_frame(GalPixbufAnimationIter *anim_iter)
 {
 	GalPixbufGifAnimIter *iter;
 
@@ -524,7 +524,7 @@ void pixbuf_gif_anim_frame_composite(GalPixbufGifAnim *gif_anim, GalPixbufFrame 
 				goto next;
 
 			if (t->prev == NULL) {
-				t->composited = egal_pixbuf_new(true, gif_anim->width, gif_anim->height);
+				t->composited = egal_pixbuf_new(etrue, gif_anim->width, gif_anim->height);
 
 				if (t->composited == NULL)
 					return;
@@ -547,7 +547,7 @@ void pixbuf_gif_anim_frame_composite(GalPixbufGifAnim *gif_anim, GalPixbufFrame 
 				if (t->action == GAL_PIXBUF_FRAME_REVERT)
 					printf("First frame of GIF has bad dispose mode, GIF loader should not have loaded this image\n");
 
-				t->need_recomposite = false;
+				t->need_recomposite = efalse;
 			}
 			else {
 				GalPixbufFrame *prev_frame;
@@ -651,7 +651,7 @@ void pixbuf_gif_anim_frame_composite(GalPixbufGifAnim *gif_anim, GalPixbufFrame 
 							PIXOPS_INTERP_NEAREST);
 				}
 
-				t->need_recomposite = false;
+				t->need_recomposite = efalse;
 			}
 next:
 			if (t == frame)

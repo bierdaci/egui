@@ -693,15 +693,15 @@ static void gene_add_to_library(eGene *parent, eGene *new)
 	return;
 }
 
-bool e_gene_match(eGene *gene1, eGene *gene2)
+ebool e_gene_match(eGene *gene1, eGene *gene2)
 {
 	if (gene1->node_num != gene2->node_num)
-		return false;
+		return efalse;
 
 	if (!e_memcmp(gene1->nodes, gene2->nodes, sizeof(eDnaNode) * gene1->node_num))
-		return true;
+		return etrue;
 
-	return false;
+	return efalse;
 }
 
 static eDnaNode *__dnode_find_subset(eDnaNode *, eint, eDnaNode *, eint);
@@ -767,9 +767,9 @@ eDnaNode *e_genetype_node(eGene *gene, eGeneType type)
 			((eGene *)type)->nodes, ((eGene *)type)->node_num);
 }
 
-bool e_genetype_check(eGeneType gene, eGeneType type)
+ebool e_genetype_check(eGeneType gene, eGeneType type)
 {
-	return e_genetype_node((eGene *)gene, type) ? true : false;
+	return e_genetype_node((eGene *)gene, type) ? etrue : efalse;
 }
 
 ePointer e_type_orders(eGeneType gtype)
@@ -983,14 +983,14 @@ static eHandle object_new_valist(eGene *gene, eValist vp)
 	return (eHandle)obj;
 }
 
-bool e_valid_gene(eGene *gene)
+ebool e_valid_gene(eGene *gene)
 {
 	eDnaNode *p = gene->nodes;
 	eGene *up;
 	eint i;
 
 	if (p->id != 0)
-		return false;
+		return efalse;
 
 	up = __genetype_library[0];
 	for (i = 1; i < gene->node_num; i++) {
@@ -1001,11 +1001,11 @@ bool e_valid_gene(eGene *gene)
 	}
 
 	if (i == gene->node_num && up == gene)
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
-bool e_object_valid(eObject *obj)
+ebool e_object_valid(eObject *obj)
 {
 	return e_valid_gene(obj->gene);
 }
@@ -1021,11 +1021,11 @@ ePointer e_object_type_data(eHandle hobj, eGeneType type)
 	return (ePointer *)((echar *)hobj + node->info.object_offset);
 }
 
-bool e_object_type_check(eHandle hobj, eGeneType type)
+ebool e_object_type_check(eHandle hobj, eGeneType type)
 {
 	if (e_genetype_check((eGeneType)((eObject *)hobj)->gene, type))
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
 ePointer e_object_type_orders(eHandle hobj, eGeneType type)
@@ -1041,11 +1041,11 @@ void e_object_init(void)
 }
 
 void e_timer_init(void);
-bool e_init(void)
+ebool e_init(void)
 {
 	e_memory_init();
 	e_object_init();
 	e_signal_init();
 	e_timer_init();
-	return true;
+	return etrue;
 }

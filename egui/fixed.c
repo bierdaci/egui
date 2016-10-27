@@ -79,7 +79,7 @@ static eHandle child_prev(GuiBin *bin, eHandle cobj)
 
 static eHandle fixed_child_switch(GuiBin *bin, eHandle child, eint dir, eint axis)
 {
-	bool loop;
+	ebool loop;
 	eHandle near = 0;
 	eint diff = 0xffff;
 	eint min  = 0xffff;
@@ -162,7 +162,7 @@ static eHandle fixed_child_switch(GuiBin *bin, eHandle child, eint dir, eint axi
 					}
 				}
 
-				loop = cw->next ? true : false;
+				loop = cw->next ? etrue : efalse;
 			}
 			else {
 				if (axis & BIN_X_AXIS)
@@ -201,7 +201,7 @@ static eHandle fixed_child_switch(GuiBin *bin, eHandle child, eint dir, eint axi
 					}
 				}
 
-				loop = cw->prev ? true : false;
+				loop = cw->prev ? etrue : efalse;
 			}
 		}
 

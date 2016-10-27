@@ -12,16 +12,16 @@ typedef void (*GalPixbufModuleUpdatedFunc)(GalPixbuf *, eint, eint, eint, eint, 
 
 struct _GalPixbufModule {
 	const char *name;
-	bool        fill;
+	ebool        fill;
 
 	void       (*fill_vtable)(GalPixbufModule *);
 	ePointer   (*load_begin)(void);
 	GalPixbuf* (*load_end)(ePointer);
-	bool       (*load_increment)(ePointer, const euchar *, size_t);
-	bool       (*load_header)(GalPixbuf *, ePointer, euint);
+	ebool       (*load_increment)(ePointer, const euchar *, size_t);
+	ebool       (*load_header)(GalPixbuf *, ePointer, euint);
 	ePointer   (*anim_load_begin)(void);
 	GalPixbufAnim* (*anim_load_end)(ePointer);
-	//bool       (*load_animation)(void);
+	//ebool       (*load_animation)(void);
 	//save;
 	//save_to_callback;
 };
@@ -40,7 +40,7 @@ struct _PixbufContext {
 	euint32 over_y, quota_y;
 
 	void (*set_pixel)(euchar *, euint8, euint8, euint8, euint8);
-	bool (*set_y)(PixbufContext *, eint);
+	ebool (*set_y)(PixbufContext *, eint);
 	void (*set_x)(PixbufContext *, eint, euint8, euint8, euint8, euint8);
 	eint (*init )(PixbufContext *, eint, eint, eint, eint);
 

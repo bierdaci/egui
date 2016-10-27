@@ -30,7 +30,7 @@ struct _eSignal {
 	eGeneType   gtype;
 	eSignalType stype;
 	const echar *name;
-	bool    prefix;
+	ebool    prefix;
 	euint32 offset;
 	euint16 num;
 	euint16 size;
@@ -39,7 +39,7 @@ struct _eSignal {
 
 struct _eSignalSlot {
 	esig_t sig;
-	bool lock;
+	ebool lock;
 
 	eSignalSlot *next;
 
@@ -52,13 +52,13 @@ struct _eSignalSlot {
 
 extern int SIG_FREE;
 
-esig_t e_signal_new(const char *, eGeneType, euint32, bool, eSignalType, const char *, ...);
+esig_t e_signal_new(const char *, eGeneType, euint32, ebool, eSignalType, const char *, ...);
 esig_t e_signal_new_label(const char *, eGeneType, const char *, ...);
-bool e_signal_connect (eHandle, esig_t, eSignalFunc);
-bool e_signal_connect1(eHandle, esig_t, eSignalFunc, ePointer);
-bool e_signal_connect2(eHandle, esig_t, eSignalFunc, ePointer, ePointer);
-bool e_signal_connect3(eHandle, esig_t, eSignalFunc, ePointer, ePointer, ePointer);
-bool e_signal_connect4(eHandle, esig_t, eSignalFunc, ePointer, ePointer, ePointer, ePointer);
+ebool e_signal_connect (eHandle, esig_t, eSignalFunc);
+ebool e_signal_connect1(eHandle, esig_t, eSignalFunc, ePointer);
+ebool e_signal_connect2(eHandle, esig_t, eSignalFunc, ePointer, ePointer);
+ebool e_signal_connect3(eHandle, esig_t, eSignalFunc, ePointer, ePointer, ePointer);
+ebool e_signal_connect4(eHandle, esig_t, eSignalFunc, ePointer, ePointer, ePointer, ePointer);
 eint e_signal_emit(eHandle, esig_t, ...);
 eint e_signal_emit_default(eHandle, esig_t, ...);
 eint e_signal_emit_connect(eHandle, esig_t, ...);

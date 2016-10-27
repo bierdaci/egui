@@ -68,15 +68,15 @@ static eint sepbar_leave(eHandle hobj)
 static eint sepbar_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 {
 	GuiFilesel *fs = GUI_WIDGET_DATA(hobj)->extra_data;
-	fs->grab  = true;
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->drawable, false, fs->cursor);
+	fs->grab  = etrue;
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->drawable, efalse, fs->cursor);
 	return 0;
 }
 
 static eint sepbar_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 {
 	GuiFilesel *fs = GUI_WIDGET_DATA(hobj)->extra_data;
-	fs->grab = false;
+	fs->grab = efalse;
 	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->drawable);
 	return 0;
 }
@@ -111,7 +111,7 @@ static void sepbar_init_orders(eGeneType new, ePointer this)
 	e->lbuttondown = sepbar_lbuttondown;
 }
 
-static void add_hlight_file_list(GuiFilesel *fs, const echar *path, bool empty)
+static void add_hlight_file_list(GuiFilesel *fs, const echar *path, ebool empty)
 {
 	DIR *dir;
 	struct dirent *ent;
@@ -166,7 +166,7 @@ static void filesel_show(eHandle hobj)
 	ClsItemBar *bar = egui_clist_get_hlight(fs->locat_list);
 
 	if (bar)
-		add_hlight_file_list(fs, bar->add_data, false);
+		add_hlight_file_list(fs, bar->add_data, efalse);
 
 	bin_show(hobj);
 	egal_window_show(wid->window);
@@ -180,7 +180,7 @@ static void filesel_hide(eHandle hobj)
 	bin_hide(hobj);
 
 	if (fs->is_hide)
-		fs->is_hide = false;
+		fs->is_hide = efalse;
 
 	egal_window_hide(wid->window);
 
@@ -202,7 +202,7 @@ static eint filesel_mousemove(eHandle hobj, GalEventMouse *ent)
 			min_w = fwid->rect.w - cwid->min_w - 20;
 		if (min_w != lwid->min_w) {
 			egui_set_min(fs->locat_list, min_w, 0);
-			egui_request_layout(fs->locat_list, 0, 0, 0, true, false);
+			egui_request_layout(fs->locat_list, 0, 0, 0, etrue, efalse);
 			fs->old_x = ent->point.x;
 		}
 		return 0;
@@ -227,7 +227,7 @@ static eint filesel_init(eHandle hobj, eValist va)
 
 static void filesel_destroy(eHandle hobj)
 {
-	egui_hide(hobj, false);
+	egui_hide(hobj, efalse);
 }
 
 static void filesel_init_orders(eGeneType new, ePointer this)
@@ -253,7 +253,7 @@ static void filesel_init_orders(eGeneType new, ePointer this)
 
 static eint cancel_bn_clicked(eHandle hobj, ePointer data)
 {
-	egui_hide((eHandle)data, true);
+	egui_hide((eHandle)data, etrue);
 	return 0;
 }
 
@@ -262,13 +262,13 @@ static eint ok_bn_clicked(eHandle hobj, ePointer data)
 	if (e_signal_emit((eHandle)data, SIG_CLICKED, 
 				e_signal_get_data((eHandle)data, SIG_CLICKED)) < 0)
 		return -1;
-	egui_hide((eHandle)data, true);
+	egui_hide((eHandle)data, etrue);
 	return 0;
 }
 
 static void clist_grid_draw_bk(eHandle hobj, GuiClist *cl,
 		GalDrawable drawable, GalPB pb,
-		int x, int w, int h, bool light, bool focus, int index)
+		int x, int w, int h, ebool light, ebool focus, int index)
 {
 	if (light) {
 		if (focus)
@@ -295,7 +295,7 @@ static eint select_dir_func(eHandle hobj, ePointer data)
 {
 	GuiFilesel *fs = e_signal_get_data(hobj, SIG_CLICKED);
 	ClsItemBar *ibar = data;
-	add_hlight_file_list(fs, ibar->add_data, true);
+	add_hlight_file_list(fs, ibar->add_data, etrue);
 	return 0;
 }
 
@@ -306,13 +306,13 @@ static eint open_dir_func(eHandle hobj, ePointer data)
 
 	if (hobj == fs->locat_list) {
 		if (e_strcmp(ibar->add_data, fs->path))
-			add_hlight_file_list(fs, ibar->add_data, true);
+			add_hlight_file_list(fs, ibar->add_data, etrue);
 	}
 	else if (ibar->add_data) {
 		echar path[256];
 		e_strcpy(path , fs->path);
 		e_strcat(path, ibar->grids[0].chars);
-		add_hlight_file_list(fs, path, true);
+		add_hlight_file_list(fs, path, etrue);
 	}
 
 	return 0;
@@ -336,7 +336,7 @@ static eint up_dir_func(eHandle hobj, ePointer data)
 			p[1] = 0;
 		else
 			p[0] = 0;
-		add_hlight_file_list(fs, fs->path, true);
+		add_hlight_file_list(fs, fs->path, etrue);
 	}
 	return 0;
 }
@@ -345,7 +345,7 @@ static eint hide_file_func(eHandle hobj, ePointer data)
 {
 	GuiFilesel *fs = data;
 	fs->is_hide = !fs->is_hide;
-	add_hlight_file_list(fs, fs->path, true);
+	add_hlight_file_list(fs, fs->path, etrue);
 	return 0;
 }
 
@@ -360,10 +360,10 @@ static eint filesel_init_data(eHandle hobj, ePointer this)
 	egui_box_set_border_width(hobj, 5);
 
 	fs->vbox = egui_vbox_new();
-	egui_set_expand(fs->vbox, true);
+	egui_set_expand(fs->vbox, etrue);
 
 	fs->addr_hbox = egui_hbox_new();
-	egui_set_expand_h(fs->addr_hbox, true);
+	egui_set_expand_h(fs->addr_hbox, etrue);
 	fs->up_bn = egui_button_new(20, 20);
 	e_signal_connect1(fs->up_bn, SIG_CLICKED, up_dir_func, fs);
 	egui_add(fs->addr_hbox, fs->up_bn);
@@ -372,13 +372,13 @@ static eint filesel_init_data(eHandle hobj, ePointer this)
 	fs->location = egui_label_new(_("Path:"));
 	egui_set_fg_color(fs->location, 0xffffff);
 	egui_set_bg_color(fs->location, 0x3c3b37);
-	egui_set_expand_h(fs->location, false);
+	egui_set_expand_h(fs->location, efalse);
 	egui_add(fs->addr_hbox, fs->location);
 	fs->addr = egui_entry_new(100);
 	egui_add(fs->addr_hbox, fs->addr);
 
 	fs->clist_hbox = egui_hbox_new();
-	egui_set_expand(fs->clist_hbox, true);
+	egui_set_expand(fs->clist_hbox, etrue);
 	fs->locat_list = egui_clist_new(location, 1);
 	egui_clist_set_item_height(fs->locat_list, 50);
 	e_signal_connect1(fs->locat_list, SIG_CLICKED,  select_dir_func, fs);
@@ -403,7 +403,7 @@ static eint filesel_init_data(eHandle hobj, ePointer this)
 #endif
 	egui_set_min(fs->locat_list, 100, 50);
 	egui_request_resize(fs->locat_list, 150, 100);
-	egui_set_expand_h(fs->locat_list, false);
+	egui_set_expand_h(fs->locat_list, efalse);
 	egui_add(fs->clist_hbox, fs->locat_list);
 
 	fs->sepbar = e_object_new(GTYPE_SEPBAR);
@@ -419,7 +419,7 @@ static eint filesel_init_data(eHandle hobj, ePointer this)
 	egui_add(fs->clist_hbox, fs->clist);
 
 	fs->dl_hbox = egui_hbox_new();
-	egui_set_expand_h(fs->dl_hbox, true);
+	egui_set_expand_h(fs->dl_hbox, etrue);
 
 	fs->hide_bn = egui_button_new(25, 25);
 	e_signal_connect1(fs->hide_bn, SIG_CLICKED, hide_file_func, fs);
@@ -433,7 +433,7 @@ static eint filesel_init_data(eHandle hobj, ePointer this)
 	fs->bn_hbox = egui_hbox_new();
 	egui_box_set_layout (fs->bn_hbox, BoxLayout_END);
 	egui_box_set_spacing(fs->bn_hbox, 20);
-	egui_set_expand_h   (fs->bn_hbox, true);
+	egui_set_expand_h   (fs->bn_hbox, etrue);
 	fs->ok_bn     = egui_label_button_new(_("open"));
 	fs->cancel_bn = egui_label_button_new(_("cancel"));
 	egui_add(fs->bn_hbox, fs->cancel_bn);

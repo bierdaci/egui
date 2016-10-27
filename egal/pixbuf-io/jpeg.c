@@ -30,11 +30,11 @@ typedef struct {
 	euint progressive_num;
 	euint rowbytes;
 
-	bool error;
-	bool did_prescan;
-	bool got_header;
-	bool src_initialized;
-	bool in_output;
+	ebool error;
+	ebool did_prescan;
+	ebool got_header;
+	ebool src_initialized;
+	ebool in_output;
 	struct jpeg_decompress_struct cinfo;
 	struct error_handler_data     jerr;
 } JpegProgContext;
@@ -68,7 +68,7 @@ static void term_source(j_decompress_ptr cinfo)
 
 static boolean fill_input_buffer(j_decompress_ptr cinfo)
 {
-	return false;
+	return efalse;
 }
 
 static void skip_input_data(j_decompress_ptr cinfo, elong num_bytes)
@@ -91,11 +91,11 @@ static ePointer jpeg_load_begin(void)
 
 	context = e_malloc(sizeof(JpegProgContext));
 	context->dptr = NULL;
-	context->got_header = false;
-	context->did_prescan = false;
-	context->src_initialized = false;
-	context->in_output = false;
-	context->error = false;
+	context->got_header = efalse;
+	context->did_prescan = efalse;
+	context->src_initialized = efalse;
+	context->in_output = efalse;
+	context->error = efalse;
 	context->progressive_num = 0;
 
 	jpeg_create_decompress(&context->cinfo);
@@ -131,7 +131,7 @@ static GalPixbuf *jpeg_load_end(ePointer data)
 	if (!context) return NULL;
 #ifdef linux
 	if (sigsetjmp(context->jerr.setjmp_buffer, 1))
-		context->error = true;
+		context->error = etrue;
 	else
 #endif
 		jpeg_finish_decompress(&context->cinfo);
@@ -246,7 +246,7 @@ static void convert_cmyk_to_rgb(JpegProgContext *context, euchar **lines, eint n
 	}
 }
 
-static bool jpeg_pixbuf_load_lines(JpegProgContext  *context)
+static ebool jpeg_pixbuf_load_lines(JpegProgContext  *context)
 {
 	struct jpeg_decompress_struct *cinfo = &context->cinfo;
 	eint nlines;
@@ -268,14 +268,14 @@ static bool jpeg_pixbuf_load_lines(JpegProgContext  *context)
 				convert_cmyk_to_rgb(context, context->lines, nlines);
 				break;
 			default:
-				return false;
+				return efalse;
 		}
 	}
 
-	return true;
+	return etrue;
 }
 
-static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
+static ebool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 {
 	JpegProgContext *context = (JpegProgContext *)data;
 	struct jpeg_decompress_struct *cinfo;
@@ -283,26 +283,26 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 	euint32 num_left, num_copy;
 	euint32 last_num_left, last_bytes_left;
 	euint32 spinguard;
-	bool first;
+	ebool first;
 	const euchar *bufhd;
 	//eint is_otag;
 	//char otag_str[5];
 
-	if (!context || !buf) return false;
+	if (!context || !buf) return efalse;
 
 	src = (my_source_mgr *)context->cinfo.src;
 
 	cinfo = &context->cinfo;
 #ifdef linux
 	if (sigsetjmp(context->jerr.setjmp_buffer, 1)) {
-		context->error = true;
-		return false;
+		context->error = etrue;
+		return efalse;
 	}
 #endif
 	if (context->src_initialized && src->skip_next) {
 		if (src->skip_next > (eint)size) {
 			src->skip_next -= size;
-			return true;
+			return etrue;
 		}
 		else {
 			num_left = size - src->skip_next;
@@ -316,13 +316,13 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 	}
 
 	if (num_left == 0)
-		return true;
+		return etrue;
 
 	last_num_left = num_left;
 	last_bytes_left = 0;
 	spinguard = 0;
-	first = true;
-	while (true) {
+	first = etrue;
+	while (etrue) {
 		if (num_left > 0) {
 			if (src->pub.bytes_in_buffer && src->pub.next_input_byte != src->buffer)
 				e_memmove(src->buffer, src->pub.next_input_byte, src->pub.bytes_in_buffer);
@@ -338,7 +338,7 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 
 		if (first) {
 			last_bytes_left = src->pub.bytes_in_buffer;
-			first = false;
+			first = efalse;
 		}
 		else if (src->pub.bytes_in_buffer == last_bytes_left && num_left == last_num_left) {
 			spinguard++;
@@ -349,7 +349,7 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 		}
 
 		if (spinguard > 2)
-			return true;
+			return etrue;
 
 		if (!context->got_header) {
 			eint rc, i;
@@ -358,13 +358,13 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 #ifdef linux
 			jpeg_save_markers(cinfo, EXIF_JPEG_MARKER, 0xffff);
 #endif
-			rc = jpeg_read_header(cinfo, true);
-			context->src_initialized = true;
+			rc = jpeg_read_header(cinfo, etrue);
+			context->src_initialized = etrue;
 
 			if (rc == JPEG_SUSPENDED)
 				continue;
 
-			context->got_header = true;
+			context->got_header = etrue;
 
 			//is_otag = get_orientation(cinfo);
 
@@ -402,56 +402,56 @@ static bool jpeg_load_increment(ePointer data, const euchar *buf, size_t size)
 
 			cinfo->buffered_image = cinfo->progressive_mode;
 			rc = jpeg_start_decompress(cinfo);
-			cinfo->do_fancy_upsampling = false;
-			cinfo->do_block_smoothing = false;
+			cinfo->do_fancy_upsampling = efalse;
+			cinfo->do_block_smoothing = efalse;
 
 			if (rc == JPEG_SUSPENDED)
 				continue;
 
-			context->did_prescan = true;
+			context->did_prescan = etrue;
 		}
 		else if (!cinfo->buffered_image) {
 			if (!jpeg_pixbuf_load_lines(context)) {
-				context->error = true;
-				return false;
+				context->error = etrue;
+				return efalse;
 			}
 
 			if (cinfo->output_scanline >= cinfo->output_height)
-				return true;
+				return etrue;
 		}
 		else {
 			while (!jpeg_input_complete(cinfo)) {
 				if (!context->in_output) {
 #ifdef linux
 					if (jpeg_start_output(cinfo, cinfo->input_scan_number))
-						context->in_output = true;
+						context->in_output = etrue;
 					else
 #endif
 						break;
 				}
 
 				if (!jpeg_pixbuf_load_lines(context)) {
-					context->error = true;
-					return false;
+					context->error = etrue;
+					return efalse;
 				}
 #ifdef WIN32
 				if (cinfo->output_scanline >= cinfo->output_height)
 #else
 				if (cinfo->output_scanline >= cinfo->output_height && jpeg_finish_output(cinfo))
 #endif
-					context->in_output = false;
+					context->in_output = efalse;
 				else
 					break;
 			}
 			if (jpeg_input_complete(cinfo))
-				return true;
+				return etrue;
 			else
 				continue;
 		}
 	}
 }
 
-static bool jpeg_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
+static ebool jpeg_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 {
 	struct jpeg_decompress_struct de;
 	struct jpeg_error_mgr jerr;
@@ -476,7 +476,7 @@ static bool jpeg_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 #ifdef linux
 	jpeg_save_markers(&de, EXIF_JPEG_MARKER, 0xffff);
 #endif
-	jpeg_read_header(&de, true);
+	jpeg_read_header(&de, etrue);
 
 	jpeg_calc_output_dimensions(&de);
 
@@ -487,7 +487,7 @@ static bool jpeg_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 error:
 	jpeg_destroy_decompress(&de);
 
-	return true;
+	return etrue;
 }
 
 void _gal_pixbuf_jpeg_fill_vtable(GalPixbufModule *module)
@@ -710,7 +710,7 @@ static void to_callback_do_write(j_compress_ptr cinfo, gsize length)
 	}
 }
 
-static bool to_callback_empty_output_buffer(j_compress_ptr cinfo)
+static ebool to_callback_empty_output_buffer(j_compress_ptr cinfo)
 {
 	ToFunctionDestinationManager *destmgr;
 
@@ -718,7 +718,7 @@ static bool to_callback_empty_output_buffer(j_compress_ptr cinfo)
 	to_callback_do_write (cinfo, TO_FUNCTION_BUF_SIZE);
 	destmgr->pub.next_output_byte = destmgr->buffer;
 	destmgr->pub.free_in_buffer = TO_FUNCTION_BUF_SIZE;
-	return true;
+	return etrue;
 }
 
 void to_callback_terminate(j_compress_ptr cinfo)
@@ -729,11 +729,11 @@ void to_callback_terminate(j_compress_ptr cinfo)
 	to_callback_do_write (cinfo, TO_FUNCTION_BUF_SIZE - destmgr->pub.free_in_buffer);
 }
 
-static bool real_save_jpeg(GalPixbuf          *pixbuf,
+static ebool real_save_jpeg(GalPixbuf          *pixbuf,
 		echar             **keys,
 		echar             **values,
 		GError            **error,
-		bool            to_callback,
+		ebool            to_callback,
 		FILE               *f,
 		GalPixbufSaveFunc   save_func,
 		ePointer            user_data)
@@ -772,7 +772,7 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 							_("JPEG quality must be a value between 0 and 100; value '%s' could not be parsed."),
 							*viter);
 
-					return false;
+					return efalse;
 				}
 
 				if (quality < 0 ||
@@ -787,7 +787,7 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 							_("JPEG quality must be a value between 0 and 100; value '%d' is not allowed."),
 							quality);
 
-					return false;
+					return efalse;
 				}
 			} else {
 				g_warning ("Unrecognized parameter (%s) passed to JPEG saver.", *kiter);
@@ -814,7 +814,7 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 				GDK_PIXBUF_ERROR,
 				GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY,
 				_("Couldn't allocate memory for loading JPEG file"));
-		return false;
+		return efalse;
 	}
 	if (to_callback) {
 		to_callback_destmgr.buffer = g_try_malloc (TO_FUNCTION_BUF_SIZE);
@@ -823,7 +823,7 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 					GDK_PIXBUF_ERROR,
 					GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY,
 					_("Couldn't allocate memory for loading JPEG file"));
-			return false;
+			return efalse;
 		}
 	}
 
@@ -838,7 +838,7 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 		jpeg_destroy_compress(&cinfo);
 		e_free(buf);
 		e_free(to_callback_destmgr.buffer);
-		return false;
+		return efalse;
 	}
 #endif
 	/* setup compress params */
@@ -862,8 +862,8 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 
 	/* set up jepg compression parameters */
 	jpeg_set_defaults (&cinfo);
-	jpeg_set_quality (&cinfo, quality, true);
-	jpeg_start_compress (&cinfo, true);
+	jpeg_set_quality (&cinfo, quality, etrue);
+	jpeg_start_compress (&cinfo, etrue);
 	/* get the start pointer */
 	ptr = pixels;
 	/* go one scanline at a time... and save */
@@ -885,24 +885,24 @@ static bool real_save_jpeg(GalPixbuf          *pixbuf,
 	jpeg_destroy_compress(&cinfo);
 	g_free(buf);
 	g_free(to_callback_destmgr.buffer);
-	return true;
+	return etrue;
 }
 
-static bool jpeg_pixbuf_save(FILE *f, 
+static ebool jpeg_pixbuf_save(FILE *f, 
 		GalPixbuf     *pixbuf, 
 		echar        **keys,
 		echar        **values)
 {
-	return real_save_jpeg(pixbuf, keys, values, false, f, NULL, NULL);
+	return real_save_jpeg(pixbuf, keys, values, efalse, f, NULL, NULL);
 }
 
-static bool jpeg_save_to_callback(GalPixbufSaveFunc   save_func,
+static ebool jpeg_save_to_callback(GalPixbufSaveFunc   save_func,
 		ePointer            user_data,
 		GalPixbuf          *pixbuf, 
 		echar			**keys,
 		echar			**values)
 {
-	return real_save_jpeg(pixbuf, keys, values, true, NULL, save_func, user_data);
+	return real_save_jpeg(pixbuf, keys, values, etrue, NULL, save_func, user_data);
 }
 
 #endif

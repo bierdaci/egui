@@ -15,7 +15,7 @@ struct _GalDrawable32 {
 	eint w, h;
 	eint depth;
 	HWND handle;
-	bool isdev;
+	ebool isdev;
 	GalSurface surface;
 };
 

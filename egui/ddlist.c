@@ -66,14 +66,14 @@ static eint ddlist_keydown(eHandle hobj, GalEventKey *ent)
 
 static eint ddlist_enter(eHandle hobj, eint x, eint y)
 {
-	GUI_DDLIST_DATA(hobj)->enter = true;
+	GUI_DDLIST_DATA(hobj)->enter = etrue;
 	egui_update(hobj);
 	return 0;
 }
 
 static eint ddlist_leave(eHandle hobj)
 {
-	GUI_DDLIST_DATA(hobj)->enter = false;
+	GUI_DDLIST_DATA(hobj)->enter = efalse;
 	egui_update(hobj);
 	return 0;
 }
@@ -156,13 +156,21 @@ static void ddlist_add(eHandle hobj, eHandle cobj)
 	ddlist->tail = cobj;
 
 	widget->min_w = GUI_WIDGET_DATA(menu->box)->rect.w - 2;
-	egui_request_layout(widget->parent, 0, 0, 0, false, true);
+	egui_request_layout(widget->parent, 0, 0, 0, efalse, etrue);
+}
+
+const echar *ddlist_get_strings(eHandle hobj)
+{
+	GuiDDList *ddlist = GUI_DDLIST_DATA(hobj);
+
+	return egui_get_strings(ddlist->item);
 }
 
 static void ddlist_init_orders(eGeneType new, ePointer this)
 {
-	GuiWidgetOrders *w = e_genetype_orders(new, GTYPE_WIDGET);
-	GuiEventOrders  *e = e_genetype_orders(new, GTYPE_EVENT);
+	GuiWidgetOrders  *w = e_genetype_orders(new, GTYPE_WIDGET);
+	GuiEventOrders   *e = e_genetype_orders(new, GTYPE_EVENT);
+	GuiStringsOrders *s = e_genetype_orders(new, GTYPE_STRINGS);
 
 	bin_keydown    = e->keydown;
 
@@ -174,6 +182,7 @@ static void ddlist_init_orders(eGeneType new, ePointer this)
 	e->focus_in    = (ePointer)egui_update;
 	e->focus_out   = (ePointer)egui_update;
 
+	s->get_strings = ddlist_get_strings;
 	w->add         = ddlist_add;
 	w->expose      = ddlist_expose;
 }

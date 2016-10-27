@@ -43,21 +43,21 @@ struct _GifContext {
 	euint width;
 	euint height;
 
-	bool has_global_cmap;
+	ebool has_global_cmap;
 
 	CMap  global_color_map;
 	euint  global_colormap_size;
 	euint global_bit_pixel;
 	euint global_color_resolution;
 	euint background_index;
-	bool  stop_after_first_frame;
+	ebool  stop_after_first_frame;
 
-	bool  frame_cmap_active;
+	ebool  frame_cmap_active;
 	CMap  frame_color_map;
 	euint frame_colormap_size;
 	euint frame_bit_pixel;
 
-	bool  is_anim;
+	ebool  is_anim;
 	euint aspect_ratio;
 	GalPixbufGifAnim *anim;
 	GalPixbufFrame   *frame;
@@ -78,7 +78,7 @@ struct _GifContext {
 	/* extension context */
 	euchar extension_label;
 	euchar extension_flag;
-	bool in_loop_extension;
+	ebool in_loop_extension;
 
 	/* get block context */
 	euchar block_count;
@@ -116,16 +116,16 @@ struct _GifContext {
 
 static int GetDataBlock(GifContext *, euchar *);
 
-static bool gif_read(GifContext *context, euchar *buffer, size_t len)
+static ebool gif_read(GifContext *context, euchar *buffer, size_t len)
 {
 	if ((context->size - context->ptr) >= len) {
 		e_memcpy(buffer, context->buf + context->ptr, len);
 		context->ptr += len;
 		context->amount_needed = 0;
-		return true;
+		return etrue;
 	}
 	context->amount_needed = len - (context->size - context->ptr);
-	return false;
+	return efalse;
 }
 
 static int gif_get_colormap(GifContext *context)
@@ -187,7 +187,7 @@ static int get_data_block(GifContext *context, euchar *buf, int *empty_block)
 
 	if (context->block_count == 0)
 		if (empty_block) {
-			*empty_block = true;
+			*empty_block = etrue;
 			return 0;
 		}
 
@@ -200,7 +200,7 @@ static int get_data_block(GifContext *context, euchar *buf, int *empty_block)
 static void gif_set_get_extension(GifContext *context)
 {
 	context->state = GIF_GET_EXTENSION;
-	context->extension_flag = true;
+	context->extension_flag = etrue;
 	context->extension_label = 0;
 	context->block_count = 0;
 	context->block_ptr = 0;
@@ -209,7 +209,7 @@ static void gif_set_get_extension(GifContext *context)
 static int gif_get_extension(GifContext *context)
 {
 	int retval;
-	int empty_block = false;
+	int empty_block = efalse;
 
 	if (context->extension_flag) {
 		if (!context->extension_label &&
@@ -234,7 +234,7 @@ static int gif_get_extension(GifContext *context)
 
 			/* Now we've successfully loaded this one, we continue on our way */
 			context->block_count = 0;
-			context->extension_flag = false;
+			context->extension_flag = efalse;
 			break;
 
 		case 0xff: /* application extension */
@@ -244,7 +244,7 @@ static int gif_get_extension(GifContext *context)
 					return retval;
 				if (!e_strncmp(_(context->block_buf), _("NETSCAPE2.0"), 11) ||
 						!e_strncmp(_(context->block_buf), _("ANIMEXTS1.0"), 11)) {
-					context->in_loop_extension = true;
+					context->in_loop_extension = etrue;
 				}
 				context->block_count = 0;
 			}
@@ -262,8 +262,8 @@ static int gif_get_extension(GifContext *context)
 					context->block_count = 0;
 				} while (!empty_block);
 
-				context->in_loop_extension = false;
-				context->extension_flag = false;
+				context->in_loop_extension = efalse;
+				context->extension_flag = efalse;
 				goto step;
 			}
 			break;
@@ -284,7 +284,7 @@ step:
 	return 0;
 }
 
-static int ZeroDataBlock = false;
+static int ZeroDataBlock = efalse;
 
 static int GetDataBlock(GifContext *context, euchar *buf)
 {
@@ -338,7 +338,7 @@ static int gif_lzw_fill_buffer(GifContext *context)
 		return -1;
 
 	if (context->block_count == 0)
-		context->code_done = true;
+		context->code_done = etrue;
 
 	context->code_last_byte = 2 + context->block_count;
 	context->code_curbit = (context->code_curbit - context->code_lastbit) + 16;
@@ -407,7 +407,7 @@ static int lzw_read_byte(GifContext *context)
 	}
 
 	if (context->lzw_fresh) {
-		context->lzw_fresh = false;
+		context->lzw_fresh = efalse;
 		do {
 			retval = get_code(context, context->lzw_code_size);
 			if (retval < 0)
@@ -510,7 +510,7 @@ static void gif_set_get_lzw(GifContext *context)
 }
 
 #if 0
-static bool clip_frame(GifContext *context, int *x, int *y, int *width, int *height)
+static ebool clip_frame(GifContext *context, int *x, int *y, int *width, int *height)
 {
 	int orig_x, orig_y;
 
@@ -522,14 +522,14 @@ static bool clip_frame(GifContext *context, int *x, int *y, int *width, int *hei
 	*height = MIN(context->height, orig_y + *height) - *y;
 
 	if (*width > 0 && *height > 0)
-		return true;
+		return etrue;
 
 	*x = 0;
 	*y = 0;
 	*width = 0;
 	*height = 0;
 
-	return false;
+	return efalse;
 }
 #endif
 
@@ -575,7 +575,7 @@ static int pixbuf_anim_process(GifContext *context)
 
 	context->frame->x_offset = context->x_offset;
 	context->frame->y_offset = context->y_offset;
-	context->frame->need_recomposite = true;
+	context->frame->need_recomposite = etrue;
 
 	context->frame->delay_time = context->gif89.delay_time * 10;
 
@@ -612,7 +612,7 @@ static int pixbuf_anim_process(GifContext *context)
 static int gif_get_lzw(GifContext *context)
 {
 	int  lower_bound, upper_bound;
-	bool bound_flag;
+	ebool bound_flag;
 	int  first_pass;
 	int  v;
 	PixbufContext *con = (PixbufContext *)context;
@@ -625,11 +625,11 @@ static int gif_get_lzw(GifContext *context)
 		con->init(con, context->frame_len, context->frame_height, 4, 1);
 	}
 
-	bound_flag  = false;
+	bound_flag  = efalse;
 	lower_bound = upper_bound = context->draw_ypos;
 	first_pass  = context->draw_pass;
 
-	while (true) {
+	while (etrue) {
 		euchar (*cmap)[MAXCOLORMAPSIZE];
 		euchar a;
 
@@ -641,7 +641,7 @@ static int gif_get_lzw(GifContext *context)
 		v = lzw_read_byte(context);
 		if (v < 0)
 			goto finished_data;
-		bound_flag = true;
+		bound_flag = etrue;
 
 		a = (euchar)((v == context->gif89.transparent) ? 0 : 255);
 		con->set_x(con, -1, cmap[2][v], cmap[1][v], cmap[0][v], a);
@@ -707,11 +707,11 @@ done:
 
 finished_data:
 	if (bound_flag && context->frame)
-		context->frame->need_recomposite = true;
+		context->frame->need_recomposite = etrue;
 
 	if (context->state == GIF_GET_NEXT_STEP) {
 		context->frame = NULL;
-		context->frame_cmap_active = false;
+		context->frame_cmap_active = efalse;
 		if (!context->is_anim || context->stop_after_first_frame)
 			context->state =  GIF_DONE;
 	}
@@ -736,11 +736,11 @@ static int gif_prepare_lzw(GifContext *context)
 	context->lzw_end_code      = context->lzw_clear_code + 1;
 	context->lzw_max_code      = context->lzw_clear_code + 2;
 	context->lzw_max_code_size = 2 * context->lzw_clear_code;
-	context->lzw_fresh         = true;
+	context->lzw_fresh         = etrue;
 	context->code_curbit       = 0;
 	context->code_lastbit      = 0;
 	context->code_last_byte    = 0;
-	context->code_done         = false;
+	context->code_done         = efalse;
 
 	e_assert(context->lzw_clear_code <= TABLES_SIZEOF(context->lzw_table[0]));
 
@@ -829,7 +829,7 @@ static int gif_get_frame_info(GifContext *context)
 
 	if (BitSet(buf[8], LOCALCOLORMAP)) {
 		context->frame_bit_pixel     = 1 << ((buf[8] & 0x07) + 1);
-		context->frame_cmap_active   = true;
+		context->frame_cmap_active   = etrue;
 		context->frame_colormap_size = 0;
 		context->state = GIF_GET_COLORMAP2;
 		return 0;
@@ -847,7 +847,7 @@ static int gif_get_frame_info(GifContext *context)
 static int gif_get_next_step(GifContext *context)
 {
 	euchar c;
-	while (true) {
+	while (etrue) {
 		if (!gif_read(context, &c, 1))
 			return -1;
 
@@ -926,7 +926,7 @@ done:
 	return retval;
 }
 
-static GifContext *new_context(bool is_anim)
+static GifContext *new_context(ebool is_anim)
 {
 	GifContext *context;
 
@@ -949,8 +949,8 @@ static GifContext *new_context(bool is_anim)
 	context->gif89.delay_time  = -1;
 	context->gif89.input_flag  = -1;
 	context->gif89.transparent = -1;
-	context->in_loop_extension = false;
-	context->stop_after_first_frame = false;
+	context->in_loop_extension = efalse;
+	context->stop_after_first_frame = efalse;
 
 	return context;
 }
@@ -959,7 +959,7 @@ static ePointer gif_load_begin(void)
 {
 	GifContext *context;
 
-	context = new_context(false);
+	context = new_context(efalse);
 
 	return (ePointer)context;
 }
@@ -976,7 +976,7 @@ static GalPixbuf *gif_load_end(ePointer data)
 	return pixbuf;
 }
 
-static bool gif_load_increment(ePointer data, const euchar *buf, euint size)
+static ebool gif_load_increment(ePointer data, const euchar *buf, euint size)
 {
 	int retval;
 	GifContext *context = (GifContext *)data;
@@ -991,7 +991,7 @@ static bool gif_load_increment(ePointer data, const euchar *buf, euint size)
 			context->amount_needed -= size;
 			e_memcpy(context->buf + context->size, buf, size);
 			context->size += size;
-			return true;
+			return etrue;
 		}
 		else if (size == context->amount_needed) {
 			e_memcpy(context->buf + context->size, buf, size);
@@ -1009,7 +1009,7 @@ static bool gif_load_increment(ePointer data, const euchar *buf, euint size)
 	if (retval == -2) {
 		if (context->buf == buf)
 			context->buf = NULL;
-		return false;
+		return efalse;
 	}
 
 	if (retval == -1) {
@@ -1031,15 +1031,15 @@ static bool gif_load_increment(ePointer data, const euchar *buf, euint size)
 	}
 
 	if (context->state == GIF_DONE)
-		return false;
-	return true;
+		return efalse;
+	return etrue;
 }
 
 static ePointer gif_anim_load_begin(void)
 {
 	GifContext *context;
 
-	context = new_context(true);
+	context = new_context(etrue);
 
 	return (ePointer)context;
 }

@@ -10,7 +10,7 @@ void egal_pixbuf_free(GalPixbuf *pixbuf)
 	e_slice_free(GalPixbuf, pixbuf);
 }
 
-GalPixbuf *egal_pixbuf_new(bool alpha, eint w, eint h)
+GalPixbuf *egal_pixbuf_new(ebool alpha, eint w, eint h)
 {
 	GalPixbuf *pixbuf = e_slice_new(GalPixbuf);
 
@@ -80,7 +80,7 @@ void egal_pixbuf_composite(GalPixbuf *dst,
 			dst->w, dst->h,
 			dst->rowbytes,
 			dst->pixelbytes,
-			false,
+			efalse,
 			src->pixels,
 			src->w, src->h,
 			src->rowbytes,

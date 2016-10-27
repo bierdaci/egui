@@ -52,7 +52,7 @@ static eint box_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 	return 0;
 }
 
-static void box_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool fixed, bool a)
+static void box_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool fixed, ebool a)
 {
 	GuiBox *box = GUI_BOX_DATA(hobj);
 
@@ -79,7 +79,7 @@ static void box_add(eHandle hobj, eHandle cobj)
 	if (!bin->head) {
 		GuiWidget *cw = GUI_WIDGET_DATA(cobj);
 		egui_box_add(hobj, cobj);
-		box_request_layout(hobj, cobj, cw->min_w, cw->min_h, false, true);
+		box_request_layout(hobj, cobj, cw->min_w, cw->min_h, efalse, etrue);
 	}
 }
 

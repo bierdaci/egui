@@ -48,20 +48,20 @@ static void menu_hbox_init_orders(eGeneType new, ePointer);
 
 static void (*vbox_add)(eHandle, eHandle);
 static void (*hbox_add)(eHandle, eHandle);
-static void (*vbox_request_layout)(eHandle, eHandle, eint, eint, bool, bool);
+static void (*vbox_request_layout)(eHandle, eHandle, eint, eint, ebool, ebool);
 void egui_menu_append(eHandle hobj, eHandle item);
 
 static void separator_init_orders(eGeneType, ePointer);
 
 typedef struct {
 	eint type;
-	bool enter;
-	bool active;
+	ebool enter;
+	ebool active;
 	eTimer timer;
 } GuiMenuButton;
 
 typedef struct {
-	bool active;
+	ebool active;
 } GuiMenuBar;
 
 eGeneType egui_genetype_menu_shell(void)
@@ -203,7 +203,7 @@ static void close_popup_menu(GuiMenu *menu)
 	if (super && shell->active == hobj)
 		shell->active = super;
 
-	egui_hide(hobj, true);
+	egui_hide(hobj, etrue);
 
 	while (menu->popup) {
 		hobj = menu->popup;
@@ -212,7 +212,7 @@ static void close_popup_menu(GuiMenu *menu)
 		if (shell->active == hobj && super)
 			shell->active = super;
 
-		egui_hide(hobj, true);
+		egui_hide(hobj, etrue);
 		menu = GUI_MENU_DATA(hobj);
 	}
 }
@@ -241,7 +241,7 @@ static void menu_shell_realize(eHandle hobj, GuiWidget *wid)
 	attr.height  = 4000;
 	attr.wclass  = GAL_INPUT_ONLY;
 	attr.wa_mask = GAL_WA_NOREDIR;
-	attr.input_event = true;
+	attr.input_event = etrue;
 	wid->window  = egal_window_new(&attr);
 	wid->drawable = wid->window;
 	egal_window_set_attachment(wid->drawable, hobj);
@@ -310,7 +310,7 @@ static eint menu_shell_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 		popup = GUI_MENU_DATA(popup)->popup;
 	}
 
-	egui_hide(hobj, true);
+	egui_hide(hobj, etrue);
 
 	shell->source = 0;
 	menu_unactive(shell, &me);
@@ -386,7 +386,7 @@ static eint menu_shell_mousemove(eHandle hobj, GalEventMouse *mevent)
 	return 0;
 }
 
-static bool can_snatch_control(eHandle hobj)
+static ebool can_snatch_control(eHandle hobj)
 {
 	GuiMenu *menu = GUI_MENU_DATA(hobj);
 	GuiBin  *bin  = GUI_BIN_DATA(menu->box);
@@ -394,10 +394,10 @@ static bool can_snatch_control(eHandle hobj)
 	if (bin->focus) {
 		GuiMenuItem *item = GUI_MENU_ITEM_DATA(bin->focus);
 		if (item->type == MenuItemBranch && item->p.submenu)
-			return false;
+			return efalse;
 	}
 
-	return true;
+	return etrue;
 }
 
 static eint menu_shell_keydown(eHandle hobj, GalEventKey *ent)
@@ -411,7 +411,7 @@ static eint menu_shell_keydown(eHandle hobj, GalEventKey *ent)
 		GuiWidget   *wid = NULL;
 		GalEventMouse me;
 
-		egui_hide(hobj, true);
+		egui_hide(hobj, etrue);
 
 		if (e_object_type_check(shell->root_menu, GTYPE_MENU_BAR)) {
 			wid = GUI_WIDGET_DATA(shell->root_menu);
@@ -462,8 +462,8 @@ static void menu_shell_show(eHandle hobj)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	egal_window_show(wid->drawable);
-	egal_grab_keyboard(wid->drawable, false);
-	egal_grab_pointer(wid->drawable, false, 0);
+	egal_grab_keyboard(wid->drawable, efalse);
+	egal_grab_pointer(wid->drawable, efalse, 0);
 }
 
 static void menu_shell_hide(eHandle hobj)
@@ -480,7 +480,7 @@ static void menu_shell_hide(eHandle hobj)
 	menu  = GUI_MENU_DATA(shell->root_menu);
 
 	if (menu->is_bar) {
-		GUI_MENU_BAR_DATA(shell->root_menu)->active = false;
+		GUI_MENU_BAR_DATA(shell->root_menu)->active = efalse;
 		if (menu->popup)
 			close_popup_menu(GUI_MENU_DATA(menu->popup));
 		menu->popup = 0;
@@ -525,10 +525,10 @@ static eint menu_bn1_timer_cb(eTimer timer, euint num, ePointer args)
 
 	if (scr->offset_y + MENU_BN_SIZE < 0) {
 		scr->offset_y += MENU_BN_SIZE;
-		GUI_MENU_BUTTON_DATA(menu->bn2)->active = true;
+		GUI_MENU_BUTTON_DATA(menu->bn2)->active = etrue;
 	}
 	else {
-		GUI_MENU_BUTTON_DATA(menu->bn1)->active = false;
+		GUI_MENU_BUTTON_DATA(menu->bn1)->active = efalse;
 		egui_update(menu->bn1);
 		scr->offset_y = 0;
 	}
@@ -554,12 +554,12 @@ static eint menu_bn2_timer_cb(eTimer timer, euint num, ePointer args)
 	eint vh = GUI_WIDGET_DATA(menu->box)->rect.h;
 
 	if (vh + (swin->offset_y - MENU_BN_SIZE) > rect->h) {
-		GUI_MENU_BUTTON_DATA(menu->bn1)->active = true;
+		GUI_MENU_BUTTON_DATA(menu->bn1)->active = etrue;
 		swin->offset_y -= MENU_BN_SIZE;
 	}
 	else {
 		swin->offset_y = -(vh - rect->h);
-		GUI_MENU_BUTTON_DATA(menu->bn2)->active = false;
+		GUI_MENU_BUTTON_DATA(menu->bn2)->active = efalse;
 	}
 
 	if (menu->old_offset_y != swin->offset_y) {
@@ -583,7 +583,7 @@ static eint menu_bn_enter(eHandle hobj, eint x, eint y)
 	if (bn->type == BN_LEFT || bn->type == BN_RIGHT)
 		return 0;
 
-	bn->enter = true;
+	bn->enter = etrue;
 	egui_update(hobj);
 
 	if (bn->active && bin->focus)
@@ -610,7 +610,7 @@ static eint menu_bn_leave(eHandle hobj)
 	if (bn->type == BN_LEFT || bn->type == BN_RIGHT)
 		return 0;
 
-	bn->enter = false;
+	bn->enter = efalse;
 	egui_update(hobj);
 	if (bn->timer) {
 		e_timer_del(bn->timer);
@@ -744,7 +744,7 @@ static eint menu_keydown(eHandle hobj, GalEventKey *ent)
 	return 0;
 }
 
-static void menu_scrwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+static void menu_scrwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool up, ebool a)
 {
 	GalEventResize res = {req_w, req_h};
 	e_signal_emit(cobj, SIG_RESIZE, &res);
@@ -850,8 +850,8 @@ static eint menu_vbox_keydown(eHandle hobj, GalEventKey *ent)
 			eint skip_h = up_skip_h(bin, iw);
 			if (iy - skip_h == 0) {
 				scr->offset_y = sw->rect.h - vw->rect.h;
-				GUI_MENU_BUTTON_DATA(menu->bn1)->active = true;
-				GUI_MENU_BUTTON_DATA(menu->bn2)->active = false;
+				GUI_MENU_BUTTON_DATA(menu->bn1)->active = etrue;
+				GUI_MENU_BUTTON_DATA(menu->bn2)->active = efalse;
 				egui_update(menu->bn1);
 				egui_update(menu->bn2);
 			}
@@ -859,11 +859,11 @@ static eint menu_vbox_keydown(eHandle hobj, GalEventKey *ent)
 				GuiMenuButton *bn = GUI_MENU_BUTTON_DATA(menu->bn2);
 				scr->offset_y -= iy - skip_h - ih + scr->offset_y;
 				if (!bn->active) {
-					bn->active = true;
+					bn->active = etrue;
 					egui_update(menu->bn2);
 				}
 				if (scr->offset_y == 0) {
-					GUI_MENU_BUTTON_DATA(menu->bn1)->active = false;
+					GUI_MENU_BUTTON_DATA(menu->bn1)->active = efalse;
 					egui_update(menu->bn1);
 				}
 			}
@@ -872,8 +872,8 @@ static eint menu_vbox_keydown(eHandle hobj, GalEventKey *ent)
 			eint skip_h = down_skip_h(bin, iw);
 			if (iy + ih + skip_h == vw->rect.h) {
 				scr->offset_y  = 0;
-				GUI_MENU_BUTTON_DATA(menu->bn1)->active = false;
-				GUI_MENU_BUTTON_DATA(menu->bn2)->active = true;
+				GUI_MENU_BUTTON_DATA(menu->bn1)->active = efalse;
+				GUI_MENU_BUTTON_DATA(menu->bn2)->active = etrue;
 				egui_update(menu->bn1);
 				egui_update(menu->bn2);
 			}
@@ -881,11 +881,11 @@ static eint menu_vbox_keydown(eHandle hobj, GalEventKey *ent)
 				GuiMenuButton *bn = GUI_MENU_BUTTON_DATA(menu->bn1);
 				scr->offset_y -= ih + skip_h - sw->rect.h + scr->offset_y + iy + ih;
 				if (!bn->active) {
-					bn->active = true;
+					bn->active = etrue;
 					egui_update(menu->bn1);
 				}
 				if (sw->rect.h - scr->offset_y == vw->rect.h) {
-					GUI_MENU_BUTTON_DATA(menu->bn2)->active = false;
+					GUI_MENU_BUTTON_DATA(menu->bn2)->active = efalse;
 					egui_update(menu->bn2);
 				}
 			}
@@ -921,7 +921,7 @@ static void menu_realize(eHandle hobj, GuiWidget *wid)
 	{
 		GalPBAttr attr;
 		attr.func = GalPBcopy;
-		attr.use_cairo = true;
+		attr.use_cairo = etrue;
 		wid->pb   = egal_pb_new(wid->drawable, &attr);
 	}
 #else
@@ -964,7 +964,7 @@ static void menu_hide(eHandle hobj)
 	egal_window_hide(GUI_WIDGET_DATA(hobj)->drawable);
 }
 
-static void menu_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+static void menu_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool up, ebool a)
 {
 	GuiMenu *menu = GUI_MENU_DATA(hobj);
 	GalRect  rect = GUI_WIDGET_DATA(menu->box)->rect;
@@ -1185,8 +1185,8 @@ void egui_menu_popup(eHandle hobj)
 	if (h < rect->h) {
 		egui_set_status(menu->bn1, GuiStatusVisible);
 		egui_set_status(menu->bn2, GuiStatusVisible);
-		GUI_MENU_BUTTON_DATA(menu->bn1)->active = false;
-		GUI_MENU_BUTTON_DATA(menu->bn2)->active = true;
+		GUI_MENU_BUTTON_DATA(menu->bn1)->active = efalse;
+		GUI_MENU_BUTTON_DATA(menu->bn2)->active = etrue;
 	}
 	else {
 		egui_unset_status(menu->bn1, GuiStatusVisible);
@@ -1196,8 +1196,8 @@ void egui_menu_popup(eHandle hobj)
 	menu_v_request_resize(hobj, rect->w, h);
 
 	egui_move(hobj, x, y);
-	egui_show(menu->shell, true);
-	egui_show(hobj, true);
+	egui_show(menu->shell, etrue);
+	egui_show(hobj, etrue);
 }
 
 static void item_init_orders(eGeneType new, ePointer this);
@@ -1298,8 +1298,8 @@ static void item_popup_submenu(eHandle hobj, eHandle sub)
 		_h = vinfo.h;
 		egui_set_status(subm->bn1, GuiStatusVisible);
 		egui_set_status(subm->bn2, GuiStatusVisible);
-		GUI_MENU_BUTTON_DATA(subm->bn1)->active = false;
-		GUI_MENU_BUTTON_DATA(subm->bn2)->active = true;
+		GUI_MENU_BUTTON_DATA(subm->bn1)->active = efalse;
+		GUI_MENU_BUTTON_DATA(subm->bn2)->active = etrue;
 	}
 	else {
 		_h = src->h;
@@ -1322,7 +1322,7 @@ static void item_popup_submenu(eHandle hobj, eHandle sub)
 	menu_v_request_resize(sub, src->w, _h);
 
 	egui_move(sub, x, y);
-	egui_show(sub, true);
+	egui_show(sub, etrue);
 
 	menu->popup = sub;
 	GUI_MENU_DATA(sub)->shell = menu->shell;
@@ -1456,15 +1456,15 @@ static eint item_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 	return 0;
 }
 
-static bool menu_close(eHandle hobj)
+static ebool menu_close(eHandle hobj)
 {
 	GuiMenu *menu = GUI_MENU_DATA(hobj);
 
 	if (menu->super && !GUI_MENU_DATA(menu->super)->is_bar) {
 		GUI_MENU_SHELL_DATA(menu->shell)->active = menu->super;
-		return true;
+		return etrue;
 	}
-	return false;
+	return efalse;
 }
 
 static eint item_keydown(eHandle hobj, GalEventKey *ent)
@@ -1476,7 +1476,7 @@ static eint item_keydown(eHandle hobj, GalEventKey *ent)
 			if (menu_close(item_to_menu(hobj))) {
 				egui_unset_focus(hobj);
 				if (item->type == MenuItemBranch && item->p.submenu)
-					egui_hide(item->p.submenu, true);
+					egui_hide(item->p.submenu, etrue);
 			}
 			return -1;
 
@@ -1584,7 +1584,7 @@ void egui_menu_item_set_radio_group(eHandle iobj, eHandle radio)
 	item->p.radio = egui_menu_radio_new(iobj);
 }
 
-void egui_menu_item_set_check(eHandle iobj, bool check)
+void egui_menu_item_set_check(eHandle iobj, ebool check)
 {
 	GuiMenuItem *item = GUI_MENU_ITEM_DATA(iobj);
 
@@ -1728,8 +1728,8 @@ static void bar_item_popup_submenu(GuiMenu *menu, eHandle hobj, eHandle sub)
 	if (src->h > h) {
 		egui_set_status(submenu->bn1, GuiStatusVisible);
 		egui_set_status(submenu->bn2, GuiStatusVisible);
-		GUI_MENU_BUTTON_DATA(submenu->bn1)->active = false;
-		GUI_MENU_BUTTON_DATA(submenu->bn2)->active = true;
+		GUI_MENU_BUTTON_DATA(submenu->bn1)->active = efalse;
+		GUI_MENU_BUTTON_DATA(submenu->bn2)->active = etrue;
 	}
 	else {
 		egui_unset_status(submenu->bn1, GuiStatusVisible);
@@ -1740,7 +1740,7 @@ static void bar_item_popup_submenu(GuiMenu *menu, eHandle hobj, eHandle sub)
 	menu_v_request_resize(sub, src->w, h);
 
 	egui_move(sub, x, y);
-	egui_show(sub, true);
+	egui_show(sub, etrue);
 
 	if (!menu->shell) {
 		if (submenu->shell)
@@ -1753,7 +1753,7 @@ static void bar_item_popup_submenu(GuiMenu *menu, eHandle hobj, eHandle sub)
 	GUI_MENU_SHELL_DATA(menu->shell)->root_menu = OBJECT_OFFSET(menu);
 
 	menu->popup = sub;
-	egui_show(menu->shell, true);
+	egui_show(menu->shell, etrue);
 	GUI_MENU_DATA(sub)->shell = menu->shell;
 	GUI_MENU_SHELL_DATA(menu->shell)->active = sub;
 }
@@ -1826,7 +1826,7 @@ static eint menu_bar_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 	GuiMenuBar *bar = GUI_MENU_BAR_DATA(hobj);
 
 	if (!bar->active)
-		bar->active = true;
+		bar->active = etrue;
 
 	__menu_bar_lbuttondown(hobj, mevent);
 
@@ -1915,20 +1915,20 @@ static void menu_bar_hbox_add(eHandle hobj, eHandle cobj)
 
 	if (GUI_WIDGET_DATA(menu->box)->rect.w >
 			GUI_WIDGET_DATA(hobj)->rect.w) {
-		egui_show(menu->bn1, true);
-		egui_show(menu->bn2, true);
-		GUI_MENU_BUTTON_DATA(menu->bn2)->active = true;
+		egui_show(menu->bn1, etrue);
+		egui_show(menu->bn2, etrue);
+		GUI_MENU_BUTTON_DATA(menu->bn2)->active = etrue;
 	}
 }
 
-static void menu_bar_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+static void menu_bar_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool up, ebool a)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	if (wid->min_h < req_h) {
 		wid->min_h = req_h;
 		wid->rect.h = req_h;
 		if (wid->parent)
-			egui_request_layout(wid->parent, hobj, req_w, req_h, false, a);
+			egui_request_layout(wid->parent, hobj, req_w, req_h, efalse, a);
 	}
 }
 /*
@@ -1938,14 +1938,14 @@ static eint bar_scrwin_resize(eHandle hobj, GuiWidget *wid, GalEventResize *conf
 	return 0;
 }
 */
-static void bar_scrwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+static void bar_scrwin_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool up, ebool a)
 {
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	wid->min_h  = req_h;
 	wid->rect.h = req_h;
 	if (wid->parent) {
 		GalEventResize res = {req_w, req_h};
-		egui_request_layout(wid->parent, hobj, req_w, req_h, false, a);
+		egui_request_layout(wid->parent, hobj, req_w, req_h, efalse, a);
 		e_signal_emit(cobj, SIG_RESIZE, &res);
 	}
 }
@@ -2006,7 +2006,7 @@ static eint menu_bar_init_data(eHandle hobj, ePointer this)
 	GuiWidget *wid  = GUI_WIDGET_DATA(hobj);
 	GuiMenu   *menu = GUI_MENU_DATA(hobj);
 
-	menu->is_bar = true;
+	menu->is_bar = etrue;
 	widget_set_status(wid, GuiStatusVisible);
 	widget_unset_status(wid, GuiStatusActive);
 
@@ -2201,7 +2201,7 @@ static void menu_create_from_node(eHandle win, PathNode *root, PathNode *node, e
 						node->accelkey, node->callback, node->data);
 
 			if (node->type == MenuItemCheck)
-				egui_menu_item_set_check(node->item, true);
+				egui_menu_item_set_check(node->item, etrue);
 			else if (node->type == MenuItemRadio) {
 				if (!node->radio_path)
 					egui_menu_item_set_radio_group(node->item, 0);
@@ -2225,7 +2225,7 @@ static eint menu_popup_cb(eHandle iobj, ePointer data)
 {
 	GuiMenuBar *bar = GUI_MENU_BAR_DATA(item_to_menu((eHandle)data));
 	if (!bar->active)
-		bar->active = true;
+		bar->active = etrue;
 	return mouse_signal_emit((eHandle)data, SIG_LBUTTONDOWN, 0, 0);
 }
 

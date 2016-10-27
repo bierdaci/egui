@@ -115,13 +115,13 @@ ePointer e_object_type_data(eHandle, eGeneType);
 ePointer e_object_type_orders(eHandle, eGeneType);
 ePointer e_type_orders(eGeneType);
 ePointer e_genetype_orders(eGeneType, eGeneType);
-bool e_genetype_check(eGeneType, eGeneType);
-bool e_object_type_check(eHandle, eGeneType);
+ebool e_genetype_check(eGeneType, eGeneType);
+ebool e_object_type_check(eHandle, eGeneType);
 eDnaNode *e_genetype_node(eGene *, eGeneType);
 
 
 eGeneType e_register_genetype(eGeneInfo *, eGeneType, ...);
-bool e_object_valid(eObject *);
+ebool e_object_valid(eObject *);
 
 void e_object_init(void);
 

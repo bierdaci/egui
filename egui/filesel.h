@@ -29,8 +29,8 @@ struct _GuiFilesel {
 	eHandle ok_bn, cancel_bn;
 
 	eint old_x;
-	bool grab;
-	bool is_hide;
+	ebool grab;
+	ebool is_hide;
 	echar path[GUI_MAX_PATH];
 	eint len;
 	GalCursor cursor;

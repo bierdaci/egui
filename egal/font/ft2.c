@@ -148,7 +148,7 @@ static eint ft2_init(GalFont obj, eValist vp)
 	ft2font->metrics.height  = face->size->metrics.height / 64;
 	ft2font->metrics.ascent  = face->size->metrics.ascender / 64;
 	ft2font->metrics.descent = face->size->metrics.descender / 64;
-	ft2font->image = egal_image_new(1000, ft2font->metrics.height, true);
+	ft2font->image = egal_image_new(1000, ft2font->metrics.height, etrue);
 
 	return 0;
 }

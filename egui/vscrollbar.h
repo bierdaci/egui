@@ -7,6 +7,6 @@
 
 
 eGeneType egui_genetype_vscrollbar(void);
-eHandle egui_vscrollbar_new(bool);
+eHandle egui_vscrollbar_new(ebool);
 
 #endif

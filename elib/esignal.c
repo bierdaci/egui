@@ -59,15 +59,15 @@ static eSignal *e_signal_find(const echar *name)
 }
 */
 
-static bool e_signal_check_name(const echar *name)
+static ebool e_signal_check_name(const echar *name)
 {
 	if (e_tree_lookup(signal_tree, (eConstPointer)name))
-		return true;
+		return etrue;
 
-	return false;
+	return efalse;
 }
 
-static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func,
+static ebool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func,
 		ePointer data, ePointer data2, ePointer data3, ePointer data4)
 {
 	eSignalSlot *slot;
@@ -97,7 +97,7 @@ static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func
 	}
 	else if (slot->lock) {
 		e_thread_mutex_unlock(&obj->slot_lock);
-		return false;
+		return efalse;
 	}
 
 	slot->func  = func;
@@ -107,7 +107,7 @@ static bool e_signal_slot_insert_func(eObject *obj, esig_t sig, eSignalFunc func
 	slot->data4 = data4;
 	e_thread_mutex_unlock(&obj->slot_lock);
 
-	return true;
+	return etrue;
 }
 
 static ePointer e_signal_slot_get_data(eObject *obj, esig_t sig, eint slot_type)
@@ -140,7 +140,7 @@ static ePointer e_signal_slot_get_data(eObject *obj, esig_t sig, eint slot_type)
 	return NULL;
 }
 
-bool e_signal_connect(eHandle hobj, esig_t sig, eSignalFunc func)
+ebool e_signal_connect(eHandle hobj, esig_t sig, eSignalFunc func)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -148,15 +148,15 @@ bool e_signal_connect(eHandle hobj, esig_t sig, eSignalFunc func)
 
 	node = e_genetype_node(obj->gene, signal->gtype);
 	if (!node)
-		return false;
+		return efalse;
 
 	if (!e_signal_slot_insert_func(obj, sig, func, NULL, NULL, NULL, NULL))
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
-bool e_signal_connect1(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data)
+ebool e_signal_connect1(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -164,15 +164,15 @@ bool e_signal_connect1(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data
 
 	node = e_genetype_node(obj->gene, signal->gtype);
 	if (!node)
-		return false;
+		return efalse;
 
 	if (!e_signal_slot_insert_func(obj, sig, func, data, NULL, NULL, NULL))
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
-bool e_signal_connect2(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data, ePointer data2)
+ebool e_signal_connect2(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data, ePointer data2)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -180,15 +180,15 @@ bool e_signal_connect2(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data
 
 	node = e_genetype_node(obj->gene, signal->gtype);
 	if (!node)
-		return false;
+		return efalse;
 
 	if (!e_signal_slot_insert_func(obj, sig, func, data, data2, NULL, NULL))
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
-bool e_signal_connect3(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data, ePointer data2, ePointer data3)
+ebool e_signal_connect3(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data, ePointer data2, ePointer data3)
 {
 	eObject  *obj    = (eObject *)hobj;
 	eSignal  *signal = (eSignal *)sig;
@@ -196,15 +196,15 @@ bool e_signal_connect3(eHandle hobj, esig_t sig, eSignalFunc func, ePointer data
 
 	node = e_genetype_node(obj->gene, signal->gtype);
 	if (!node)
-		return false;
+		return efalse;
 
 	if (!e_signal_slot_insert_func(obj, sig, func, data, data2, data3, NULL))
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
-bool e_signal_connect4(eHandle hobj, esig_t sig, eSignalFunc func,
+ebool e_signal_connect4(eHandle hobj, esig_t sig, eSignalFunc func,
 		ePointer data, ePointer data2, ePointer data3, ePointer data4)
 {
 	eObject  *obj    = (eObject *)hobj;
@@ -213,12 +213,12 @@ bool e_signal_connect4(eHandle hobj, esig_t sig, eSignalFunc func,
 
 	node = e_genetype_node(obj->gene, signal->gtype);
 	if (!node)
-		return false;
+		return efalse;
 
 	if (!e_signal_slot_insert_func(obj, sig, func, data, data2, data3, data4))
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
 static eint fmstr2node(const char *fmstr, struct _argsnode *node)
@@ -275,7 +275,7 @@ static eint fmstr2node(const char *fmstr, struct _argsnode *node)
 }
 
 static esig_t __signal_new(const char *name, eGeneType gtype,
-		euint32 offset, bool prefix, eSignalType stype, const char *fmstr, eValist vp)
+		euint32 offset, ebool prefix, eSignalType stype, const char *fmstr, eValist vp)
 {
 	eSignal *new;
 	struct _argsnode tmp[256];
@@ -317,24 +317,24 @@ static esig_t __signal_new(const char *name, eGeneType gtype,
 }
 
 esig_t e_signal_new(const char *name, eGeneType gtype,
-		euint32 offset, bool prefix, eSignalType stype, const char *fmstr, ...)
+		euint32 offset, ebool prefix, eSignalType stype, const char *fmstr, ...)
 {
-	eValist vp;
 	if (fmstr) {
+		eValist vp;
 		e_va_start(vp, fmstr);
 		return __signal_new(name, gtype, offset, prefix, stype, fmstr, vp);
 	}
-	return __signal_new(name, gtype, offset, prefix, stype, fmstr, vp);
+	return __signal_new(name, gtype, offset, prefix, stype, NULL, NULL);
 }
 
 esig_t e_signal_new_label(const char *name, eGeneType gtype, const char *fmstr, ...)
 {
-	eValist vp;
 	if (fmstr) {
+		eValist vp;
 		e_va_start(vp, fmstr);
-		return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, vp);
+		return __signal_new(name, gtype, 0, efalse, STYPE_CONNECT, fmstr, vp);
 	}
-	return __signal_new(name, gtype, 0, false, STYPE_CONNECT, fmstr, vp);
+	return __signal_new(name, gtype, 0, efalse, STYPE_CONNECT, NULL, NULL);
 }
 
 static eint signal_call_marshal(eObject *obj, eSignal *signal, eVoidFunc func, eValist vp)
@@ -484,7 +484,7 @@ void e_signal_lock(eHandle hobj, esig_t sig)
 		slot->func = NULL;
 		slot->data = NULL;
 	}
-	slot->lock = true;
+	slot->lock = etrue;
 
 	e_thread_mutex_unlock(&obj->slot_lock);
 }
@@ -499,7 +499,7 @@ void e_signal_unlock(eHandle hobj, esig_t sig)
 	slot = (eSignalSlot *)obj->slot_head;
 	while (slot) {
 		if (slot->sig == sig) {
-			slot->lock = false;
+			slot->lock = efalse;
 			break;
 		}
 		slot = slot->next;
@@ -516,5 +516,5 @@ void e_signal_init(void)
 	SIG_FREE = e_signal_new("free",
 			GTYPE_CELL,
 			STRUCT_OFFSET(eCellOrders, free),
-			false, 0, NULL);
+			efalse, 0, NULL);
 }

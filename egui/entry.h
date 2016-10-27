@@ -31,10 +31,10 @@ struct _GuiEntry {
 	eint glyph_w;
 	GalGlyph glyph;
 
-	bool visible;
-	bool bn_down;
-	bool is_show;
-	bool is_sel;
+	ebool visible;
+	ebool bn_down;
+	ebool is_show;
+	ebool is_sel;
 
 	GalPB     cpb;
 	GalFont   font;
@@ -44,6 +44,6 @@ struct _GuiEntry {
 eGeneType egui_genetype_entry(void);
 
 eHandle egui_entry_new(eint w);
-void egui_entry_set_visibility(eHandle, bool);
+void egui_entry_set_visibility(eHandle, ebool);
 
 #endif

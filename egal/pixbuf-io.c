@@ -16,16 +16,16 @@ void _gal_pixbuf_png_fill_vtable(GalPixbufModule *module);
 #endif
 
 static GalPixbufModule pixbuf_modules[] = {
-	{"bmp", false, _gal_pixbuf_bmp_fill_vtable},
-	{"gif", false, _gal_pixbuf_gif_fill_vtable},
+	{"bmp", efalse, _gal_pixbuf_bmp_fill_vtable},
+	{"gif", efalse, _gal_pixbuf_gif_fill_vtable},
 #ifdef _GAL_SUPPORT_JPEG
-	{"jpg", false, _gal_pixbuf_jpeg_fill_vtable},
+	{"jpg", efalse, _gal_pixbuf_jpeg_fill_vtable},
 #endif
 #ifdef _GAL_SUPPORT_PNG
-	{"png", false, _gal_pixbuf_png_fill_vtable},
+	{"png", efalse, _gal_pixbuf_png_fill_vtable},
 #endif
 #ifdef _GAL_SUPPORT_ICO
-	{"ico", false, _gal_pixbuf_ico_fill_vtable},
+	{"ico", efalse, _gal_pixbuf_ico_fill_vtable},
 #endif
 	{NULL},
 };
@@ -142,7 +142,7 @@ static void pixbuf_io_set_x(PixbufContext *context, eint x, euint8 r, euint8 g, 
 	}
 }
 
-static bool pixbuf_io_set_y(PixbufContext *context, eint y)
+static ebool pixbuf_io_set_y(PixbufContext *context, eint y)
 {
 	GalPixbuf *pixbuf = context->pixbuf;
 	euint32  dy, _dy;
@@ -193,12 +193,12 @@ static bool pixbuf_io_set_y(PixbufContext *context, eint y)
 	context->dy += context->y_step;
 
 	if (context->y < 0 || context->y >= pixbuf->h)
-		return false;
+		return efalse;
 
 	context->pixels = pixbuf->pixels + context->y * pixbuf->rowbytes;
 	context->dx = 0;
 
-	return true;
+	return etrue;
 }
 
 static eint pixbuf_io_init(PixbufContext *context, eint w, eint h, eint channels, eint negative)
@@ -263,7 +263,7 @@ static GalPixbufModule *pixbuf_module_get(echar *buffer, const echar *format_nam
 		if (!e_strcmp((echar *)module->name, format_name)) {
 			if (!module->fill) {
 				module->fill_vtable(module);
-				module->fill = true;
+				module->fill = etrue;
 			}
 			return module;
 		}
@@ -331,7 +331,7 @@ GalPixbuf *egal_pixbuf_new_from_file(const echar *filename, efloat x_scale, eflo
 	return pixbuf;
 }
 
-bool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf)
+ebool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf)
 {
 	FILE *f;
 	echar buffer[4096];
@@ -339,16 +339,16 @@ bool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf)
 	echar *format_name;
 
 	if (filename == NULL)
-		return false;
+		return efalse;
 
 	format_name = e_strrchr(filename, '.');
 	if (!format_name)
-		return false;
+		return efalse;
 	format_name++;
 
 	pixbuf_module = pixbuf_module_get(buffer, (echar *)format_name);
 	if (pixbuf_module == NULL)
-		return false;
+		return efalse;
 
 	f = fopen((const char *)filename, "rb");
 	fseek(f, 0, SEEK_SET);
@@ -358,7 +358,7 @@ bool egal_pixbuf_load_header(const echar *filename, GalPixbuf *pixbuf)
 		return pixbuf_module->load_header(pixbuf, buffer, len);
 	}
 
-	return false;
+	return efalse;
 }
 
 static GalPixbufAnim *pixbuf_module_load_anim(GalPixbufModule *module, FILE *f, efloat x_scale, efloat y_scale)

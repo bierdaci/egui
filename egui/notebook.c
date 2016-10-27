@@ -35,8 +35,8 @@ static void pagebn_init_orders(eGeneType, ePointer);
 static void tabbar_init_orders(eGeneType, ePointer);
 static void pagebox_init_orders(eGeneType, ePointer);
 
-static void (*vbox_request_layout)(eHandle, eHandle, eint, eint, bool, bool);
-static void (*hbox_request_layout)(eHandle, eHandle, eint, eint, bool, bool);
+static void (*vbox_request_layout)(eHandle, eHandle, eint, eint, ebool, ebool);
+static void (*hbox_request_layout)(eHandle, eHandle, eint, eint, ebool, ebool);
 static eint (*vbox_keydown)(eHandle, GalEventKey *);
 static eint (*hbox_keydown)(eHandle, GalEventKey *);
 static eint (*hbox_resize)(eHandle, GuiWidget *, GalEventResize *);
@@ -194,7 +194,7 @@ static eint pagebox_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 	return 0;
 }
 
-static void pagebox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+static void pagebox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool up, ebool a)
 {
 	GuiWidget  *wid = GUI_WIDGET_DATA(hobj);
 	GuiNotebook *nb = wid->extra_data;
@@ -225,7 +225,7 @@ static void pagebox_add(eHandle pobj, eHandle cobj)
 		wid->rect.h = box->border_width * 2 + cw->rect.h;
 
 	if (old_w != wid->rect.w || old_h != wid->rect.h)
-		egui_request_layout(wid->parent, cobj, wid->rect.w, wid->rect.h, false, true);
+		egui_request_layout(wid->parent, cobj, wid->rect.w, wid->rect.h, efalse, etrue);
 }
 
 static void pagebox_init_orders(eGeneType new, ePointer this)
@@ -334,13 +334,13 @@ static eHandle varbox_next_child(GuiBin *bin, eHandle cobj, eint dir, eint axis)
 		return hbox_next_child(bin, cobj, dir, axis);
 }
 
-static void varbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, bool up, bool a)
+static void varbox_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool up, ebool a)
 {
 	VarBox *vb = VARBOX_DATA(hobj);
 	if (vb->pos == DIRECT_V)
-		vbox_request_layout(hobj, 0, req_w, req_h, false, a);
+		vbox_request_layout(hobj, 0, req_w, req_h, efalse, a);
 	else
-		hbox_request_layout(hobj, 0, req_w, req_h, false, a);
+		hbox_request_layout(hobj, 0, req_w, req_h, efalse, a);
 }
 
 static void varbox_add(eHandle pobj, eHandle cobj)
@@ -391,12 +391,12 @@ static void notebook_set_current_page(GuiNotebook *nb, eHandle bn)
 	if (nb->curpage && nb->curpage != bn) {
 		eHandle o = nb->curpage;
 		nb->curpage = 0;
-		egui_hide(PAGEBN_DATA(o)->page, true);
+		egui_hide(PAGEBN_DATA(o)->page, etrue);
 		egui_update(o);
 	}
 
 	nb->curpage = bn;
-	egui_show(pagebn->page, true);
+	egui_show(pagebn->page, etrue);
 	egui_update(bn);
 	egui_update(nb->pagebox);
 }
@@ -421,10 +421,10 @@ static eint notebook_init_data(eHandle hobj, ePointer this)
 	GUI_WIDGET_DATA(nb->pagebox)->extra_data = nb;
 	e_signal_connect(nb->pagebox, SIG_EXPOSE_BG, box_expose_bg);
 
-	egui_set_expand(hobj, true);
+	egui_set_expand(hobj, etrue);
 	egui_box_set_align(hobj, BoxAlignStart);
 	egui_box_set_layout(hobj, BoxLayout_START);
-	egui_set_expand(nb->pagebox, true);
+	egui_set_expand(nb->pagebox, etrue);
 	egui_box_set_border_width(nb->pagebox, 3);
 
 	egui_add(hobj, nb->tabbar);
@@ -448,9 +448,9 @@ eint egui_notebook_append_page(eHandle hobj, eHandle page, const echar *label)
 
 	if (!nb->curpage) {
 		nb->curpage = pbn_obj;
-		egui_show(page, true);
+		egui_show(page, etrue);
 	}
-	else egui_hide(page, true);
+	else egui_hide(page, etrue);
 
 	return 0;
 }
@@ -482,7 +482,7 @@ void egui_notebook_set_pos(eHandle hobj, GuiPositionType pos)
 		while (tail) {
 			GuiWidget *t = tail;
 			tail = t->prev;
-			egui_remove(OBJECT_OFFSET(t), false);
+			egui_remove(OBJECT_OFFSET(t), efalse);
 			t->next = head;
 			head = t;
 		}

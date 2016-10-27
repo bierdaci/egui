@@ -108,7 +108,7 @@ find_queue_by_count(Uint32 count)
 }
 
 static DataQueue *
-find_queue_by_data(void *data, int len, bool (*cmp)(void *, void *, int))
+find_queue_by_data(void *data, int len, ebool (*cmp)(void *, void *, int))
 {
 	DataQueue *node = NULL;
 	list_t *pos;
@@ -122,12 +122,12 @@ find_queue_by_data(void *data, int len, bool (*cmp)(void *, void *, int))
 	return NULL;
 }
 
-static bool cred_cmp(void *data1, void *data2, int len)
+static ebool cred_cmp(void *data1, void *data2, int len)
 {
 	return(memcmp(data1, data2, len) == 0);
 }
 
-static bool _cred_cmp(void *data1, void *data2, int len)
+static ebool _cred_cmp(void *data1, void *data2, int len)
 {
 	DataInfoHead *dh = (DataInfoHead *)data1;
 	return cred_cmp(&dh->cred, data2, len);
@@ -673,7 +673,7 @@ static int sm_reply_who(void *data, int len)
 
 static int sm_reply_friend(void *data, int len)
 {
-	bool is = *(bool *)(data + MAX_USERNAME);
+	ebool is = *(ebool *)(data + MAX_USERNAME);
 	printf("all friend: %s  online %s\n", (char *)data, is ? "yes" : "no");
 	return 0;
 }

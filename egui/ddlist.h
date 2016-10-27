@@ -10,7 +10,7 @@
 typedef struct _GuiDDList GuiDDList;
 
 struct _GuiDDList {
-	bool enter;
+	ebool enter;
 	const echar *strings;
 	eHandle menu;
 	eHandle item;

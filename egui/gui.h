@@ -8,12 +8,12 @@
 #include <egui/bin.h>
 
 #define GUI_TYPE_WINDOW(hobj)					(e_object_type_check(hobj, GTYPE_WINDOW))
-static INLINE bool GUI_TYPE_BIN(eHandle hobj)
+static INLINE ebool GUI_TYPE_BIN(eHandle hobj)
 {
 	GuiBin *b = GUI_BIN_DATA(hobj);
 	if (b && b->is_bin)
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
 #define GTYPE_GUI								(egui_genetype())
@@ -109,16 +109,16 @@ eGeneType egui_genetype_inout(void);
 int  egui_init(int, char* const[]);
 int  egui_main(void);
 void egui_quit(void);
-void egui_show(eHandle, bool);
-void egui_hide(eHandle, bool);
-void egui_show_async(eHandle, bool);
-void egui_hide_async(eHandle, bool);
+void egui_show(eHandle, ebool);
+void egui_hide(eHandle, ebool);
+void egui_show_async(eHandle, ebool);
+void egui_hide_async(eHandle, ebool);
 void egui_update(eHandle);
 void egui_update_rect(eHandle, GalRect *);
 void egui_update_async(eHandle);
 void egui_update_rect_async(eHandle, GalRect *);
 void egui_put(eHandle, eHandle, eint, eint);
-void egui_remove(eHandle, bool); 
+void egui_remove(eHandle, ebool); 
 void egui_move(eHandle, eint, eint);
 void egui_move_resize(eHandle, eint, eint, eint, eint);
 void egui_raise(eHandle);
@@ -133,8 +133,8 @@ void egui_draw_hbar(GalWindow, GalPB, GalImage *, GalImage *, GalImage *, int, i
 void egui_add(eHandle, eHandle);
 void egui_add_spacing(eHandle, eint);
 void egui_request_resize(eHandle, eint, eint);
-void egui_request_layout_async(eHandle, eHandle, eint, eint, bool, bool);
-void egui_request_layout(eHandle, eHandle, eint, eint, bool, bool);
+void egui_request_layout_async(eHandle, eHandle, eint, eint, ebool, ebool);
+void egui_request_layout(eHandle, eHandle, eint, eint, ebool, ebool);
 void egui_strings_extent(GalFont, const echar *, eint *, eint *);
 void egui_set_strings(eHandle, const echar *);
 const echar *egui_get_strings(eHandle);
@@ -155,9 +155,9 @@ void egui_set_max(eHandle hobj, eint w, eint h);
 void egui_set_fg_color(eHandle hobj, euint32 color);
 void egui_set_bg_color(eHandle hobj, euint32 color);
 
-void egui_set_expand  (eHandle, bool);
-void egui_set_expand_v(eHandle, bool);
-void egui_set_expand_h(eHandle, bool);
+void egui_set_expand  (eHandle, ebool);
+void egui_set_expand_v(eHandle, ebool);
+void egui_set_expand_h(eHandle, ebool);
 
 void egui_accelkey_connect(eHandle hobj, const echar *accelkey, AccelKeyCB cb, ePointer data);
 

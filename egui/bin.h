@@ -25,13 +25,13 @@ struct _GuiBin {
 	GalRegion  region_mask;
 	GuiWidget *head;
 	GuiWidget *tail;
-	bool is_bin;
+	ebool is_bin;
 };
 
 struct _GuiBinOrders {
 	void (*add_spacing)(eHandle, eint);
 	void (*switch_focus)(eHandle, eHandle);
-	void (*request_layout)(eHandle, eHandle, eint, eint, bool, bool);
+	void (*request_layout)(eHandle, eHandle, eint, eint, ebool, ebool);
 	eHandle (*next_child)(GuiBin *, eHandle, eint, eint);
 };
 
@@ -40,6 +40,6 @@ eHandle egui_bin_new(int w, int h);
 
 eint bin_prev_focus(eHandle, eint);
 eint bin_next_focus(eHandle, eint);
-bool bin_can_focus(GuiWidget *);
+ebool bin_can_focus(GuiWidget *);
 
 #endif

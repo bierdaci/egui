@@ -33,10 +33,10 @@ static eTreeNode* e_tree_node_new                   (ePointer       key,
 static void       e_tree_insert_internal            (eTree         *tree,
 		ePointer       key,
 		ePointer       value,
-		bool       replace);
-static bool   e_tree_remove_internal            (eTree         *tree,
+		ebool       replace);
+static ebool   e_tree_remove_internal            (eTree         *tree,
 		ePointer  key,
-		bool       steal);
+		ebool       steal);
 static eTreeNode* e_tree_node_balance               (eTreeNode     *node);
 static eTreeNode *e_tree_find_node                  (eTree         *tree,
 		eConstPointer  key);
@@ -64,8 +64,8 @@ static eTreeNode* e_tree_node_new(ePointer key, ePointer value)
 	node->balance = 0;
 	node->left = NULL;
 	node->right = NULL;
-	node->left_child = false;
-	node->right_child = false;
+	node->left_child = efalse;
+	node->right_child = efalse;
 	node->key = key;
 	node->value = value;
 
@@ -176,21 +176,21 @@ void e_tree_insert(eTree *tree, ePointer key, ePointer value)
 {
 	e_return_if_fail(tree != NULL);
 
-	e_tree_insert_internal(tree, key, value, false);
+	e_tree_insert_internal(tree, key, value, efalse);
 }
 
 void e_tree_replace(eTree *tree, ePointer key, ePointer value)
 {
 	e_return_if_fail(tree != NULL);
 
-	e_tree_insert_internal(tree, key, value, true);
+	e_tree_insert_internal(tree, key, value, etrue);
 }
 
 static void e_tree_insert_internal(
 		eTree *tree,
 		ePointer  key,
 		ePointer  value,
-		bool  replace)
+		ebool  replace)
 {
 	eTreeNode *node;
 	eTreeNode *path[MAX_GTREE_HEIGHT];
@@ -241,7 +241,7 @@ static void e_tree_insert_internal(
 				child->left = node->left;
 				child->right = node;
 				node->left = child;
-				node->left_child = true;
+				node->left_child = etrue;
 				node->balance -= 1;
 
 				tree->nnodes++;
@@ -260,7 +260,7 @@ static void e_tree_insert_internal(
 				child->right = node->right;
 				child->left = node;
 				node->right = child;
-				node->right_child = true;
+				node->right_child = etrue;
 				node->balance += 1;
 
 				tree->nnodes++;
@@ -272,7 +272,7 @@ static void e_tree_insert_internal(
 
 	while (1) {
 		eTreeNode *bparent = path[--idx];
-		bool left_node = (bparent && node == bparent->left);
+		ebool left_node = (bparent && node == bparent->left);
 		e_assert(!bparent || bparent->left == node || bparent->right == node);
 
 		if (node->balance < -1 || node->balance > 1) {
@@ -297,39 +297,39 @@ static void e_tree_insert_internal(
 	}
 }
 
-bool e_tree_remove(eTree *tree, ePointer key)
+ebool e_tree_remove(eTree *tree, ePointer key)
 {
-	bool removed;
+	ebool removed;
 
-	e_return_val_if_fail(tree != NULL, false);
+	e_return_val_if_fail(tree != NULL, efalse);
 
-	removed = e_tree_remove_internal(tree, key, false);
+	removed = e_tree_remove_internal(tree, key, efalse);
 
 	return removed;
 }
 
-bool e_tree_steal(eTree *tree, ePointer key)
+ebool e_tree_steal(eTree *tree, ePointer key)
 {
-	bool removed;
+	ebool removed;
 
-	e_return_val_if_fail(tree != NULL, false);
+	e_return_val_if_fail(tree != NULL, efalse);
 
-	removed = e_tree_remove_internal(tree, key, true);
+	removed = e_tree_remove_internal(tree, key, etrue);
 
 	return removed;
 }
 
-static bool e_tree_remove_internal(eTree *tree, ePointer key, bool steal)
+static ebool e_tree_remove_internal(eTree *tree, ePointer key, ebool steal)
 {
 	eTreeNode *node, *parent, *balance;
 	eTreeNode *path[MAX_GTREE_HEIGHT];
 	int idx;
-	bool left_node;
+	ebool left_node;
 
-	e_return_val_if_fail(tree != NULL, false);
+	e_return_val_if_fail(tree != NULL, efalse);
 
 	if (!tree->root)
-		return false;
+		return efalse;
 
 	idx = 0;
 	path[idx++] = NULL;
@@ -342,14 +342,14 @@ static bool e_tree_remove_internal(eTree *tree, ePointer key, bool steal)
 			break;
 		else if (cmp < 0) {
 			if (!node->left_child)
-				return false;
+				return efalse;
 
 			path[idx++] = node;
 			node = node->left;
 		}
 		else {
 			if (!node->right_child)
-				return false;
+				return efalse;
 
 			path[idx++] = node;
 			node = node->right;
@@ -367,12 +367,12 @@ static bool e_tree_remove_internal(eTree *tree, ePointer key, bool steal)
 				tree->root = NULL;
 			}
 			else if (left_node) {
-				parent->left_child = false;
+				parent->left_child = efalse;
 				parent->left = node->left;
 				parent->balance += 1;
 			}
 			else {
-				parent->right_child = false;
+				parent->right_child = efalse;
 				parent->right = node->right;
 				parent->balance -= 1;
 			}
@@ -430,10 +430,10 @@ static bool e_tree_remove_internal(eTree *tree, ePointer key, bool steal)
 				if (next->right_child)
 					nextp->left = next->right;
 				else
-					nextp->left_child = false;
+					nextp->left_child = efalse;
 				nextp->balance += 1;
 
-				next->right_child = true;
+				next->right_child = etrue;
 				next->right = node->right;
 			}
 			else
@@ -443,7 +443,7 @@ static bool e_tree_remove_internal(eTree *tree, ePointer key, bool steal)
 				prev = prev->right;
 			prev->right = next;
 
-			next->left_child = true;
+			next->left_child = etrue;
 			next->left = node->left;
 			next->balance = node->balance;
 
@@ -496,7 +496,7 @@ static bool e_tree_remove_internal(eTree *tree, ePointer key, bool steal)
 
 	tree->nnodes--;
 
-	return true;
+	return etrue;
 }
 
 ePointer e_tree_lookup(eTree *tree, eConstPointer key)
@@ -510,14 +510,14 @@ ePointer e_tree_lookup(eTree *tree, eConstPointer key)
 	return node ? node->value : NULL;
 }
 
-bool e_tree_lookup_extended(eTree *tree,
+ebool e_tree_lookup_extended(eTree *tree,
 		ePointer        lookup_key,
 		ePointer      *orig_key,
 		ePointer      *value)
 {
 	eTreeNode *node;
 
-	e_return_val_if_fail(tree != NULL, false);
+	e_return_val_if_fail(tree != NULL, efalse);
 
 	node = e_tree_find_node(tree, lookup_key);
 
@@ -526,10 +526,10 @@ bool e_tree_lookup_extended(eTree *tree,
 			*orig_key = node->key;
 		if (value)
 			*value = node->value;
-		return true;
+		return etrue;
 	}
 	else
-		return false;
+		return efalse;
 }
 
 void e_tree_foreach(eTree *tree, eTraverseFunc func, ePointer user_data)
@@ -670,55 +670,55 @@ static eTreeNode *e_tree_find_node(eTree *tree, eConstPointer key)
 static eint e_tree_node_pre_order(eTreeNode *node, eTraverseFunc traverse_func, ePointer data)
 {
 	if ((*traverse_func)(node->key, node->value, data))
-		return true;
+		return etrue;
 
 	if (node->left_child) {
 		if (e_tree_node_pre_order(node->left, traverse_func, data))
-			return true;
+			return etrue;
 	}
 
 	if (node->right_child) {
 		if (e_tree_node_pre_order(node->right, traverse_func, data))
-			return true;
+			return etrue;
 	}
 
-	return false;
+	return efalse;
 }
 
 static eint e_tree_node_in_order(eTreeNode *node, eTraverseFunc traverse_func, ePointer data)
 {
 	if (node->left_child) {
 		if (e_tree_node_in_order(node->left, traverse_func, data))
-			return true;
+			return etrue;
 	}
 
 	if ((*traverse_func)(node->key, node->value, data))
-		return true;
+		return etrue;
 
 	if (node->right_child) {
 		if (e_tree_node_in_order(node->right, traverse_func, data))
-			return true;
+			return etrue;
 	}
 
-	return false;
+	return efalse;
 }
 
 static eint e_tree_node_post_order(eTreeNode *node, eTraverseFunc traverse_func, ePointer data)
 {
 	if (node->left_child) {
 		if (e_tree_node_post_order(node->left, traverse_func, data))
-			return true;
+			return etrue;
 	}
 
 	if (node->right_child) {
 		if (e_tree_node_post_order(node->right, traverse_func, data))
-			return true;
+			return etrue;
 	}
 
 	if ((*traverse_func)(node->key, node->value, data))
-		return true;
+		return etrue;
 
-	return false;
+	return efalse;
 }
 */
 
@@ -760,9 +760,9 @@ static eTreeNode* e_tree_node_rotate_left(eTreeNode *node)
 	if (right->left_child)
 		node->right = right->left;
 	else {
-		node->right_child = false;
+		node->right_child = efalse;
 		node->right = right;
-		right->left_child = true;
+		right->left_child = etrue;
 	}
 	right->left = node;
 
@@ -799,9 +799,9 @@ static eTreeNode* e_tree_node_rotate_right(eTreeNode *node)
 		node->left = left->right;
 	}
 	else {
-		node->left_child = false;
+		node->left_child = efalse;
 		node->left = left;
-		left->right_child = true;
+		left->right_child = etrue;
 	}
 	left->right = node;
 

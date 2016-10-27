@@ -35,7 +35,7 @@ static void char_init_gene(eGeneType new)
 	char_signal_char = e_signal_new("char",
 			new,
 			STRUCT_OFFSET(GuiCharOrders, achar),
-			false, 0, "%p");
+			efalse, 0, "%p");
 }
 
 static euchar char_trans(GalKeyCode code)

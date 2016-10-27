@@ -152,7 +152,7 @@ static eint label_resize(eHandle hobj, GuiWidget *widget, GalEventResize *resize
 	widget->rect.h = resize->h;
 	layout->w = resize->w;
 	layout->h = resize->h;
-	layout->configure = false;
+	layout->configure = efalse;
 	egui_update(hobj);
 	return 0;
 }

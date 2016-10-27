@@ -15,7 +15,7 @@ static eint entry_expose_bg(eHandle, GuiWidget *, GalEventExpose *);
 static eint entry_keydown(eHandle, GalEventKey *);
 static eint entry_char(eHandle, echar);
 static void set_cursor_pos(eHandle, GuiEntry *, eint);
-static void entry_show_cursor(eHandle, GuiEntry *, bool);
+static void entry_show_cursor(eHandle, GuiEntry *, ebool);
 static void entry_hide_cursor(eHandle, GuiEntry *);
 static eint entry_configure(eHandle, GuiWidget *, GalEventConfigure *);
 static void entry_set_font(eHandle, GalFont);
@@ -56,7 +56,7 @@ static eint entry_focus_in(eHandle hobj)
 	egal_draw_line(wid->drawable, wid->pb, wid->rect.w - 1, 0, wid->rect.w - 1, entry->h);
 
 	if (!entry->is_show && !entry->is_sel)
-		entry_show_cursor(wid->drawable, entry, true);
+		entry_show_cursor(wid->drawable, entry, etrue);
 
 	return 0;
 }
@@ -122,23 +122,23 @@ static eint entry_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	}
 
 	if (entry->is_sel) {
-		entry->is_sel = false;
+		entry->is_sel = efalse;
 		update_select_area(hobj, entry);
 	}
 
 	entry_set_cursor(hobj, entry, i);
 	entry->e_ioff = i;
 
-	entry->bn_down = true;
+	entry->bn_down = etrue;
 #ifdef WIN32
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, etrue, 0);
 #endif
 	return 0;
 }
 
 static eint entry_lbuttonup(eHandle hobj, GalEventMouse *ent)
 {
-	GUI_ENTRY_DATA(hobj)->bn_down = false;
+	GUI_ENTRY_DATA(hobj)->bn_down = efalse;
 #ifdef WIN32
 	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->window);
 #endif
@@ -172,7 +172,7 @@ static void entry_key_select(eHandle hobj, GuiEntry *entry, eint n)
 	eint ox, nx;
 
 	if (!entry->is_sel) {
-		entry->is_sel = true;
+		entry->is_sel = etrue;
 		entry->e_ioff = entry->s_ioff;
 	}
 
@@ -185,17 +185,17 @@ static void entry_key_select(eHandle hobj, GuiEntry *entry, eint n)
 
 	if (n == 0) {
 		if (entry->e_ioff == entry->s_ioff)
-			entry->is_sel = false;
+			entry->is_sel = efalse;
 		return;
 	}
 
 	if (entry->e_ioff == entry->s_ioff)
 		entry_hide_cursor(wid->drawable, entry);
 	else if (entry->e_ioff + n != entry->s_ioff)
-		entry->is_show = false;
+		entry->is_show = efalse;
 	else {
-		entry->is_sel  = false;
-		entry->is_show = true;
+		entry->is_sel  = efalse;
+		entry->is_show = etrue;
 	}
 
 	entry->e_ioff += n;
@@ -275,7 +275,7 @@ static eint entry_mousemove(eHandle hobj, GalEventMouse *ent)
 
 		if (!entry->is_sel) {
 			entry_hide_cursor(wid->drawable, entry);
-			entry->is_sel = true;
+			entry->is_sel = etrue;
 		}
 
 		rc.y = 0;
@@ -307,11 +307,11 @@ static eint entry_mousemove(eHandle hobj, GalEventMouse *ent)
 	}
 
 	if (entry->s_ioff == entry->e_ioff) {
-		entry->is_sel = false;
+		entry->is_sel = efalse;
 		entry_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, entry, !entry->is_show);
 	}
 	else if (entry->offsets[entry->s_ioff].x - entry->offset_x == rc.x)
-		entry->is_show = false;
+		entry->is_show = efalse;
 	else
 		entry_hide_cursor(GUI_WIDGET_DATA(hobj)->drawable, entry);
 
@@ -543,7 +543,7 @@ static void cursor_move_left(eHandle hobj, GuiEntry *entry)
 	GalRect *rect = &GUI_WIDGET_DATA(hobj)->rect;
 
 	if (entry->is_sel) {
-		entry->is_sel = false;
+		entry->is_sel = efalse;
 		update_select_area(hobj, entry);
 	}
 
@@ -565,7 +565,7 @@ static void cursor_move_right(eHandle hobj, GuiEntry *entry)
 	GalRect *rect = &GUI_WIDGET_DATA(hobj)->rect;
 
 	if (entry->is_sel) {
-		entry->is_sel = false;
+		entry->is_sel = efalse;
 		update_select_area(hobj, entry);
 	}
 
@@ -622,8 +622,8 @@ static eint entry_init_data(eHandle hobj, ePointer this)
 	entry->cursor   = egal_cursor_new(GAL_XTERM);
 	entry->nchar    = 0;
 	entry->offset_x = 0;
-	entry->is_sel   = false;
-	entry->bn_down  = false;
+	entry->is_sel   = efalse;
+	entry->bn_down  = efalse;
 	entry->max      = 0xffff;
 	entry->offsets  = e_calloc(sizeof(CharOffset), 1);
 
@@ -864,7 +864,7 @@ static void entry_delete_from_offset(eHandle hobj, GuiEntry *entry, eint ioff, e
 	entry->offsets = e_realloc(entry->offsets, (entry->nichar + 1) * sizeof(CharOffset));
 
 	set_cursor_pos(hobj, entry, ioff);
-	entry->is_show = true;
+	entry->is_show = etrue;
 	if (ioff == 0) {
 		entry->offset_x = 0;
 		entry->x = 0;
@@ -982,7 +982,7 @@ static void entry_insert_to_cursor(eHandle hobj, GuiEntry *entry, const echar *c
 {
 	if (entry->is_sel) {
 		eint n = entry->e_ioff - entry->s_ioff;
-		entry->is_sel = false;
+		entry->is_sel = efalse;
 		if (n < 0)
 			entry_delete_from_offset(hobj, entry, entry->e_ioff, -n);
 		else
@@ -996,7 +996,7 @@ static void entry_backspace_from_cursor(eHandle hobj, GuiEntry *entry)
 {
 	if (entry->is_sel) {
 		eint n = entry->e_ioff - entry->s_ioff;
-		entry->is_sel  = false;
+		entry->is_sel  = efalse;
 		if (n < 0)
 			entry_delete_from_offset(hobj, entry, entry->e_ioff, -n);
 		else
@@ -1013,14 +1013,14 @@ static void set_cursor_pos(eHandle hobj, GuiEntry *entry, eint ioff)
 	entry->x = entry->offsets[ioff].x - entry->offset_x;
 }
 
-static void entry_show_cursor(GalDrawable draw, GuiEntry *entry, bool show)
+static void entry_show_cursor(GalDrawable draw, GuiEntry *entry, ebool show)
 {
 	if (show || entry->o_ioff != entry->s_ioff) {
 		if (!entry->is_sel || entry->s_ioff == entry->e_ioff) {
 			eint x = entry->offsets[entry->s_ioff].x - entry->offset_x;
 			egal_draw_line(draw, entry->cpb, x, SIDE_SPACING, x, entry->h - SIDE_SPACING * 2);
 		}
-		entry->is_show = true;
+		entry->is_show = etrue;
 		if (entry->o_ioff != entry->s_ioff)
 			entry->o_ioff  = entry->s_ioff;
 	}
@@ -1030,7 +1030,7 @@ static INLINE void entry_hide_cursor(eHandle draw, GuiEntry *entry)
 {
 	if (entry->is_show) {
 		eint x = entry->offsets[entry->s_ioff].x - entry->offset_x;
-		entry->is_show = false;
+		entry->is_show = efalse;
 		if (!entry->is_sel || entry->s_ioff == entry->e_ioff)
 			egal_draw_line(draw, entry->cpb, x, SIDE_SPACING, x, entry->h - SIDE_SPACING * 2);
 	}
@@ -1046,7 +1046,7 @@ static eint entry_init(eHandle hobj, eValist vp)
 
 	entry->font = egal_default_font();
 	entry->h    = egal_font_height(entry->font) + SIDE_SPACING * 2;
-	entry->visible = true;
+	entry->visible = etrue;
 
 	wid->rect.w = w;
 	wid->rect.h = entry->h;
@@ -1074,7 +1074,7 @@ eHandle egui_entry_new(eint w)
 	return e_object_new(GTYPE_ENTRY, w);
 }
 
-void egui_entry_set_visibility(eHandle hobj, bool visible)
+void egui_entry_set_visibility(eHandle hobj, ebool visible)
 {
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
 	eint i;

@@ -14,8 +14,8 @@ static eint text_expose_bg(eHandle, GuiWidget *, GalEventExpose *);
 static eint text_keydown(eHandle, GalEventKey *);
 static eint text_char(eHandle, echar);
 static eint text_wrap_line(GuiText *, TextLine *);
-static void text_cursor_setpos(eHandle, GuiText *, TextLine *, TextWrap *, eint, bool);
-static void text_show_cursor(eHandle, GuiText *, TextLine *, TextWrap *, eint, bool);
+static void text_cursor_setpos(eHandle, GuiText *, TextLine *, TextWrap *, eint, ebool);
+static void text_show_cursor(eHandle, GuiText *, TextLine *, TextWrap *, eint, ebool);
 static void text_hide_cursor(eHandle, GuiText *);
 static eint text_configure(eHandle, GuiWidget *, GalEventConfigure *);
 static eint text_resize(eHandle, GuiWidget *, GalEventResize *);
@@ -23,7 +23,7 @@ static void text_wrap(eHandle, GuiText *);
 static eint text_delete_select(eHandle, GuiText *, eint *, eint *);
 static void text_set_font(eHandle, GalFont);
 static void insert_text_to_cursor(eHandle, GuiText *, const echar *, eint);
-static void egui_show_cursor(GalDrawable, TextCursor *, bool);
+static void egui_show_cursor(GalDrawable, TextCursor *, ebool);
 static void egui_hide_cursor(GalDrawable, TextCursor *);
 static eint text_line_insert(GuiText *, const echar *, eint);
 static eint del_line_series(GuiText *, TextLine *, TextLine *);
@@ -71,7 +71,7 @@ static eint text_focus_in(eHandle hobj)
 	GuiText *text = GUI_TEXT_DATA(hobj);
 	if (!text->cursor.show && !text->is_sel) {
 		if (text->cursor.y >= 0 && text->cursor.y < text->height - text->hline)
-			egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, true);
+			egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, etrue);
 	}
 	return 0;
 }
@@ -138,7 +138,7 @@ static TextWrap *ycoor_to_wrap(GuiText *text, eint y)
 	eint t = line->offset_y - text->offset_y;
 	eint b = line->nwrap * h - text->offset_y;
 
-	while (true) {
+	while (etrue) {
 		if (y >= t && y < b)
 			break;
 		t    = b;
@@ -169,7 +169,7 @@ static eint text_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	eint ioff;
 
 	if (text->is_sel && REGION_NO_EMPTY(text->sel_rgn)) {
-		text->is_sel = false;
+		text->is_sel = efalse;
 		egui_update_region(hobj, text->sel_rgn);
 		egal_region_empty(text->sel_rgn);
 	}
@@ -177,20 +177,20 @@ static eint text_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	wrap = ycoor_to_wrap(text, ent->point.y);
 	ioff = xcoor_to_ioffset(text, wrap, ent->point.x);
 
-	text_show_cursor(hobj, text, wrap->line, wrap, ioff, true);
+	text_show_cursor(hobj, text, wrap->line, wrap, ioff, etrue);
 
-	text->bn_down = true;
+	text->bn_down = etrue;
 	text->select.s_id   = wrap->line->id;
 	text->select.s_ioff = ioff;
 #ifdef WIN32
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, etrue, 0);
 #endif
 	return 0;
 }
 
 static eint text_lbuttonup(eHandle hobj, GalEventMouse *ent)
 {
-	GUI_TEXT_DATA(hobj)->bn_down = false;
+	GUI_TEXT_DATA(hobj)->bn_down = efalse;
 #ifdef WIN32
 	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->window);
 #endif
@@ -342,7 +342,7 @@ static eint text_mousemove(eHandle hobj, GalEventMouse *ent)
 		text->select.e_ioff = ioff;
 
 		if (!text->is_sel) {
-			text->is_sel = true;
+			text->is_sel = etrue;
 			text_hide_cursor(hobj, text);
 		}
 
@@ -359,12 +359,12 @@ static eint text_mousemove(eHandle hobj, GalEventMouse *ent)
 		}
 	}
 	else if (text->is_sel) {
-		text->is_sel = false;
+		text->is_sel = efalse;
 		if (REGION_NO_EMPTY(text->sel_rgn)) {
 			egui_update_region(hobj, text->sel_rgn);
 			egal_region_empty(text->sel_rgn);
 		}
-		egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, true);
+		egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, etrue);
 	}
 
 	text_set_scrollbar(text, ent->point.y);
@@ -389,7 +389,7 @@ static TextLine *textline_new(void)
 	line->nichar      = 0;
 	line->chars       = NULL;
 	line->nwrap       = 0;
-	line->is_lf       = false;
+	line->is_lf       = efalse;
 	line->nchar       = 0;
 	line->id          = 0;
 	line->over        = 0;
@@ -426,7 +426,7 @@ static void text_clear(GuiText *text)
 	text->nline = 1;
 
 	if (text->is_sel) {
-		text->is_sel = false;
+		text->is_sel = efalse;
 		egal_region_empty(text->sel_rgn);
 	}
 }
@@ -445,7 +445,7 @@ static void text_set_text(eHandle hobj, const echar *chars, eint nchar)
 
 	if (text->font) {
 		text_wrap(hobj, text);
-		text_cursor_setpos(hobj, text, text->line_head, NULL, 0, true);
+		text_cursor_setpos(hobj, text, text->line_head, NULL, 0, etrue);
 	}
 }
 
@@ -560,11 +560,11 @@ static INLINE eint get_space_width(GalFont font)
 
 static void text_set_cursor(eHandle hobj,
 		GuiText  *text, TextLine *line,
-		TextWrap *wrap, eint ioff, bool set)
+		TextWrap *wrap, eint ioff, ebool set)
 {
 	text_cursor_setpos(hobj, text, line, wrap, ioff, set);
 	text_set_scrollbar(text, text->cursor.y);
-	text_show_cursor(hobj, text, line, wrap, ioff, false);
+	text_show_cursor(hobj, text, line, wrap, ioff, efalse);
 }
 
 static eint text_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
@@ -581,7 +581,7 @@ static eint text_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 	text_hide_cursor(hobj, text);
 	text_wrap(hobj, text);
 	if (text->cursor.line)
-		text_set_cursor(hobj, text, text->cursor.line, NULL, text->cursor.ioff, false);
+		text_set_cursor(hobj, text, text->cursor.line, NULL, text->cursor.ioff, efalse);
 	egui_update(hobj);
 
 	return 0;
@@ -597,7 +597,7 @@ static eint text_configure(eHandle hobj, GuiWidget *wid, GalEventConfigure *conf
 		if (text->nchar == 0)
 			text_line_insert(text, _("\n"), 1);
 		text_wrap(hobj, text);
-		text_cursor_setpos(hobj, text, text->line_head, NULL, 0, true);
+		text_cursor_setpos(hobj, text, text->line_head, NULL, 0, etrue);
 	}
 	return 0;
 }
@@ -615,7 +615,7 @@ static eint text_char(eHandle hobj, echar c)
 
 	if (c == '\b') {
 		backspace_from_cursor(hobj, text);
-		text_set_cursor(hobj, text, cursor->line, cursor->wrap, cursor->ioff, false);
+		text_set_cursor(hobj, text, cursor->line, cursor->wrap, cursor->ioff, efalse);
 		return 0;
 	}
 	else {
@@ -624,7 +624,7 @@ static eint text_char(eHandle hobj, echar c)
 	}
 
 	insert_text_to_cursor(hobj, text, buf, n);
-	text_set_cursor(hobj, text, cursor->line, cursor->wrap, cursor->ioff, false);
+	text_set_cursor(hobj, text, cursor->line, cursor->wrap, cursor->ioff, efalse);
 
 	return -1;
 }
@@ -648,7 +648,7 @@ static void cursor_move_up(eHandle hobj, GuiText *text)
 	else
 		return;
 
-	text_set_cursor(hobj, text, line, wrap, ioff, false);
+	text_set_cursor(hobj, text, line, wrap, ioff, efalse);
 }
 
 static void cursor_move_down(eHandle hobj, GuiText *text)
@@ -670,7 +670,7 @@ static void cursor_move_down(eHandle hobj, GuiText *text)
 	else
 		return;
 
-	text_set_cursor(hobj, text, line, wrap, ioff, false);
+	text_set_cursor(hobj, text, line, wrap, ioff, efalse);
 }
 
 static void cursor_move_left(eHandle hobj, GuiText *text)
@@ -689,7 +689,7 @@ static void cursor_move_left(eHandle hobj, GuiText *text)
 	else
 		return;
 
-	text_set_cursor(hobj, text, line, NULL, ioff, true);
+	text_set_cursor(hobj, text, line, NULL, ioff, etrue);
 }
 
 static void cursor_move_right(eHandle hobj, GuiText *text)
@@ -712,13 +712,13 @@ static void cursor_move_right(eHandle hobj, GuiText *text)
 	else
 		return;
 
-	text_set_cursor(hobj, text, line, NULL, ioff, true);
+	text_set_cursor(hobj, text, line, NULL, ioff, etrue);
 }
 
 static INLINE void text_cancel_select(eHandle hobj, GuiText *text)
 {
 	if (text->is_sel) {
-		text->is_sel = false;
+		text->is_sel = efalse;
 		egui_update_region(hobj, text->sel_rgn);
 		egal_region_empty(text->sel_rgn);
 	}
@@ -786,7 +786,7 @@ static eint text_adjust_update(eHandle hobj, efloat value)
 
 	if (!text->is_sel && text->cursor.line) {
 		TextCursor *cursor = &text->cursor;
-		text_show_cursor(obj, text, cursor->line, cursor->wrap, cursor->ioff, false);
+		text_show_cursor(obj, text, cursor->line, cursor->wrap, cursor->ioff, efalse);
 	}
     return 0;
 }
@@ -812,9 +812,9 @@ static eint text_init_data(eHandle hobj, ePointer this)
 	text->top         = NULL;
 	text->cursor.line = NULL;
 	text->cursor.ioff = 0;
-	text->cursor.show = false;
-	text->is_sel      = false;
-	text->bn_down     = false;
+	text->cursor.show = efalse;
+	text->is_sel      = efalse;
+	text->bn_down     = efalse;
 	text->nline       = 1;
 	line = textline_new();
 	text->line_head = line;
@@ -1029,7 +1029,7 @@ static eint text_expose(eHandle hobj, GuiWidget *widget, GalEventExpose *expose)
 	draw_text(widget->drawable, widget->pb, text, &expose->rect);
 
 	if (GUI_STATUS_FOCUS(hobj) && text->cursor.show)
-		egui_show_cursor(widget->drawable, &text->cursor, true);
+		egui_show_cursor(widget->drawable, &text->cursor, etrue);
 
 	return 0;
 }
@@ -1055,23 +1055,23 @@ static void textwrap_free(TextWrap *wrap)
 
 #define ioffset_char(line, ioff) line->chars[line->coffsets[ioff]]
 
-static bool ioffset_line_end(TextLine *line, eint ioff)
+static ebool ioffset_line_end(TextLine *line, eint ioff)
 {
 	if (line->chars[line->coffsets[ioff]] == '\n'
 			|| ioff >= line->nichar)
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
-static bool ioffset_is_latin(TextLine *line, eint ioff)
+static ebool ioffset_is_latin(TextLine *line, eint ioff)
 {
 	echar c = line->chars[line->coffsets[ioff]];
 	if (c < 128
 			&& c != ' '
 			&& c != '\t'
 			&& !ioffset_line_end(line, ioff))
-		return true;
-	return false;
+		return etrue;
+	return efalse;
 }
 
 static eint latin_word_width(TextLine *line, eint o, eint *j, eint max_w)
@@ -1280,7 +1280,7 @@ static eint text_line_insert(GuiText *text, const echar *chars, eint clen)
 	} while (ichar != '\n' && len < clen);
 
 	if (ichar == '\n')
-		line->is_lf = true;
+		line->is_lf = etrue;
 
 finish:
 	if (line->nchar > 0)
@@ -1319,11 +1319,11 @@ typedef struct {
 	eint coff;
 	eint nchar;
 	eint nichar;
-	bool is_lf;
+	ebool is_lf;
 } LineNode;
 
 static void text_update_area(eHandle hobj, GuiText *text, TextCursor *cursor,
-		TextLine *line, eint inc, eint nichar, bool text_sel, eint bear_x)
+		TextLine *line, eint inc, eint nichar, ebool text_sel, eint bear_x)
 {
 	GuiWidget *widget;
 	TextWrap  *wrap, *prev, *next;
@@ -1487,13 +1487,13 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 	eint count    = 0;
 	eint inc_wrap = 0;
 	eint del_nr   = 0;
-	bool text_sel = false;
+	ebool text_sel = efalse;
 	eint bear_x   = 0;
 
 	text->update_h = text->height;
 	if (text->is_sel) {
-		text_sel     = true;
-		text->is_sel = false;
+		text_sel     = etrue;
+		text->is_sel = efalse;
 		egal_region_empty(text->sel_rgn);
 		inc_wrap = text_delete_select(hobj, text, &del_nr, &bear_x);
 		cursor   = &text->cursor;
@@ -1530,7 +1530,7 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 
 		euchar *p;
 		eint i, ioff, coff, nchar;
-		bool is_underline;
+		ebool is_underline;
 
 		if (count == 0) {
 			ioff = cursor->ioff;
@@ -1562,7 +1562,7 @@ static void text_insert_line_node(eHandle hobj, GuiText *text, const echar *char
 			line   = new;
 			ioff   = 0;
 			coff   = 0;
-			line->is_lf = true;
+			line->is_lf = etrue;
 		}
 
 		line->chars   = insert_data(line->chars,
@@ -1632,11 +1632,11 @@ cont:
 		text->top = cursor->line;
 	text_update_area(hobj, text, cursor, line, inc_wrap, nds->nichar + del_nr, text_sel, bear_x);
 	if (!nds->is_lf)
-		text_show_cursor(hobj, text, line, NULL, cursor->ioff + nds->nichar, true);
+		text_show_cursor(hobj, text, line, NULL, cursor->ioff + nds->nichar, etrue);
 	else if (count > node_num)
-		text_show_cursor(hobj, text, line, NULL, 0, true);
+		text_show_cursor(hobj, text, line, NULL, 0, etrue);
 	else
-		text_show_cursor(hobj, text, line, NULL, nds[node_num-1].nichar, true);
+		text_show_cursor(hobj, text, line, NULL, nds[node_num-1].nichar, etrue);
 }
 
 static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *chars, eint clen)
@@ -1674,7 +1674,7 @@ static void insert_text_to_cursor(eHandle hobj, GuiText *text, const echar *char
 		} while (ichar != '\n' && nchar < clen);
 
 		if (ichar == '\n')
-			node->is_lf = true;
+			node->is_lf = etrue;
 
 		p    += nchar;
 		clen -= nchar;
@@ -1746,7 +1746,7 @@ static eint del_line_series(GuiText *text, TextLine *begin, TextLine *end)
 
 static eint _text_delete_area(eHandle hobj, GuiText *text,
 		eint sid, eint sioff, eint eid, eint eioff,
-		eint *del_nr, eint *bear_x, bool is_wrap)
+		eint *del_nr, eint *bear_x, ebool is_wrap)
 {
 	TextLine  *sl = find_line_by_id(text, sid);
 	eint nichar, nchar;
@@ -1827,7 +1827,7 @@ static eint _text_delete_area(eHandle hobj, GuiText *text,
 			adjust_line_series(text, sl);
 	}
 
-	text_cursor_setpos(hobj, text, sl, NULL, sioff, true);
+	text_cursor_setpos(hobj, text, sl, NULL, sioff, etrue);
 
 	if (bear_x && sl->glyphs[sioff].x < *bear_x)
 		*bear_x = sl->glyphs[sioff].x;
@@ -1841,7 +1841,7 @@ static eint text_delete_select(eHandle hobj, GuiText *text, eint *del_nr, eint *
 
 	select_normalize(text, &sid, &sioff, &eid, &eioff);
 
-	return _text_delete_area(hobj, text, sid, sioff, eid, eioff, del_nr, bear_x, false);
+	return _text_delete_area(hobj, text, sid, sioff, eid, eioff, del_nr, bear_x, efalse);
 }
 
 static void backspace_from_cursor(eHandle hobj, GuiText *text)
@@ -1851,26 +1851,26 @@ static void backspace_from_cursor(eHandle hobj, GuiText *text)
 	eint inc_wrap;
 	eint nchar    = 0;
 	eint bear_x   = 0;
-	bool text_sel = false;
+	ebool text_sel = efalse;
 
 	text->update_h = text->total_h;
 	if (text->is_sel) {
 		eint sid, sioff, eid, eioff;
-		text_sel     = true;
-		text->is_sel = false;
+		text_sel     = etrue;
+		text->is_sel = efalse;
 		egal_region_empty(text->sel_rgn);
 		select_normalize(text, &sid, &sioff, &eid, &eioff);
-		inc_wrap  = _text_delete_area(hobj, text, sid, sioff, eid, eioff, &nchar, &bear_x, true);
+		inc_wrap  = _text_delete_area(hobj, text, sid, sioff, eid, eioff, &nchar, &bear_x, etrue);
 	}
 	else if (cursor->ioff == 0) {
 		if (!line->prev)
 			return;
 		inc_wrap = _text_delete_area(hobj, text, 
-				line->prev->id, line->prev->nichar - 1, line->id, 0, NULL, &bear_x, true);
+				line->prev->id, line->prev->nichar - 1, line->id, 0, NULL, &bear_x, etrue);
 	}
 	else {
 		inc_wrap = _text_delete_area(hobj, text,
-				line->id, cursor->ioff - 1, line->id, cursor->ioff, NULL, &bear_x, true);
+				line->id, cursor->ioff - 1, line->id, cursor->ioff, NULL, &bear_x, etrue);
 		nchar = -1;
 	}
 	if (line != cursor->line)
@@ -1878,10 +1878,10 @@ static void backspace_from_cursor(eHandle hobj, GuiText *text)
 	if (cursor->line->id == 0)
 		text->top = cursor->line;
 	text_update_area(hobj, text, &text->cursor, line, inc_wrap, nchar, text_sel, bear_x);
-	egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, false);
+	egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, efalse);
 }
 
-static void text_cursor_setpos(eHandle hobj, GuiText *text, TextLine *line, TextWrap *wrap, eint ioff, bool set)
+static void text_cursor_setpos(eHandle hobj, GuiText *text, TextLine *line, TextWrap *wrap, eint ioff, ebool set)
 {
 	TextCursor *cursor = &text->cursor;
 
@@ -1907,11 +1907,11 @@ static void text_cursor_setpos(eHandle hobj, GuiText *text, TextLine *line, Text
 	if (set) cursor->offset_x = w;
 }
 
-static void text_show_cursor(eHandle hobj, GuiText *text, TextLine *line, TextWrap *wrap, eint ioff, bool set)
+static void text_show_cursor(eHandle hobj, GuiText *text, TextLine *line, TextWrap *wrap, eint ioff, ebool set)
 {
 	text_cursor_setpos(hobj, text, line, wrap, ioff, set);
 	if (GUI_STATUS_FOCUS(hobj))
-		egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, false);
+		egui_show_cursor(GUI_WIDGET_DATA(hobj)->drawable, &text->cursor, efalse);
 }
 
 static INLINE void text_hide_cursor(eHandle hobj, GuiText *text)
@@ -1923,11 +1923,11 @@ static void egui_hide_cursor(GalDrawable window, TextCursor *cursor)
 {
 	if (cursor->show) {
 		egal_draw_line(window, cursor->pb, cursor->x, cursor->y, cursor->x, cursor->y + cursor->h);
-		cursor->show = false;
+		cursor->show = efalse;
 	}
 }
 
-static void egui_show_cursor(GalDrawable window, TextCursor *cursor, bool show)
+static void egui_show_cursor(GalDrawable window, TextCursor *cursor, ebool show)
 {
 	if (show || !cursor->show ||
 			cursor->ox != cursor->x ||
@@ -1941,7 +1941,7 @@ static void egui_show_cursor(GalDrawable window, TextCursor *cursor, bool show)
 			cursor->oh  = cursor->h;
 		egal_draw_line(window, cursor->pb,
 				cursor->x, cursor->y, cursor->x, cursor->y + cursor->h);
-		cursor->show = true;
+		cursor->show = etrue;
 	}
 }
 
@@ -1976,7 +1976,7 @@ static eint text_init(eHandle hobj, eValist vp)
 	return retval;
 }
 
-void egui_text_set_only_read(eHandle hobj, bool only)
+void egui_text_set_only_read(eHandle hobj, ebool only)
 {
 	GUI_TEXT_DATA(hobj)->only_read = only;
 }
@@ -1993,10 +1993,10 @@ void egui_text_clear(eHandle hobj)
 	text_clear(text);
 	text_line_insert(text, _("\n"), 1);
 	text_wrap(hobj, text);
-	text_cursor_setpos(hobj, text, text->line_head, NULL, 0, true);
+	text_cursor_setpos(hobj, text, text->line_head, NULL, 0, etrue);
 	egui_update(hobj);
 	if (WIDGET_STATUS_FOCUS(wid))
-		egui_show_cursor(wid->drawable, &text->cursor, false);
+		egui_show_cursor(wid->drawable, &text->cursor, efalse);
 }
 
 void egui_text_append(eHandle hobj, const echar *chars, eint nchar)
@@ -2004,7 +2004,7 @@ void egui_text_append(eHandle hobj, const echar *chars, eint nchar)
 	GuiText *text = GUI_TEXT_DATA(hobj);
 
 	if (text->is_sel) {
-		text->is_sel = false;
+		text->is_sel = efalse;
 		egal_region_empty(text->sel_rgn);
 	}
 
@@ -2051,7 +2051,7 @@ void egui_text_set_underline(eHandle hobj)
 
 	if (text->is_sel && REGION_NO_EMPTY(text->sel_rgn)) {
 		set_underline(text);
-		text->is_sel = false;
+		text->is_sel = efalse;
 		egui_update_region(hobj, text->sel_rgn);
 		egal_region_empty(text->sel_rgn);
 	}

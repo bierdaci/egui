@@ -12,7 +12,7 @@ static struct EventList *wait_event_tail = NULL;
 static e_thread_mutex_t event_list_lock;
 static e_sem_t event_list_sem;
 static Queue  *event_queue = NULL;
-static bool is_recv = false;
+static ebool is_recv = efalse;
 
 #ifndef WIN32
 static ePointer wait_event_handler(ePointer data)
@@ -83,11 +83,11 @@ eint egal_init(eint argc, char *const args[])
 
 eint egal_event_init(void)
 {
-	is_recv = true;
+	is_recv = etrue;
 	return 0;
 }
 
-bool egal_wait_event(GalEvent *event)
+ebool egal_wait_event(GalEvent *event)
 {
 #ifdef WIN32
 	if (!egal_get_event_from_queue(event)) {
@@ -100,9 +100,9 @@ bool egal_wait_event(GalEvent *event)
 #endif
 
 	if (event->type == GAL_ET_QUIT)
-		return false;
+		return efalse;
 
-	return true;
+	return etrue;
 }
 
 void egal_add_event_to_queue(GalEvent *event)

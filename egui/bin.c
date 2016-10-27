@@ -55,7 +55,7 @@ static eint bin_init_data(eHandle hobj, ePointer this)
 	GuiWidget *wid = GUI_WIDGET_DATA(hobj);
 	GuiBin    *bin = (GuiBin *)this;
 
-	bin->is_bin = true;
+	bin->is_bin = etrue;
 	egal_region_init(&bin->region_mask);
 
 	widget_set_status(wid, GuiStatusVisible | GuiStatusMouse | GuiStatusActive);
@@ -68,7 +68,7 @@ static void bin_destroy(eHandle hobj)
 	while (cw) {
 		GuiWidget *t = cw;
 		cw = cw->next;
-		egui_remove(OBJECT_OFFSET(t), true);
+		egui_remove(OBJECT_OFFSET(t), etrue);
 		e_signal_emit(OBJECT_OFFSET(t), SIG_DESTROY);
 		e_object_unref(OBJECT_OFFSET(t));
 	}
@@ -254,7 +254,7 @@ static eint bin_buttondown(eHandle hobj, GalEventMouse *mevent, esig_t sig)
 	GuiWidget *wid = grab_in_point(bin, x, y);
 	if (wid) {
 		eint ret;
-		bool t = GUI_TYPE_BIN(OBJECT_OFFSET(wid));
+		ebool t = GUI_TYPE_BIN(OBJECT_OFFSET(wid));
 
 		if (!t && WIDGET_STATUS_ACTIVE(wid))
 			egui_set_focus(OBJECT_OFFSET(wid));
@@ -444,27 +444,27 @@ static eint bin_imeinput(eHandle hobj, GalEventImeInput *ent)
 	return 0;
 }
 
-bool bin_can_focus(GuiWidget *wid)
+ebool bin_can_focus(GuiWidget *wid)
 {
 	GuiBin *bin;
 
 	if (!WIDGET_STATUS_VISIBLE(wid))
-		return false;
+		return efalse;
 
 	if (!WIDGET_STATUS_ACTIVE(wid))
-		return false;
+		return efalse;
 
 	if ((bin = GUI_BIN_DATA(OBJECT_OFFSET(wid))) && bin->is_bin) {
 		GuiWidget *cw = bin->head;
 		while (cw) {
 			if (bin_can_focus(cw))
-				return true;
+				return etrue;
 			cw = cw->next;
 		}
-		return false;
+		return efalse;
 	}
 
-	return true;
+	return etrue;
 }
 
 static eHandle child_next(GuiBin *bin, eHandle cobj)
@@ -522,7 +522,7 @@ static eHandle bin_next_child(GuiBin *bin, eHandle child, eint dir, eint axis)
 	eHandle (*cb)(GuiBin *, eHandle);
 
 	eint diff = 0xffff;
-	bool loop;
+	ebool loop;
 
 	if (dir == BIN_DIR_NEXT)
 		cb = child_next;
@@ -567,14 +567,14 @@ static eHandle bin_next_child(GuiBin *bin, eHandle child, eint dir, eint axis)
 							child = OBJECT_OFFSET(ow);
 						}
 					}
-					loop = false;
+					loop = efalse;
 				}
 				else if (d == 0)
-					loop = false;
+					loop = efalse;
 				else
-					loop = true;
+					loop = etrue;
 
-				loop = cw->next ? loop : false;
+				loop = cw->next ? loop : efalse;
 			}
 			else {
 				if (axis & BIN_X_AXIS)
@@ -604,14 +604,14 @@ static eHandle bin_next_child(GuiBin *bin, eHandle child, eint dir, eint axis)
 							child = OBJECT_OFFSET(ow);
 						}
 					}
-					loop = false;
+					loop = efalse;
 				}
 				else if (d == 0)
-					loop = false;
+					loop = efalse;
 				else
-					loop = true;
+					loop = etrue;
 
-				loop = cw->prev ? loop : false;
+				loop = cw->prev ? loop : efalse;
 			}
 
 			if (diff > d) {

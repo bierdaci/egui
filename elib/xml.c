@@ -66,16 +66,16 @@ static struct {
 	{_("&quot;"),	'\"'}
 };
 
-static INLINE bool is_matching(echar c, const echar *pattern)
+static INLINE ebool is_matching(echar c, const echar *pattern)
 {
 	echar b;
 	int i = 0;
 
 	while ((b = pattern[i++])) {
 		if (b == c) 
-			return true;
+			return etrue;
 	}
-	return false;
+	return efalse;
 }
 
 static int m_strcmp(const echar *src, const echar *dst, const echar *br)
@@ -94,24 +94,24 @@ static int m_strcmp(const echar *src, const echar *dst, const echar *br)
 	return 0;
 }
 
-static bool match_all(echar c)
+static ebool match_all(echar c)
 {
-	return true;
+	return etrue;
 }
-static bool match_xml_c(echar c)
+static ebool match_xml_c(echar c)
 {
 	return IS_XML_C(c);
 }
-static bool match_alpha(echar c)
+static ebool match_alpha(echar c)
 {
 	return IS_ALPHA(c);
 }
-static bool match_no_quot(echar c)
+static ebool match_no_quot(echar c)
 {
 	return (c != '"');
 }
 
-static echar *m_strdup(const echar *src, bool (*match)(echar))
+static echar *m_strdup(const echar *src, ebool (*match)(echar))
 {
 	echar buf[MAX_LINE_BUF];
 	echar *p = buf;
@@ -787,7 +787,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 {
 	int i; 
 	int ret = 0;
-	bool is_lf = true;
+	ebool is_lf = etrue;
 	XmlElement *elm = NULL;
 
 	while ((elm = xml_next_element(xml, parent, elm))) {
@@ -795,7 +795,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 			int b;
 			if (is_lf) {
 				fprintf(xml->fp, "\n");
-				is_lf = false;
+				is_lf = efalse;
 			}
 			for (i = 0; i < step; i++) fprintf(xml->fp, "\t");
 			if (xml_write_node(xml, elm)) {
@@ -816,7 +816,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 		else if (XML_IS_COMMENT(elm)) {
 			if (is_lf) {
 				fprintf(xml->fp, "\n");
-				is_lf = false;
+				is_lf = efalse;
 			}
 			for (i = 0; i < step; i++) fprintf(xml->fp, "\t");
 			xml_write_comment(xml, elm);
@@ -826,7 +826,7 @@ static int xml_save_node(Xml *xml, XmlElement *parent, int step)
 		else if (XML_IS_DECLARE(elm)) {
 			if (is_lf) {
 				fprintf(xml->fp, "\n");
-				is_lf = false;
+				is_lf = efalse;
 			}
 			for (i = 0; i < step; i++) fprintf(xml->fp, "\t");
 			xml_write_declare(xml, elm);
@@ -1116,7 +1116,7 @@ int xml_add_element(XmlElement *parent, XmlElement *child)
 	return -1;
 }
 
-static int set_val(echar **p, const echar *val, bool (*match)(echar))
+static int set_val(echar **p, const echar *val, ebool (*match)(echar))
 {
 	echar *t = m_strdup(val, match);
 	if (!t)

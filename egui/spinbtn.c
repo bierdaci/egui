@@ -20,7 +20,7 @@ static void bn_init_orders(eGeneType, ePointer);
 static eGeneType GTYPE_BN = 0;
 typedef struct {
 	eint n;
-	bool down;
+	ebool down;
 	GalImage *img;
 } SpinBN;
 #define BN_DATA(hobj)  ((SpinBN *)e_object_type_data(hobj, GTYPE_BN))
@@ -180,7 +180,7 @@ static eint bn_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	spinbn_right_value(spin);
 
 	value = spin->value;
-	bn->down = true;
+	bn->down = etrue;
 	egui_update(hobj);
 
 	if (bn->n == 1) {
@@ -197,7 +197,7 @@ static eint bn_lbuttondown(eHandle hobj, GalEventMouse *ent)
 	spinbn_set_value(spin, value);
 	egui_set_focus(spin->entry);
 #ifdef WIN32
-	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, true, 0);
+	egal_grab_pointer(GUI_WIDGET_DATA(hobj)->window, etrue, 0);
 #endif
 	return 0;
 }
@@ -211,7 +211,7 @@ static eint bn_lbuttonup(eHandle hobj, GalEventMouse *ent)
 		e_timer_del(spin->timer);
 		spin->timer = 0;
 	}
-	bn->down = false;
+	bn->down = efalse;
 	egui_update(hobj);
 #ifdef WIN32
 	egal_ungrab_pointer(GUI_WIDGET_DATA(hobj)->window);

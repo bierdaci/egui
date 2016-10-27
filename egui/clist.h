@@ -92,8 +92,8 @@ struct _GuiClist {
 	eint        ck_num;
 	euint32     ck_time;
 	ClsItemBar *ck_ibar;
-	bool vsbar_auto;
-	bool hsbar_auto;
+	ebool vsbar_auto;
+	ebool hsbar_auto;
 	void (*clear)(ClsItemBar *);
 };
 
@@ -103,7 +103,7 @@ struct _GuiClistOrders {
 	eint (*update)(eHandle, GuiClist *, ClsItemBar *);
 	void (*draw_title)(eHandle, GuiClist *, GalDrawable, GalPB);
 	void (*draw_grid)(eHandle, GalDrawable, GalPB, GalFont, ClsItemBar *, int, int, int, int);
-	void (*draw_grid_bk)(eHandle, GuiClist *, GalDrawable, GalPB, int, int, int, bool, bool, int);
+	void (*draw_grid_bk)(eHandle, GuiClist *, GalDrawable, GalPB, int, int, int, ebool, ebool, int);
 	eint (*find)(eHandle, ClsItemBar *, ePointer);
 };
 

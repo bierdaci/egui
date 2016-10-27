@@ -44,7 +44,7 @@ struct _TextLine {
 	eint   nchar;
 	eint   nichar;
 	eint   max_w:31;
-	bool   is_lf:1;
+	ebool   is_lf:1;
 	eint   offset_y;
 	eint   load_nchar;
 	eint   load_nichar;
@@ -69,7 +69,7 @@ struct _TextCursor {
 
 	eint x, y, h;
 	eint ox, oy, oh;
-	bool show;
+	ebool show;
 };
 
 struct _GuiText {
@@ -97,18 +97,18 @@ struct _GuiText {
 	eHandle vadj, hadj;
 	GalCursor gal_cursor;
 
-	bool only_read    : 1;
-	bool is_wrap      : 1;
-	bool is_sel       : 1;
-	bool bn_down      : 1;
-	bool is_underline : 1;
+	ebool only_read    : 1;
+	ebool is_wrap      : 1;
+	ebool is_sel       : 1;
+	ebool bn_down      : 1;
+	ebool is_underline : 1;
 };
 
 eGeneType egui_genetype_text(void);
 eHandle egui_text_new(eint w, eint h);
 void egui_text_append(eHandle, const echar *, eint);
 void egui_text_clear(eHandle hobj);
-void egui_text_set_only_read(eHandle, bool);
+void egui_text_set_only_read(eHandle, ebool);
 void egui_text_set_underline(eHandle hobj);
 
 #endif

@@ -17,11 +17,11 @@ typedef struct _GuiScrollRegion		GuiScrollRegion;
 
 struct _GuiScrollRegion {
 	GalRect rect;
-	bool is_down;
+	ebool is_down;
 
-	bool (*down)(eHandle, GuiScrollBar *, eint x, eint y);
+	ebool (*down)(eHandle, GuiScrollBar *, eint x, eint y);
 	void (*up)  (eHandle, GuiScrollBar *);
-	bool (*move)(eHandle, GuiScrollBar *, eint x, eint y);
+	ebool (*move)(eHandle, GuiScrollBar *, eint x, eint y);
 };
 
 struct _GuiScrollBar {
@@ -58,11 +58,11 @@ struct _GuiScrollBar {
 	euint   time;
 	eTimer  timer;
 
-	bool auto_hide;
+	ebool auto_hide;
 };
 
 struct _GuiScrollBarOrders {
-	bool (*update)(eHandle, GuiScrollBar *, eint);
+	ebool (*update)(eHandle, GuiScrollBar *, eint);
 };
 
 eGeneType egui_genetype_scrollbar(void);

@@ -74,7 +74,7 @@ struct bmp_context_state {
 static ePointer bmp_load_begin(void);
 
 static GalPixbuf* bmp_load_end(ePointer data);
-static bool bmp_increment_load(ePointer data, const euchar *buf, size_t);
+static ebool bmp_increment_load(ePointer data, const euchar *buf, size_t);
 
 static euint lsb_32(const euchar *src)
 {
@@ -216,16 +216,16 @@ static eint decode_header(const euchar *BFH, const euchar *BIH, struct bmp_conte
 	return 0;
 }
 
-static bool bmp_load_header(GalPixbuf *pixbuf, ePointer data, euint size)
+static ebool bmp_load_header(GalPixbuf *pixbuf, ePointer data, euint size)
 {
 	struct bmp_context_state context;
 
 	context.request_size = size;
 	if (decode_header(data, (euchar *)data + 14, &context) != 0)
-		return false;
+		return efalse;
 	pixbuf->w = context.header.width;
 	pixbuf->h = context.header.height;
-	return true;
+	return etrue;
 }
 
 static eint decode_colormap(const euchar *buff, struct bmp_context_state *context)
@@ -816,7 +816,7 @@ static eint _bmp_increment_load(struct bmp_context_state *context, const euchar 
 	return status;
 }
 
-static bool bmp_increment_load(ePointer data, const euchar *buf, size_t len)
+static ebool bmp_increment_load(ePointer data, const euchar *buf, size_t len)
 {
 	struct bmp_context_state *context = (struct bmp_context_state *)data;
 	const euchar *p;
@@ -828,7 +828,7 @@ static bool bmp_increment_load(ePointer data, const euchar *buf, size_t len)
 		if (context->old_size < context->request_size) {
 			context->in_buffer = e_realloc(context->in_buffer, context->request_size);
 			if (context->in_buffer == NULL)
-				return false;
+				return efalse;
 			context->old_size = context->request_size;
 		}
 
@@ -842,17 +842,17 @@ static bool bmp_increment_load(ePointer data, const euchar *buf, size_t len)
 			p += bytes;
 			context->done_size += bytes;
 			if (context->done_size < context->request_size)
-				return true;
+				return etrue;
 		}
 
 		status = _bmp_increment_load(context, context->in_buffer);
 		if (status == 0)
 			context->done_size = 0;
 		else if (status < 0)
-			return false;
+			return efalse;
 	}
 
-	return true;
+	return etrue;
 }
 
 void _gal_pixbuf_bmp_fill_vtable(GalPixbufModule *module)

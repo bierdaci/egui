@@ -98,7 +98,7 @@ static eint button_keydown(eHandle hobj, GalEventKey *ent)
 	GuiButton *bn = GUI_BUTTON_DATA(hobj);
 	if (!bn->key_down && 
 			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
-		bn->key_down = true;
+		bn->key_down = etrue;
 		egui_update(hobj);
 	}
 	return 0;
@@ -110,7 +110,7 @@ static eint button_keyup(eHandle hobj, GalEventKey *ent)
 
 	if (button->key_down &&
 			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
-		button->key_down = false;
+		button->key_down = efalse;
 		egui_update(hobj);
 		e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
 	}
@@ -154,9 +154,9 @@ static eint button_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 {
 #ifdef WIN32
 	eHandle top = egui_get_top(hobj);
-	egal_grab_pointer(GUI_WIDGET_DATA(top)->window, true, 0);
+	egal_grab_pointer(GUI_WIDGET_DATA(top)->window, etrue, 0);
 #endif
-	GUI_BUTTON_DATA(hobj)->down = true;
+	GUI_BUTTON_DATA(hobj)->down = etrue;
 	egui_update(hobj);
 	return 0;
 }
@@ -169,7 +169,7 @@ static eint button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 	egal_ungrab_pointer(GUI_WIDGET_DATA(top)->window);
 #endif
 	if (button->down) {
-		button->down = false;
+		button->down = efalse;
 		if (button->enter)
 			e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
 		egui_update(hobj);
@@ -180,14 +180,14 @@ static eint button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 
 static eint button_enter(eHandle hobj, eint x, eint y)
 {
-	GUI_BUTTON_DATA(hobj)->enter = true;
+	GUI_BUTTON_DATA(hobj)->enter = etrue;
 	egui_update(hobj);
 	return 0;
 }
 
 static eint button_leave(eHandle hobj)
 {
-	GUI_BUTTON_DATA(hobj)->enter = false;
+	GUI_BUTTON_DATA(hobj)->enter = efalse;
 	egui_update(hobj);
 	return 0;
 }
@@ -228,7 +228,7 @@ static eint label_button_init(eHandle hobj, eValist vp)
 	wid->rect.h = img_enter->h;
 	wid->fg_color = 0;
 
-	wid->drawable = egal_drawable_new(wid->min_w, wid->min_h, false);
+	wid->drawable = egal_drawable_new(wid->min_w, wid->min_h, efalse);
 	wid->pb       = egal_pb_new(wid->drawable, NULL);
 
 	return 0;
@@ -354,7 +354,7 @@ static eint radio_button_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *en
 
 static eint radio_button_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 {
-	GUI_BUTTON_DATA(hobj)->down = true;
+	GUI_BUTTON_DATA(hobj)->down = etrue;
 	egui_update(hobj);
 	return 0;
 }
@@ -363,7 +363,7 @@ static eint radio_button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 {
 	GuiButton *button = GUI_BUTTON_DATA(hobj);
 	if (button->down) {
-		button->down = false;
+		button->down = efalse;
 		if (button->enter && button->p.group->bn != hobj) {
 			eHandle bn = button->p.group->bn;
 			button->p.group->bn = hobj;
@@ -380,7 +380,7 @@ static eint radio_button_keydown(eHandle hobj, GalEventKey *ent)
 	GuiButton *bn = GUI_BUTTON_DATA(hobj);
 	if (!bn->key_down && 
 			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
-		bn->key_down = true;
+		bn->key_down = etrue;
 	}
 	return 0;
 }
@@ -391,7 +391,7 @@ static eint radio_button_keyup(eHandle hobj, GalEventKey *ent)
 
 	if (button->key_down &&
 			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
-		button->key_down = false;
+		button->key_down = efalse;
 		if (button->p.group->bn != hobj) {
 			eHandle bn = button->p.group->bn;
 			button->p.group->bn = hobj;
@@ -447,7 +447,7 @@ static eint check_button_init(eHandle hobj, eValist vp)
 	eint w, h;
 
 	bn->label   = e_va_arg(vp, const echar *);
-	bn->p.check = e_va_arg(vp, bool);
+	bn->p.check = e_va_arg(vp, ebool);
 
 	egui_strings_extent(0, bn->label, &w, &h);
 	wid->min_w  = check_img_y->w + w + 7;
@@ -496,7 +496,7 @@ static eint check_button_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *en
 
 static eint check_button_lbuttondown(eHandle hobj, GalEventMouse *mevent)
 {
-	GUI_BUTTON_DATA(hobj)->down = true;
+	GUI_BUTTON_DATA(hobj)->down = etrue;
 	egui_update(hobj);
 	return 0;
 }
@@ -505,7 +505,7 @@ static eint check_button_lbuttonup(eHandle hobj, GalEventMouse *mevent)
 {
 	GuiButton *button = GUI_BUTTON_DATA(hobj);
 	if (button->down) {
-		button->down = false;
+		button->down = efalse;
 		if (button->enter) {
 			button->p.check = !button->p.check;
 			egui_update(hobj);
@@ -520,7 +520,7 @@ static eint check_button_keydown(eHandle hobj, GalEventKey *ent)
 	GuiButton *bn = GUI_BUTTON_DATA(hobj);
 	if (!bn->key_down && 
 			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
-		bn->key_down = true;
+		bn->key_down = etrue;
 	}
 	return 0;
 }
@@ -531,7 +531,7 @@ static eint check_button_keyup(eHandle hobj, GalEventKey *ent)
 
 	if (button->key_down &&
 			(ent->code == GAL_KC_space || ent->code == GAL_KC_Enter)) {
-		button->key_down = false;
+		button->key_down = efalse;
 		button->p.check = !button->p.check;
 		egui_update(hobj);
 		e_signal_emit(hobj, SIG_CLICKED, e_signal_get_data(hobj, SIG_CLICKED));
@@ -581,7 +581,7 @@ eHandle egui_radio_button_new(const echar *label, eHandle group)
 	return e_object_new(GTYPE_RADIO_BUTTON, label, group);
 }
 
-eHandle egui_check_button_new(const echar *label, bool is_check)
+eHandle egui_check_button_new(const echar *label, ebool is_check)
 {
 	return e_object_new(GTYPE_CHECK_BUTTON, label, is_check);
 }

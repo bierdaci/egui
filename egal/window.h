@@ -71,11 +71,11 @@ typedef enum {
 } GalPBFunc;
 
 struct _GalWindowManager {
-	GalWindow   (*wait_event)(GalEvent *, bool);
+	GalWindow   (*wait_event)(GalEvent *, ebool);
 	void        (*get_event)(GalEvent *);
 	GalWindow   (*window_new)(GalWindowAttr *);
-	GalDrawable (*drawable_new)(eint, eint, bool);
-	GalImage*   (*image_new)(eint, eint, bool);
+	GalDrawable (*drawable_new)(eint, eint, ebool);
+	GalImage*   (*image_new)(eint, eint, ebool);
 	void        (*image_free)(GalImage *);
 	GalPB       (*pb_new)(GalDrawable, GalPBAttr *);
 	GalCursor   (*cursor_new)(GalCursorType);
@@ -182,9 +182,9 @@ struct _GalWindowAttr {
 	eint width;
 	eint height;
 	eint depth;
-	bool visible;
-	bool input_event;
-	bool output_event;
+	ebool visible;
+	ebool input_event;
+	ebool output_event;
 	GalEventMask event_mask;
 	GalWindowClass wclass;
 	GalWindowAttributesMask wa_mask;
@@ -228,9 +228,9 @@ struct _GalWindowOrders {
 	eint (*get_attr)(GalWindow, GalWindowAttr *);
 
 	void (*warp_pointer)(GalWindow, int, int, int, int, int, int); 
-	GalGrabStatus (*grab_pointer)(GalWindow, bool, GalCursor);
+	GalGrabStatus (*grab_pointer)(GalWindow, ebool, GalCursor);
 	GalGrabStatus (*ungrab_pointer)(GalWindow);
-	GalGrabStatus (*grab_keyboard)(GalWindow, bool);
+	GalGrabStatus (*grab_keyboard)(GalWindow, ebool);
 	GalGrabStatus (*ungrab_keyboard)(GalWindow);
 
 	void (*get_pointer)(GalWindow, eint *, eint *, eint *, eint *, GalModifierType *);
@@ -283,7 +283,7 @@ struct _GalImage {
     eint pixelbytes;
     eint rowbytes;
 	eint negative;
-	bool alpha;
+	ebool alpha;
     euchar *pixels;
 };
 
@@ -342,7 +342,7 @@ struct _GalPBAttr {
 	eint fill_rule;
 	eint arc_mode;
 #ifdef _GAL_SUPPORT_CAIRO
-	bool use_cairo;
+	ebool use_cairo;
 #endif
 };
 
@@ -461,13 +461,13 @@ eGeneType egal_genetype_cursor(void);
 GalPB egal_pb_new(GalDrawable, GalPBAttr *);
 GalPB egal_type_pb(GalPBFunc);
 
-GalImage *egal_image_new(eint, eint, bool);
+GalImage *egal_image_new(eint, eint, ebool);
 void egal_image_free(GalImage *);
 
 GalWindow egal_window_new(GalWindowAttr *);
 GalWindow egal_root_window(void);
 
-GalDrawable egal_drawable_new(eint w, eint h, bool alpha);
+GalDrawable egal_drawable_new(eint w, eint h, ebool alpha);
 
 GalCursor egal_cursor_new(GalCursorType);
 GalCursor egal_cursor_new_name(const echar *);
@@ -486,9 +486,9 @@ eint egal_window_move_resize(GalWindow, eint, eint, eint, eint);
 eint egal_window_set_name(GalWindow, const echar *);
 
 void egal_warp_pointer(GalWindow window, int sx, int sy, int sw, int sh, int dx, int dy);
-GalGrabStatus egal_grab_pointer(GalWindow, bool, GalCursor);
+GalGrabStatus egal_grab_pointer(GalWindow, ebool, GalCursor);
 GalGrabStatus egal_ungrab_pointer(GalWindow);
-GalGrabStatus egal_grab_keyboard(GalWindow, bool);
+GalGrabStatus egal_grab_keyboard(GalWindow, ebool);
 GalGrabStatus egal_ungrab_keyboard(GalWindow);
 
 void egal_get_pointer(GalWindow, eint *, eint *, eint *, eint *, GalModifierType *);
@@ -535,7 +535,7 @@ void egal_window_set_attr(GalWindow, GalWindowAttr *);
 void egal_window_get_attr(GalWindow, GalWindowAttr *);
 void egal_window_get_origin(GalWindow, eint *, eint *);
 
-GalWindow egal_window_wait_event(GalEvent *, bool);
+GalWindow egal_window_wait_event(GalEvent *, ebool);
 void egal_window_get_event(GalEvent *event);
 eint egal_window_init(void);
 

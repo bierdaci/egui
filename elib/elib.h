@@ -13,6 +13,6 @@
 #include <elib/esignal.h>
 #include <elib/timer.h>
 
-bool e_init(void);
+ebool e_init(void);
 
 #endif

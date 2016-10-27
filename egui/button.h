@@ -14,12 +14,12 @@ typedef struct _GuiButton  GuiButton;
 typedef struct _RadioGroup RadioGroup;
 
 struct _GuiButton {
-	bool enter;
-	bool down;
-	bool key_down;
+	ebool enter;
+	ebool down;
+	ebool key_down;
 	const echar *label;
 	union {
-		bool check;
+		ebool check;
 		RadioGroup *group;
 	} p;
 };
@@ -35,5 +35,6 @@ eGeneType egui_genetype_radio_button(void);
 eHandle   egui_button_new(int w, int h);
 eHandle   egui_label_button_new(const echar *);
 eHandle   egui_radio_button_new(const echar *, eHandle);
+eHandle   egui_check_button_new(const echar *, ebool);
 
 #endif
