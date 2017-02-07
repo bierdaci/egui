@@ -1,6 +1,6 @@
 #include "egal.h"
 
-#define EVENT_LIST_MAX  20
+#define EVENT_LIST_MAX  1
 static struct EventList {
 	GalEvent event;
 	struct EventList *next;	
@@ -28,6 +28,7 @@ static ePointer wait_event_handler(ePointer data)
 }
 #endif
 
+/*
 static ePointer wait_add_async_event(ePointer data)
 {
 	GalEvent event;
@@ -50,6 +51,7 @@ static ePointer wait_add_async_event(ePointer data)
 	}
 	return (ePointer)-1;
 }
+*/
 
 eint egal_init(eint argc, char *const args[])
 {
@@ -69,8 +71,8 @@ eint egal_init(eint argc, char *const args[])
 		free_event_list = event_list_buf + i;
 	}
 
-	if (e_thread_create(&pid, wait_add_async_event, NULL) < 0)
-		return -1;
+	//if (e_thread_create(&pid, wait_add_async_event, NULL) < 0)
+	//	return -1;
 
 	if (egal_window_init() < 0)
 		return -1;
@@ -85,6 +87,24 @@ eint egal_event_init(void)
 {
 	is_recv = etrue;
 	return 0;
+}
+
+static void add_async_event(void)
+{
+	GalEvent event;
+	struct EventList *tmp;
+
+	if (wait_event_head) {
+		e_thread_mutex_lock(&event_list_lock);
+		tmp = wait_event_head;
+		wait_event_head = tmp->next;
+		tmp->next = free_event_list;
+		free_event_list = tmp;
+		event = tmp->event;
+		e_thread_mutex_unlock(&event_list_lock);
+
+		e_queue_write_try(event_queue, (ePointer)&event, sizeof(GalEvent));
+	}
 }
 
 ebool egal_wait_event(GalEvent *event)
@@ -102,6 +122,8 @@ ebool egal_wait_event(GalEvent *event)
 	if (event->type == GAL_ET_QUIT)
 		return efalse;
 
+	add_async_event();
+
 	return etrue;
 }
 
@@ -117,42 +139,47 @@ void egal_add_event_to_queue(GalEvent *event)
 
 eint egal_get_event_from_queue(GalEvent *event)
 {
-	if (event_queue) {
-		int n;
+	int n;
+	GalEvent t;
+
+	if (!event_queue)
+		return 0;
+
 #ifdef WIN32
-		n = e_queue_read_try(event_queue, (ePointer)event, sizeof(GalEvent)) / sizeof(GalEvent);
+	n = e_queue_read_try(event_queue, (ePointer)event, sizeof(GalEvent));
 #else
-		n = e_queue_read_wait(event_queue, (ePointer)event, sizeof(GalEvent)) / sizeof(GalEvent);
+	n = e_queue_read_wait(event_queue, (ePointer)event, sizeof(GalEvent));
 #endif
-		if (n > 0 && (event->type == GAL_ET_RESIZE || event->type == GAL_ET_EXPOSE)) {
-			eint offset = 0;
-			GalEvent t;
-			while (e_queue_seek(event_queue, (ePointer)&t, offset, sizeof(GalEvent))) {
-				offset += sizeof(GalEvent);
-				if (t.type != event->type || event->window != t.window)
-					continue;
-				if (event->type == GAL_ET_RESIZE)
-					return 0;
-				if (event->type == GAL_ET_EXPOSE) {
-					eint x1 = event->e.expose.rect.x + event->e.expose.rect.w - 1;
-					eint y1 = event->e.expose.rect.y + event->e.expose.rect.h - 1;
-					eint x2 = t.e.expose.rect.x + t.e.expose.rect.w - 1;
-					eint y2 = t.e.expose.rect.y + t.e.expose.rect.h - 1;
-					if (event->e.expose.rect.x <= t.e.expose.rect.x
+	if (n > 0 && (event->type == GAL_ET_RESIZE || event->type == GAL_ET_EXPOSE)) {
+		while (e_queue_seek(event_queue, (ePointer)&t, 0, sizeof(GalEvent))) {
+			if (t.type != event->type || event->window != t.window)
+				break;
+			if (event->type == GAL_ET_RESIZE) {
+				e_queue_read(event_queue, (ePointer)&t, sizeof(GalEvent));
+				continue;
+			}
+			if (event->type == GAL_ET_EXPOSE) {
+				eint x1 = event->e.expose.rect.x + event->e.expose.rect.w - 1;
+				eint y1 = event->e.expose.rect.y + event->e.expose.rect.h - 1;
+				eint x2 = t.e.expose.rect.x + t.e.expose.rect.w - 1;
+				eint y2 = t.e.expose.rect.y + t.e.expose.rect.h - 1;
+				if (event->e.expose.rect.x <= t.e.expose.rect.x 
 						&& event->e.expose.rect.y <= t.e.expose.rect.y
-						&& x1 >= x2 && y1 >= y2)
-						return 0;
-					if (t.e.expose.rect.x <= event->e.expose.rect.x
-						&& t.e.expose.rect.y <= event->e.expose.rect.y
-						&& x2 >= x1 && y2 >= y1)
-						return 0;
+						&& x1 >= x2 && y1 >= y2) {
+					e_queue_read(event_queue, (ePointer)&t, sizeof(GalEvent));
+					continue;
+				}
+				if (event->e.expose.rect.x >= t.e.expose.rect.x
+						&& event->e.expose.rect.y >= t.e.expose.rect.y
+						&& x1 <= x2 && y1 <= y2) {
+					e_queue_read(event_queue, (ePointer)event, sizeof(GalEvent));
+					continue;
 				}
 			}
+			break;
 		}
-		return n;
 	}
-
-	return 0;
+	return n / sizeof(GalEvent);
 }
 
 void egal_add_async_event_to_queue(GalEvent *event)
@@ -176,7 +203,7 @@ void egal_add_async_event_to_queue(GalEvent *event)
 	}
 	e_thread_mutex_unlock(&event_list_lock);
 
-	e_sem_getvalue(&event_list_sem, &semval);
-	if (semval < 1)
-		e_sem_post(&event_list_sem);
+	//e_sem_getvalue(&event_list_sem, &semval);
+	//if (semval < 1)
+	//	e_sem_post(&event_list_sem);
 }

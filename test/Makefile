@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -Wall -g -I../ -I/usr/include/freetype2
 LDFLAGS = -L../egui/.libs/ -L../egal/.libs -L../elib/.libs -legal -lelib -legui -lfreetype -lXrender
-ALL: button fixed label text clist anim box scrollwin menu menu_entrys entry frame notebook filesel ddlist hello opengl image.o
+ALL: button fixed label text clist anim box scrollwin menu menu_entrys entry frame notebook filesel ddlist hello gis opengl image.o
 
 opengl: opengl.c image.o
 	${CC} ${CFLAGS} $^ -o $@ ${LDFLAGS}
@@ -12,6 +12,9 @@ hello: hello.c image.o
 
 image.o: image.c
 	$(CC) $(CFLAGS) $^ -c
+
+gis: gis.c
+	${CC} ${CFLAGS} $^ -o $@ ${LDFLAGS}
 
 ddlist: ddlist.c
 	$(CC) $(CFLAGS) -o ddlist $^ $(LDFLAGS)

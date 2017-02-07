@@ -9,5 +9,6 @@ typedef eint (*eTimerFunc)(eTimer, euint, ePointer);
 void   e_timer_init(void);
 void   e_timer_loop(void);
 eTimer e_timer_add(euint interval, eTimerFunc func, ePointer args);
+eTimer e_thread_timer_add(euint interval, eTimerFunc func, ePointer args);
 void   e_timer_del(eTimer timer);
 #endif
