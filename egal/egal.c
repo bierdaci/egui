@@ -127,35 +127,6 @@ ebool egal_wait_event(GalEvent *event)
 	return etrue;
 }
 
-static void add_async_list(GalEvent *event)
-{
-	struct EventList *tmp;
-
-	e_thread_mutex_lock(&event_list_lock);
-
-	if (!free_event_list) {
-		tmp = wait_event_head;
-		wait_event_head = tmp->next;
-	}
-	else {
-		tmp = free_event_list;
-		free_event_list = tmp->next;
-	}
-
-	tmp->next = NULL;
-	tmp->event = *event;
-	if (wait_event_head) {
-		wait_event_tail->next = tmp;
-		wait_event_tail = tmp;
-	}
-	else {
-		wait_event_head = tmp;
-		wait_event_tail = tmp;
-	}
-
-	e_thread_mutex_unlock(&event_list_lock);
-}
-
 void egal_add_event_to_queue(GalEvent *event)
 {
 	if (event_queue) {
@@ -163,7 +134,7 @@ void egal_add_event_to_queue(GalEvent *event)
 				|| event->type == GAL_ET_EXPOSE
 				|| event->type == GAL_ET_WHEELFORWARD
 				|| event->type == GAL_ET_WHEELBACKWARD) {
-			add_async_list(event);
+			egal_add_async_event_to_queue(event);
 		}
 		else {
 #ifdef WIN32
@@ -219,22 +190,30 @@ eint egal_get_event_from_queue(GalEvent *event)
 void egal_add_async_event_to_queue(GalEvent *event)
 {
 	//eint semval;
+	struct EventList *tmp;
 
 	e_thread_mutex_lock(&event_list_lock);
-	if (free_event_list) {
-		struct EventList *tmp = free_event_list;
-		free_event_list = tmp->next;
-		tmp->next = NULL;
-		tmp->event = *event;
-		if (wait_event_head) {
-			wait_event_tail->next = tmp;
-			wait_event_tail = tmp;
-		}
-		else {
-			wait_event_head = tmp;
-			wait_event_tail = tmp;
-		}
+
+	if (!free_event_list) {
+		tmp = wait_event_head;
+		wait_event_head = tmp->next;
 	}
+	else {
+		tmp = free_event_list;
+		free_event_list = tmp->next;
+	}
+
+	tmp->next = NULL;
+	tmp->event = *event;
+	if (wait_event_head) {
+		wait_event_tail->next = tmp;
+		wait_event_tail = tmp;
+	}
+	else {
+		wait_event_head = tmp;
+		wait_event_tail = tmp;
+	}
+
 	e_thread_mutex_unlock(&event_list_lock);
 
 	//e_sem_getvalue(&event_list_sem, &semval);
