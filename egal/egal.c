@@ -127,14 +127,52 @@ ebool egal_wait_event(GalEvent *event)
 	return etrue;
 }
 
+static void add_async_list(GalEvent *event)
+{
+	struct EventList *tmp;
+
+	e_thread_mutex_lock(&event_list_lock);
+
+	if (!free_event_list) {
+		tmp = wait_event_head;
+		wait_event_head = tmp->next;
+	}
+	else {
+		tmp = free_event_list;
+		free_event_list = tmp->next;
+	}
+
+	tmp->next = NULL;
+	tmp->event = *event;
+	if (wait_event_head) {
+		wait_event_tail->next = tmp;
+		wait_event_tail = tmp;
+	}
+	else {
+		wait_event_head = tmp;
+		wait_event_tail = tmp;
+	}
+
+	e_thread_mutex_unlock(&event_list_lock);
+}
+
 void egal_add_event_to_queue(GalEvent *event)
 {
-	if (event_queue)
+	if (event_queue) {
+		if (event->type == GAL_ET_MOUSEMOVE 
+				|| event->type == GAL_ET_EXPOSE
+				|| event->type == GAL_ET_WHEELFORWARD
+				|| event->type == GAL_ET_WHEELBACKWARD) {
+			add_async_list(event);
+		}
+		else {
 #ifdef WIN32
 		e_queue_write_try(event_queue, (ePointer)event, sizeof(GalEvent));
 #else
 		e_queue_write_wait(event_queue, (ePointer)event, sizeof(GalEvent));
 #endif
+		}
+	}
 }
 
 eint egal_get_event_from_queue(GalEvent *event)
@@ -184,7 +222,7 @@ eint egal_get_event_from_queue(GalEvent *event)
 
 void egal_add_async_event_to_queue(GalEvent *event)
 {
-	eint semval;
+	//eint semval;
 
 	e_thread_mutex_lock(&event_list_lock);
 	if (free_event_list) {

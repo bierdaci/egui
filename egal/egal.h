@@ -10,7 +10,7 @@
 #include <egal/font.h>
 #include <egal/types.h>
 
-#define EVENT_QUEUE_MAX		20
+#define EVENT_QUEUE_MAX		15
 
 eint egal_init(eint, char *const[]);
 ebool egal_wait_event(GalEvent *);
