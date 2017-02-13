@@ -167,9 +167,9 @@ void egal_add_event_to_queue(GalEvent *event)
 		}
 		else {
 #ifdef WIN32
-		e_queue_write_try(event_queue, (ePointer)event, sizeof(GalEvent));
+			e_queue_write_try(event_queue, (ePointer)event, sizeof(GalEvent));
 #else
-		e_queue_write_wait(event_queue, (ePointer)event, sizeof(GalEvent));
+			e_queue_write_wait(event_queue, (ePointer)event, sizeof(GalEvent));
 #endif
 		}
 	}
@@ -188,14 +188,10 @@ eint egal_get_event_from_queue(GalEvent *event)
 #else
 	n = e_queue_read_wait(event_queue, (ePointer)event, sizeof(GalEvent));
 #endif
-	if (n > 0 && (event->type == GAL_ET_RESIZE || event->type == GAL_ET_EXPOSE)) {
+	if (n > 0 && event->type == GAL_ET_EXPOSE) {
 		while (e_queue_seek(event_queue, (ePointer)&t, 0, sizeof(GalEvent))) {
 			if (t.type != event->type || event->window != t.window)
 				break;
-			if (event->type == GAL_ET_RESIZE) {
-				e_queue_read(event_queue, (ePointer)&t, sizeof(GalEvent));
-				continue;
-			}
 			if (event->type == GAL_ET_EXPOSE) {
 				eint x1 = event->e.expose.rect.x + event->e.expose.rect.w - 1;
 				eint y1 = event->e.expose.rect.y + event->e.expose.rect.h - 1;
