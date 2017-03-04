@@ -1,6 +1,6 @@
 #include "egal.h"
 
-#define EVENT_LIST_MAX  1
+#define EVENT_LIST_MAX  2
 static struct EventList {
 	GalEvent event;
 	struct EventList *next;	
@@ -131,9 +131,7 @@ void egal_add_event_to_queue(GalEvent *event)
 {
 	if (event_queue) {
 		if (event->type == GAL_ET_MOUSEMOVE 
-				|| event->type == GAL_ET_EXPOSE
-				|| event->type == GAL_ET_WHEELFORWARD
-				|| event->type == GAL_ET_WHEELBACKWARD) {
+				|| event->type == GAL_ET_EXPOSE) {
 			egal_add_async_event_to_queue(event);
 		}
 		else {
@@ -180,6 +178,12 @@ eint egal_get_event_from_queue(GalEvent *event)
 					e_queue_read(event_queue, (ePointer)event, sizeof(GalEvent));
 					continue;
 				}
+			}
+			else if (event->type == GAL_ET_WHEELFORWARD) {
+				e_queue_read(event_queue, (ePointer)&t, sizeof(GalEvent));
+			}
+			else if (event->type == GAL_ET_WHEELBACKWARD) {
+				e_queue_read(event_queue, (ePointer)&t, sizeof(GalEvent));
 			}
 			break;
 		}

@@ -31,7 +31,7 @@ struct _PixbufContext {
 	eint w, h;
 	eint negative;
 
-	euint32 rowbytes;
+	eint32 rowbytes;
 	euint32 shift_w, shift_h;
 	efloat  x_scale, y_scale;
 	euint32 ny;
