@@ -17,9 +17,9 @@ static eint timer_test_cb(eTimer timer, euint n, ePointer data)
 
 static eint show_clicked(eHandle hobj, ePointer data)
 {
+	GalRect rc = {100, 0, 100, 30};
 	GuiWidget *wid = GUI_WIDGET_DATA(win);
 	timer = e_timer_add(300, timer_test_cb, data);
-	GalRect rc = {100, 0, 100, 30};
 	egal_set_foreground(wid->pb, 0);
 	egui_draw_strings(wid->drawable, wid->pb, 0, _("hello world"), &rc, LF_VCenter);
 	rc.x = 350;

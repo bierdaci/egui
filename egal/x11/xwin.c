@@ -39,7 +39,7 @@ static eGeneType x11_genetype_drawable(void);
 static eGeneType x11_genetype_surface(void);
 
 static void x11_drawable_init(GalDrawable, Window, eint, eint, eint);
-static GalWindow   x11_wait_event(GalEvent *, ebool);
+static eint x11_get_event(GalEvent *, ebool);
 static GalWindow   x11_window_new(GalWindowAttr *);
 static GalDrawable x11_drawable_new(eint, eint, ebool);
 static GalImage   *x11_image_new(eint, eint, ebool);
@@ -360,7 +360,7 @@ int x11_wmananger_init(GalWindowManager *wm)
 		return -1;
 	}
 
-	wm->wait_event   = x11_wait_event;
+	wm->get_event    = x11_get_event;
 	wm->window_new   = x11_window_new;
 	wm->image_new    = x11_image_new;
 	wm->image_free   = x11_image_free;
@@ -565,7 +565,7 @@ static ebool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 }
 
 static void x11_get_pointer(GalWindow, eint *, eint *, eint *, eint *, GalModifierType *);
-static GalWindow x11_wait_event(GalEvent *gent, ebool recv)
+static eint x11_get_event(GalEvent *gent, ebool recv)
 {
 	XEvent xent;
 
@@ -594,16 +594,14 @@ static GalWindow x11_wait_event(GalEvent *gent, ebool recv)
 						XSendEvent(x11_dpy, xent.xany.window, efalse, xmask, &xent);
 					}
 				}
-				return gent->window;
+				return 1;
 			}
 		}
 	}
 
-	usleep(10000);
-	gent->type   = GAL_ET_TIMEOUT;
-	gent->window = root_window;
+	usleep(1000);
 #endif
-	return gent->window;
+	return 0;
 }
 
 static ebool x11_create_child_window(GalWindowX11 *);
@@ -611,6 +609,7 @@ static void x11_list_add(GalWindowX11 *parent, GalWindowX11 *child)
 {
 	e_thread_mutex_lock(&parent->lock);
 	list_add_tail(&child->list, &parent->child_head);
+	child->parent = parent;
 	e_thread_mutex_unlock(&parent->lock);
 }
 
@@ -620,6 +619,7 @@ static void x11_list_del(GalWindowX11 *xwin)
 	if (parent) {
 		e_thread_mutex_lock(&parent->lock);
 		list_del(&xwin->list);
+		xwin->parent = NULL;
 		e_thread_mutex_unlock(&parent->lock);
 	}
 }
@@ -800,7 +800,6 @@ static eint x11_window_put(GalWindow win1, GalWindow win2, eint x, eint y)
 
 	child->x = x;
 	child->y = y;
-	child->parent = parent;
 	x11_list_add(parent, child);
 	if (parent->xid != 0 && child->xid == 0)
 		x11_create_window(parent, child);
@@ -860,7 +859,7 @@ static eint x11_window_remove(GalWindow window)
 	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
 	if (xwin->xid)
 		XUnmapWindow(x11_dpy, xwin->xid);
-	xwin->parent = NULL;
+	x11_list_del(xwin);
 	return 0;
 }
 

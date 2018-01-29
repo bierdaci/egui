@@ -8,7 +8,6 @@
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 
 typedef enum {efalse = 0, etrue = 1} ebool;
-typedef signed long				elong;
 typedef signed short			eint16;
 typedef signed int				eint;
 typedef signed int				eint32;
@@ -21,20 +20,30 @@ typedef signed   char		eint8;
 typedef unsigned char		euint8;
 typedef unsigned short		euint16;
 typedef unsigned int 		euint32;
-typedef unsigned long		eulong;
 typedef unsigned short		eushort;
 
 #ifdef WIN32
 
+#include <BaseTsd.h>
+
 #define INLINE
+
+typedef SSIZE_T				elong;
+typedef SIZE_T				eulong;
 typedef __int64				eint64;
 typedef __int64				ellong;
 typedef unsigned __int64	euint64;
 typedef unsigned __int64	eullong;
+typedef SIZE_T				eHandle;
 
 #elif linux
 
+#include <stdio.h>
+
 #define INLINE inline
+typedef ssize_t				elong;
+typedef size_t				eulong;
+typedef size_t				eHandle;
 typedef long long			eint64;
 typedef long long			ellong;
 typedef unsigned long long	euint64;
@@ -43,7 +52,11 @@ typedef unsigned long long	eullong;
 #endif
 
 typedef unsigned int		euint;
+#ifdef _WIN64
+typedef double				efloat;
+#else
 typedef float				efloat;
+#endif
 typedef double				edouble;
 typedef void				evoid;
 
@@ -54,7 +67,6 @@ typedef euint 				eunichar;
 #endif
 typedef signed int 			essize;
 
-typedef unsigned long		eHandle;
 typedef void *				ePointer;
 typedef const void *		eConstPointer;
 

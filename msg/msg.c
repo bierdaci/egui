@@ -69,7 +69,7 @@ typedef struct {
 } TransferStatus;
 
 static eint sfd;
-static euint SIG_RECV_MSG = 0;
+static eHandle SIG_RECV_MSG = 0;
 static eHandle fri_clist  = 0;
 static eTimer  sys_timer  = 0;
 static euint   sys_count  = 0;
@@ -109,7 +109,6 @@ static eint append_text_cb(eHandle hobj, eint type, ePointer data)
 {
 	echar *msg = data;
 	view_text_append(hobj, msg, e_strlen(msg));
-	e_free(msg);
 	return 0;
 }
 
@@ -535,11 +534,11 @@ void ui_recv_realmsg(const char *name, const char *msg)
 		UserProfile *user = ibar->add_data;
 		if (user->cwin && GUI_STATUS_VISIBLE(user->chat)) {
 			echar *buf = e_malloc(MAX_MESSAGE + MAX_USERNAME + 2);
-
 			e_strcpy(buf, _(name ));
 			e_strcat(buf, _(":\n"));
 			e_strcat(buf, _(msg  ));
 			egui_signal_emit2(user->cwin->view_text, SIG_RECV_MSG, 0, buf);
+			e_free(buf);
 		}
 		else {
 			eint  size = strlen(name) + 2 + strlen(msg);
@@ -1228,6 +1227,8 @@ static void login_account_dlg(void)
 	eHandle dlg, vbox, frame, vbox1, hbox, label, entry1, entry2, bn;
 
 	dlg = egui_window_new(GUI_WINDOW_TOPLEVEL);
+	//e_signal_connect(dlg, SIG_DESTROY, egui_quit);
+
 	egui_box_set_border_width(dlg, 5);
 
 	vbox = egui_vbox_new();

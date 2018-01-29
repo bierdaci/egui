@@ -55,10 +55,11 @@ GalFont egal_default_font(void)
 	if (!font) {
 #ifdef WIN32
 		if (stat("config", &st) == 0) {
+			eConfig *conf = e_conf_open(_("config"));
 #else
 		if (stat("./.config", &st) == 0) {
-#endif
 			eConfig *conf = e_conf_open(_("./.config"));
+#endif
 			font = egal_font_load(e_conf_get_val(conf, _("font"), _("default")));
 			e_conf_destroy(conf);
 		}

@@ -226,41 +226,60 @@ static void do_private_event(GalEvent *event)
 	}
 }
 
+static void dispatch_event(GalEvent *event)
+{
+	esig_t signal;
+	eHandle hobj;
+
+	e_timer_loop();
+
+	if (event->window == 0)
+		return;
+
+	if (event->type == GAL_ET_PRIVATE
+			|| event->type == GAL_ET_PRIVATE_SAFE) {
+		do_private_event(event);
+		return;
+	}
+
+	hobj = egal_window_get_attachment(event->window);
+	if (hobj == 0)
+		return;
+
+	signal = event_to_signal(event);
+	if (signal == SIG_EXPOSE) {
+		egui_update_rect(hobj, &event->e.expose.rect);
+	}
+	else if (signal != 0) {
+		if (signal == SIG_KEYDOWN &&
+				event->e.key.state &&
+				is_accel_key(hobj, &event->e.key))
+			return;
+		e_signal_emit(hobj, signal, &event->e);
+	}
+}
+
 int egui_main()
 {
-	GalEvent event;
-	esig_t   signal;
+	Queue *queue;
+	GalEvent e;
+	int n, i;
 
 	egal_event_init();
 
-	while (egal_wait_event(&event)) {
+	queue = e_queue_new(sizeof(GalEvent) * 100);
+	if (!queue)
+		return -1;
 
-		e_timer_loop();
-
-		if (event.window == 0)
-			continue;
-
-		if (event.type == GAL_ET_PRIVATE) {
-			do_private_event(&event);
-		}
-		else if (event.type != GAL_ET_TIMEOUT) {
-			eHandle hobj = egal_window_get_attachment(event.window);
-			if (hobj == 0)
-				continue;
-
-			signal = event_to_signal(&event);
-			if (signal == SIG_EXPOSE)
-				egui_update_rect(hobj, &event.e.expose.rect);
-			else if (signal != 0) {
-				if (signal == SIG_KEYDOWN &&
-						event.e.key.state &&
-						is_accel_key(hobj, &event.e.key))
-					continue;
-
-				e_signal_emit(hobj, signal, &event.e);
-			}
+	while ((n = egal_wait_event(queue)) > 0) {
+		for (i = 0; i < n; i++) {
+			e_queue_read(queue, &e, sizeof(GalEvent));
+			if (e.type == GAL_ET_QUIT)
+				exit(0);
+			dispatch_event(&e);
 		}
 	}
+
 	return 0;
 }
 
@@ -271,49 +290,49 @@ void egui_quit(void)
 	event.type   = GAL_ET_QUIT;
 	event.window = 0;
 
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 void egui_signal_emit(eHandle hobj, esig_t sig)
 {
 	GalEvent event;
-	event.type   = GAL_ET_PRIVATE;
+	event.type   = GAL_ET_PRIVATE_SAFE;
 	event.window = hobj;
 	event.private_type = GUI_ASYNC_SIGNAL;
 	event.e.private.args[0] = (eHandle)sig;
 	event.e.private.args[1] = (eHandle)0;
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 void egui_signal_emit1(eHandle hobj, esig_t sig, ePointer args)
 {
 	GalEvent event;
-	event.type   = GAL_ET_PRIVATE;
+	event.type   = GAL_ET_PRIVATE_SAFE;
 	event.window = hobj;
 	event.private_type = GUI_ASYNC_SIGNAL;
 	event.e.private.args[0] = (eHandle)sig;
 	event.e.private.args[1] = (eHandle)1;
 	event.e.private.args[2] = (eHandle)args;
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 void egui_signal_emit2(eHandle hobj, esig_t sig, ePointer args1, ePointer args2)
 {
 	GalEvent event;
-	event.type   = GAL_ET_PRIVATE;
+	event.type   = GAL_ET_PRIVATE_SAFE;
 	event.window = hobj;
 	event.private_type = GUI_ASYNC_SIGNAL;
 	event.e.private.args[0] = (eHandle)sig;
 	event.e.private.args[1] = (eHandle)2;
 	event.e.private.args[2] = (eHandle)args1;
 	event.e.private.args[3] = (eHandle)args2;
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 void egui_signal_emit3(eHandle hobj, esig_t sig, ePointer args1, ePointer args2, ePointer args3)
 {
 	GalEvent event;
-	event.type   = GAL_ET_PRIVATE;
+	event.type   = GAL_ET_PRIVATE_SAFE;
 	event.window = hobj;
 	event.private_type = GUI_ASYNC_SIGNAL;
 	event.e.private.args[0] = (eHandle)sig;
@@ -321,13 +340,13 @@ void egui_signal_emit3(eHandle hobj, esig_t sig, ePointer args1, ePointer args2,
 	event.e.private.args[2] = (eHandle)args1;
 	event.e.private.args[3] = (eHandle)args2;
 	event.e.private.args[4] = (eHandle)args3;
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 void egui_signal_emit4(eHandle hobj, esig_t sig, ePointer args1, ePointer args2, ePointer args3, ePointer args4)
 {
 	GalEvent event;
-	event.type   = GAL_ET_PRIVATE;
+	event.type   = GAL_ET_PRIVATE_SAFE;
 	event.window = hobj;
 	event.private_type = GUI_ASYNC_SIGNAL;
 	event.e.private.args[0] = (eHandle)sig;
@@ -336,7 +355,7 @@ void egui_signal_emit4(eHandle hobj, esig_t sig, ePointer args1, ePointer args2,
 	event.e.private.args[3] = (eHandle)args2;
 	event.e.private.args[4] = (eHandle)args3;
 	event.e.private.args[5] = (eHandle)args4;
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 static eint get_key_state(const echar *buf, eint len, GalKeyState *state)
@@ -565,7 +584,7 @@ void egui_update_rect_async(eHandle hobj, GalRect *prc)
 	event.e.private.args[2] = (eHandle)prc->w;
 	event.e.private.args[3] = (eHandle)prc->h;
 
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 void egui_update_async(eHandle hobj)
@@ -695,15 +714,14 @@ void egui_request_layout_async(eHandle hobj, eHandle cobj, eint req_w, eint req_
 	GalEvent event;
 
 	event.window = hobj;
-	event.type   = GAL_ET_PRIVATE;
+	event.type   = GAL_ET_PRIVATE_SAFE;
 	event.private_type = GUI_ASYNC_RELAYOUT;
 	event.e.private.args[0] = (eHandle)cobj;
 	event.e.private.args[1] = (eHandle)req_w;
 	event.e.private.args[2] = (eHandle)req_h;
 	event.e.private.args[3] = (eHandle)up;
 	event.e.private.args[4] = (eHandle)add;
-
-	egal_add_async_event_to_queue(&event);
+	egal_add_async_event(&event);
 }
 
 static void __request_layout_event(eHandle hobj, GalEvent *ent)

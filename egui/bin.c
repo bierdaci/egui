@@ -793,6 +793,7 @@ static void bin_put(eHandle pobj, eHandle cobj)
 		GuiBin    *cbin = GUI_BIN_DATA(cobj);
 		GuiWidget *ccw  = cbin->head;
 
+		cbin->enter = NULL;
 		while (ccw) {
 			GUI_WIDGET_ORDERS(cobj)->put(cobj, OBJECT_OFFSET(ccw));
 			ccw = ccw->next;

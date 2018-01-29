@@ -14,7 +14,7 @@ static GalPB w32_pb_new(GalDrawable, GalPBAttr *);
 static GalCursor w32_cursor_new(GalCursorType);
 static GalCursor w32_cursor_new_name(const echar *);
 static GalCursor w32_cursor_new_pixbuf(GalPixbuf *, eint, eint);
-static void w32_get_event(GalEvent *gent);
+static int  w32_get_event(GalEvent *gent);
 static void w32_image_free(GalImage *);
 static void w32_composite(GalDrawable, GalPB, int, int, GalDrawable, GalPB, int, int, int, int);
 static void w32_composite_image(GalDrawable, GalPB, int, int, GalImage *, int, int, int, int);
@@ -91,7 +91,6 @@ int w32_wmananger_init(GalWindowManager *wm)
 	xdraw->w = attributes.width;
 	xdraw->h = attributes.height;
 
-	wm->wait_event   = NULL;
 	wm->get_event    = w32_get_event;
 	wm->window_new   = w32_window_new;
 	wm->image_new    = w32_image_new;
@@ -150,7 +149,7 @@ static void check_mouse_leave(void)
 			gent.type = GAL_ET_LEAVE;
 			gent.window = OBJECT_OFFSET(top_enter);
 			top_enter = NULL;
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 		}
 	}
 
@@ -159,32 +158,33 @@ static void check_mouse_leave(void)
 		gent.window = find_window(hwnd);
 		if (gent.window) {
 			top_enter = W32_WINDOW_DATA(gent.window);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 		}
 	}
 }
 
-static void w32_get_event(GalEvent *gent)
+static int w32_get_event(GalEvent *gent, ebool recv)
 {
 	MSG msg;
 
 	check_mouse_leave();
+
 	if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	else {
-		//Sleep(1);
-		gent->type = GAL_ET_TIMEOUT;
-		egal_add_event_to_queue(gent);
-	}
+
+	return egal_size_event();
 }
 
 static void w32_list_add(GalWindow32 *parent, GalWindow32 *child)
 {
-	e_thread_mutex_lock(&parent->lock);
-	list_add_tail(&child->list, &parent->child_head);
-	e_thread_mutex_unlock(&parent->lock);
+	if (!child->parent) {
+		e_thread_mutex_lock(&parent->lock);
+		list_add_tail(&child->list, &parent->child_head);
+		child->parent = parent;
+		e_thread_mutex_unlock(&parent->lock);
+	}
 }
 
 static void w32_list_del(GalWindow32 *xwin)
@@ -193,6 +193,7 @@ static void w32_list_del(GalWindow32 *xwin)
 	if (parent) {
 		e_thread_mutex_lock(&parent->lock);
 		list_del(&xwin->list);
+		xwin->parent = NULL;
 		e_thread_mutex_unlock(&parent->lock);
 	}
 }
@@ -452,7 +453,7 @@ static int mouse_event_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			gent.window = w_grab_mouse;
 		else
 			gent.window = find_window(wnd);
-		egal_add_event_to_queue(&gent);
+		egal_add_event(&gent);
 		return 1;
 	}
 
@@ -483,7 +484,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				gent.window = w_grab_key;
 			else
 				gent.window = find_window(wnd);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			break;
 
 		case WM_KEYDOWN:
@@ -494,7 +495,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				gent.window = w_grab_key;
 			else
 				gent.window = find_window(wnd);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			break;
 
 		case WM_CHAR:
@@ -517,7 +518,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			POINT pt;
 			gent.type = GAL_ET_FOCUS_IN;
 			gent.window = find_window(wnd);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			GetCursorPos(&pt);
 			gent.e.mouse.root_x  = pt.x;
 			gent.e.mouse.root_y  = pt.y;
@@ -526,14 +527,14 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			gent.e.mouse.point.y = pt.y;
 			gent.e.mouse.state   = 0;
 			gent.type = GAL_ET_MOUSEMOVE;
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			break;
 		}
 
 		case WM_KILLFOCUS:
 			gent.type = GAL_ET_FOCUS_OUT;
 			gent.window = find_window(wnd);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			break;
 
 		case WM_PAINT:
@@ -547,7 +548,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			gent.e.expose.rect.w = ps.rcPaint.right - ps.rcPaint.left;
 			gent.e.expose.rect.h = ps.rcPaint.bottom - ps.rcPaint.top;
 			gent.window = find_window(wnd);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			break;
 		}
 
@@ -568,7 +569,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					gent.e.configure.rect.y = 0;
 					gent.e.configure.rect.w = w;
 					gent.e.configure.rect.h = h;
-					egal_add_event_to_queue(&gent);
+					egal_add_event(&gent);
 				}
 				else if (xwin->ntype != wParam) {
 					xwin->ntype = wParam;
@@ -576,7 +577,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						gent.type = GAL_ET_RESIZE;
 						gent.e.resize.w = w;
 						gent.e.resize.h = h;
-						egal_add_event_to_queue(&gent);
+						egal_add_event(&gent);
 					}
 				}
 			}
@@ -590,7 +591,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				gent.type = GAL_ET_RESIZE;
 				gent.e.resize.w = rect.right - rect.left + 1;
 				gent.e.resize.h = rect.bottom - rect.top + 1;
-				egal_add_event_to_queue(&gent);
+				egal_add_event(&gent);
 			}
 		break;
 
@@ -598,7 +599,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			gent.window = find_window(wnd);
 			if (gent.window) {
 				gent.type = GAL_ET_DESTROY;
-				egal_add_event_to_queue(&gent);
+				egal_add_event(&gent);
 			}
 		break;
 
@@ -627,11 +628,11 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					len -= sizeof(eHandle) * 7;
 					gent.e.imeinput.len = sizeof(eHandle) * 7;
 					memcpy(gent.e.imeinput.data, buf, sizeof(eHandle) * 7);
-					egal_add_event_to_queue(&gent);
+					egal_add_event(&gent);
 				}
 				gent.e.imeinput.len = len;
 				memcpy(gent.e.imeinput.data, buf, len);
-				egal_add_event_to_queue(&gent);
+				egal_add_event(&gent);
 			}
 			break;
 		}
@@ -689,7 +690,7 @@ static int  CALLBACK WinProcChild(HWND wnd, UINT msg, WPARAM wParam, LPARAM lPar
 					gent.e.configure.rect.y = 0;
 					gent.e.configure.rect.w = w;
 					gent.e.configure.rect.h = h;
-					egal_add_event_to_queue(&gent);
+					egal_add_event(&gent);
 				}
 			}
 			break;
@@ -705,7 +706,7 @@ static int  CALLBACK WinProcChild(HWND wnd, UINT msg, WPARAM wParam, LPARAM lPar
 			gent.e.expose.rect.w = ps.rcPaint.right - ps.rcPaint.left;
 			gent.e.expose.rect.h = ps.rcPaint.bottom - ps.rcPaint.top;
 			gent.window = find_window(wnd);
-			egal_add_event_to_queue(&gent);
+			egal_add_event(&gent);
 			break;
 		}
 		case WM_DESTROY:
@@ -806,7 +807,11 @@ static void makeCurrent32(GalWindow32 *win32)
 			pixelFormateDes.cColorBits = 32;
 			pixelFormateDes.cDepthBits = 32;
 			pixelFormateDes.iPixelType = PFD_TYPE_RGBA;
-			pixelFormateDes.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL| PFD_DOUBLEBUFFER;
+#if	_WIN64
+			pixelFormateDes.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+#else
+			pixelFormateDes.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+#endif
 		}
 		win32->hdc = GetDC(win32->hwnd);
 		SetPixelFormat(win32->hdc, ChoosePixelFormat(win32->hdc, &pixelFormateDes), &pixelFormateDes);
@@ -934,7 +939,6 @@ static eint w32_window_put(GalWindow win1, GalWindow win2, eint x, eint y)
 
 	child->x = x;
 	child->y = y;
-	child->parent = parent;
 	w32_list_add(parent, child);
 	if (parent->hwnd && !child->hwnd)
 		w32_create_window(parent, child);
@@ -1010,7 +1014,7 @@ static eint w32_window_remove(GalWindow window)
 		ShowWindow(xwin->hwnd, SW_HIDE);
 		SetParent(xwin->hwnd, w32_root->hwnd);
 	}
-	xwin->hwnd = NULL;
+	w32_list_del(xwin);
 	return 0;
 }
 
@@ -1620,7 +1624,7 @@ static eint w32_window_init(eHandle hobj, GalWindowAttr *attr)
 			|| xwin->attr.type == GalWindowTemp) {
 		if (!w32_create_window(w32_root, xwin))
 			return -1;
-		w32_list_add(w32_root, xwin);
+		//w32_list_add(w32_root, xwin);
 	}
 	else {
 		W32_DRAWABLE_DATA(hobj)->isdev = etrue;

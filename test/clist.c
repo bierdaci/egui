@@ -3,7 +3,6 @@
 
 #include <math.h>
 
-#include <X11/extensions/Xrender.h>
 
 static eint bn1_clicked(eHandle hobj, ePointer data)
 {
@@ -46,7 +45,8 @@ int main(int argc, char *const argv[])
 	eHandle win, vbox, hbox, lv, bn1, bn2, bn3;
 
 	const echar *titles[2] = {_("aaa"), _("bbb")};
-
+	int i;
+	char buf1[10], buf2[10];
 	egui_init(argc, argv);
 
 	win  = egui_window_new(GUI_WINDOW_TOPLEVEL);
@@ -80,8 +80,6 @@ int main(int argc, char *const argv[])
 	egui_add(vbox, hbox);
 	egui_add(win,  vbox);
 
-	int i;
-	char buf1[10], buf2[10];
 	for (i = 0; i < 21; i++) {
 		sprintf(buf1, "r%d", i);
 		sprintf(buf2, "s%d", i + 7);

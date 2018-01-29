@@ -38,6 +38,7 @@ int main(int argc, char *const argv[])
 	eHandle win, vbox, hbox, vbox1, text;
 	eHandle vscrollbar, hscrollbar;
 	eHandle hbox1, bn1, bn2, bn3, bn4;
+	FILE *infile;
 
 	egui_init(argc, argv);
 
@@ -86,7 +87,7 @@ int main(int argc, char *const argv[])
 	e_signal_connect1(bn3, SIG_CLICKED, bn_underlines, (ePointer)text);
 	e_signal_connect1(bn4, SIG_CLICKED, bn_hscrollbar, (ePointer)hscrollbar);
 
-	FILE *infile = fopen("a.c", "r");
+	infile = fopen("a.c", "r");
 	if (infile) {
 		echar buffer[1024];
 		eint nchars;

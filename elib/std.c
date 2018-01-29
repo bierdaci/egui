@@ -1,32 +1,94 @@
 #include <time.h>
-#define _GNU_SOURCE
 #include <string.h>
+#include <fcntl.h>
 #include "std.h"
 #include "elist.h"
 
 #ifdef WIN32
 
+echar *e_strcasestr(const echar *s1, const echar *s2)
+{
+	echar c, sc;
+	size_t len;
+
+	if ((c = *s2++) != 0) {
+		c = tolower((euchar)c);
+		len = e_strlen(s2);
+		do {
+			do {
+				if ((sc = *s1++) == 0)
+					return NULL;
+			} while ((echar)tolower((euchar)sc) != c);
+		} while (e_strncasecmp(s1, s2, len) != 0);
+		s1--;
+	}
+	return (echar *)s1;
+}
+
 //static FILE _iob0 = __iob_func()[0];
 //static FILE _iob1 = __iob_func()[1];
 //static FILE _iob2 = __iob_func()[2];
+#ifndef _WIN64
 FILE _iob[3] = {0, 0, 0};
-int gettimeofday(struct timeval *tp, void *tzp)
+#endif
+/*
+int gettimeofday(struct timeval *tp, struct timezone *tzp)
 {
-    time_t clock;
-    struct tm tm;
-    SYSTEMTIME wtm;
-    GetLocalTime(&wtm);
-    tm.tm_year = wtm.wYear - 1900;
-    tm.tm_mon  = wtm.wMonth - 1;
-    tm.tm_mday = wtm.wDay;
-    tm.tm_hour = wtm.wHour;
-    tm.tm_min  = wtm.wMinute;
-    tm.tm_sec  = wtm.wSecond;
-    tm.tm_isdst = -1;
-    clock = mktime(&tm);
-    tp->tv_sec = clock;
-    tp->tv_usec = wtm.wMilliseconds * 1000;
-    return 0;
+	FILETIME ft;
+	euint64 tmpres = 0;  
+	static int tzflag = 0; 
+
+
+	if (tp) {    
+#ifdef _WIN32_WCE
+		SYSTEMTIME st;
+		GetSystemTime(&st);
+		SystemTimeToFileTime(&st, &ft);
+#else
+		GetSystemTimeAsFileTime(&ft);
+#endif
+
+		tmpres |= ft.dwHighDateTime;   
+		tmpres <<= 32; 
+		tmpres |= ft.dwLowDateTime;
+		tmpres /= 10;
+		tmpres -= DELTA_EPOCH_IN_MICROSECS;
+
+		tp->tv_sec = (long)(tmpres / 1000000UL); 
+		tp->tv_usec = (long)(tmpres % 1000000UL); 
+	}
+
+	if (tzp) {   
+		if (!tzflag){
+#if !TSK_UNDER_WINDOWS_RT
+			_tzset();
+#endif
+			tzflag++;  
+		}   
+		tzp->tz_minuteswest = _timezone / 60;
+		tzp->tz_dsttime = _daylight;
+	}
+
+	return 0; 
+}
+*/
+int gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+	edouble f;
+	LARGE_INTEGER inter;
+	static eullong QuadPart = 0;
+	if (QuadPart == 0) {
+		LARGE_INTEGER freq;
+		QueryPerformanceFrequency(&freq);
+		QuadPart = freq.QuadPart;
+	}
+	QueryPerformanceCounter(&inter);
+	f = inter.QuadPart / (edouble)QuadPart;
+
+	tp->tv_sec = (long)f;
+	tp->tv_usec = (long)((f -  tp->tv_sec) * 1000000);
+
+	return 0;
 }
 
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
@@ -74,14 +136,34 @@ eint e_thread_mutex_destroy(e_thread_mutex_t *mutex)
 	return 0;
 }
 
+eint e_thread_rwlock_init(e_thread_rwlock_t *rwlock, e_thread_rwlockattr_t *attr)
+{
+#ifdef _WIN64
+	InitializeSRWLock(rwlock); 
+#else
+	*rwlock = CreateMutex(NULL, FALSE, NULL);
+#endif
+	return 0;
+}
+
 eint e_thread_rwlock_rdlock(e_thread_rwlock_t *rwlock)
 {
-	return -1;
+#ifdef _WIN64
+	AcquireSRWLockShared(rwlock);
+#else
+	WaitForSingleObject(*rwlock, INFINITE);
+#endif
+	return 0;
 }
 
 eint e_thread_rwlock_wrlock(e_thread_rwlock_t *rwlock)
 {
-	return -1;
+#ifdef _WIN64
+	AcquireSRWLockExclusive(rwlock);
+#else
+	WaitForSingleObject(*rwlock, INFINITE);
+#endif
+	return 0;
 }
 
 eint e_thread_rwlock_tryrdlock(e_thread_rwlock_t *rwlock)
@@ -94,17 +176,27 @@ eint e_thread_rwlock_trywrlock(e_thread_rwlock_t *rwlock)
 	return -1;
 }
 
-eint e_thread_rwlock_unlock(e_thread_rwlock_t *rwlock)
+eint e_thread_rwlock_rdunlock(e_thread_rwlock_t *rwlock)
 {
-	return -1;
+#ifdef _WIN64
+	ReleaseSRWLockShared(rwlock);
+#else
+	ReleaseMutex(*rwlock);
+#endif
+	return 0;
+}
+
+eint e_thread_rwlock_wrunlock(e_thread_rwlock_t *rwlock)
+{
+#ifdef _WIN64
+	ReleaseSRWLockExclusive(rwlock);
+#else
+	ReleaseMutex(*rwlock);
+#endif
+	return 0;
 }
 
 eint pthread_rwlock_destroy(e_thread_rwlock_t *rwlock)
-{
-	return -1;
-}
-
-eint pthread_rwlock_init(e_thread_rwlock_t *rwlock, e_thread_rwlockattr_t *attr)
 {
 	return -1;
 }
@@ -217,7 +309,186 @@ eint e_closedir(DIR *dir)
 	return 0;
 }
 
+int e_open_file(const char *filename, int flags)
+{
+	int create = OPEN_EXISTING;
+	int access = 0;
+	int mode   = 0;
+
+	if ((flags & 3) == O_RDONLY) {
+		access = GENERIC_READ;
+		mode = FILE_SHARE_READ;
+	}
+	else if ((flags & 3) == O_WRONLY) {
+		access = GENERIC_WRITE;
+		mode = FILE_SHARE_WRITE;
+	}
+	else if ((flags & 3) == O_RDWR) {
+		access = GENERIC_READ | GENERIC_WRITE;
+		mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+	}
+
+	if (flags & O_CREAT) {
+		if (flags & O_EXCL)
+			create = CREATE_NEW;
+		else
+			create = OPEN_ALWAYS;
+	}
+
+	if (flags & O_TRUNC)
+		create = TRUNCATE_EXISTING;
+
+	return (int)CreateFile(filename,
+	                      access,
+	                      mode,
+	                      NULL,
+	                      create,
+	                      FILE_ATTRIBUTE_NORMAL,
+	                      NULL);
+}
+
+void e_close_file(int fd)
+{
+	if ((HANDLE)fd != INVALID_HANDLE_VALUE)
+		CloseHandle((HANDLE)fd);
+}
+
+eMapHandle e_map_open_file(const char *filename, int flags)
+{
+	eFileMap *hmap = calloc(sizeof(eFileMap), 1);
+	int create = OPEN_EXISTING;
+	int access = 0;
+	int mode   = 0;
+
+	if ((flags & 3) == O_RDONLY) {
+		access = GENERIC_READ;
+		mode = FILE_SHARE_READ;
+	}
+	else if ((flags & 3) == O_WRONLY) {
+		access = GENERIC_WRITE;
+		mode = FILE_SHARE_WRITE;
+	}
+	else if ((flags & 3) == O_RDWR) {
+		access = GENERIC_READ | GENERIC_WRITE;
+		mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+	}
+
+	if (flags & O_CREAT) {
+		if (flags & O_EXCL)
+			create = CREATE_NEW;
+		else
+			create = OPEN_ALWAYS;
+	}
+
+	if (flags & O_TRUNC)
+		create = TRUNCATE_EXISTING;
+
+	hmap->fd = CreateFile(filename,
+	                      access,
+	                      mode,
+	                      NULL,
+	                      create,
+	                      FILE_ATTRIBUTE_NORMAL,
+	                      NULL);
+	return (eMapHandle)hmap;
+}
+
+void e_map_close(eMapHandle hmap)
+{
+	eFileMap *fm = (eFileMap *)hmap;
+	CloseHandle(fm->fd);
+}
+
+int e_map_read_file(eMapHandle hmap, void *buf, int size)
+{
+	int ret = 0;
+	eFileMap *fm = (eFileMap *)hmap;
+	if (!ReadFile(fm->fd, buf, size, &ret, NULL))
+		return -1;
+	return ret;
+}
+
+int e_map_write_file(eMapHandle hmap, void *buf, int size)
+{
+	int ret = 0;
+	eFileMap *fm = (eFileMap *)hmap;
+	if (!WriteFile(fm->fd, buf, size, &ret, NULL))
+		return -1;
+	return ret;
+}
+
+int e_map_seek(eMapHandle hmap, int offset, int whence)
+{
+	eFileMap *fm = (eFileMap *)hmap;
+	return SetFilePointer(fm->fd,offset, NULL, whence);
+}
+
+int e_map_get_size(eMapHandle hmap)
+{
+	eFileMap *fm = (eFileMap *)hmap;
+	return GetFileSize(fm->fd, NULL);
+}
+
+void *e_mmap(void *addr, size_t size, int prot, int flags, eMapHandle hmap, off_t offset)
+{
+	eFileMap *fm = (eFileMap *)hmap;
+	int access = 0;
+	int page;
+	
+	if (prot & 1) {
+		access |= FILE_MAP_READ;
+		page = PAGE_READONLY;
+	}
+
+	if (prot & 2) {
+		access |= FILE_MAP_WRITE;
+		page = PAGE_READWRITE;
+	}
+		
+	if (prot & 4)
+		access |= FILE_MAP_EXECUTE;
+
+	fm->map = CreateFileMapping(fm->fd,
+			NULL,
+			page,
+			0,
+			size,
+			NULL);
+
+	return MapViewOfFile(fm->map,
+			access,
+			offset,
+			0,
+			0);
+}
+
+int e_munmap(void *addr, size_t length)
+{
+	return UnmapViewOfFile(addr);
+}
+
+int e_socket_init(void)
+{
+	WORD sockVersion = MAKEWORD(2, 2);
+	WSADATA wsaData;
+	if (WSAStartup(sockVersion, &wsaData) != 0)
+		return -1;
+	return 0;
+}
+
+int e_socket_close(eSocket_t fd)
+{
+	return closesocket(fd);
+}
+
 #else
+
+#include <sys/stat.h>
+
+echar *e_strcasestr(const echar *s1, const echar *s2)
+{
+	return (echar *)strcasestr((const char *)s1, (const char *)s2);
+}
 
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
 {
@@ -275,6 +546,16 @@ eint e_thread_rwlock_trywrlock(e_thread_rwlock_t *rwlock)
 }
 
 eint e_thread_rwlock_unlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_unlock(rwlock);
+}
+
+eint e_thread_rwlock_rdunlock(e_thread_rwlock_t *rwlock)
+{
+	return pthread_rwlock_unlock(rwlock);
+}
+
+eint e_thread_rwlock_wrunlock(e_thread_rwlock_t *rwlock)
 {
 	return pthread_rwlock_unlock(rwlock);
 }
@@ -339,13 +620,69 @@ eint e_sem_getvalue(e_sem_t *sem, eint *val)
 	return sem_getvalue(sem, val);
 }
 
-#endif
-
-#if 0
-char *e_strrchr(const char *s, int c)
+int e_open_file(const char *filename, int flags)
 {
-	return strrchr(s, c);
+	return open(filename, flags, S_IWUSR | S_IRUSR);
 }
+
+void e_close_file(int fd)
+{
+	close(fd);
+}
+
+eMapHandle e_map_open_file(const char *name, int flags)
+{
+	return open(name, flags, S_IWUSR | S_IRUSR);
+}
+
+void e_map_close(eMapHandle fd)
+{
+	close(fd);
+}
+
+int e_map_read_file(eMapHandle hmap, void *buf, int size)
+{
+	return read(hmap, buf, size);
+}
+
+int e_map_write_file(eMapHandle hmap, void *buf, int size)
+{
+	return write(hmap, buf, size);
+}
+
+int e_map_seek(eMapHandle hmap, int offset, int whence)
+{
+	return lseek(hmap, offset, whence);
+}
+
+int e_map_get_size(eMapHandle hmap)
+{
+	struct stat st;
+	if (fstat(hmap, &st) < 0)
+		return -1;
+	return st.st_size;
+}
+
+void *e_mmap(void *addr, size_t length, int prot, int flags, eMapHandle fd, off_t offset)
+{
+	return mmap(addr, length, prot, flags, fd, offset);
+}
+
+int e_munmap(void *addr, size_t length)
+{
+	return munmap(addr, length);
+}
+
+int e_socket_init(void)
+{
+	return 1;
+}
+
+int e_socket_close(eSocket_t fd)
+{
+	return close(fd);
+}
+
 #endif
 
 echar** e_strsplit(const echar *str, const echar *delimiter, eint max)
@@ -407,27 +744,4 @@ void e_strfreev(echar **str_array)
 			e_free(str_array[i]);
 		e_free(str_array);
 	}
-}
-
-echar *e_strcasestr(const echar *s1, const echar *s2)
-{
-#ifdef WIN32
-	echar c, sc;
-	size_t len;
-
-	if ((c = *s2++) != 0) {
-		c = tolower((euchar)c);
-		len = e_strlen(s2);
-		do {
-			do {
-				if ((sc = *s1++) == 0)
-					return NULL;
-			} while ((echar)tolower((euchar)sc) != c);
-		} while (e_strncasecmp(s1, s2, len) != 0);
-		s1--;
-	}
-	return (echar *)s1;
-#else
-	return (echar *)strcasestr(s1, s2);
-#endif
 }

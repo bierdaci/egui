@@ -1,40 +1,54 @@
 #include <stdio.h>
 
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-
 #include <egui/egui.h>
 
 #include "image.h"
 
-static eint image_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
+#include <GL/glew.h>
+
+typedef float vec2_t[2];
+typedef float vec3_t[3];
+
+static float win_w, win_h;
+
+static eint win_expose(eHandle hobj, GuiWidget *wid, GalEventExpose *ent)
 {
-	glClearColor(1.0, 1.0, 1.0, 1.0);
+	vec2_t p1 = {10, 10};
+	vec2_t p2 = {100, 30};
+	vec2_t p3 = {50, 100};
+
+	glClearColor(0.0,0.0,0.0,0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-1., 1., -1., 1., 1., 20.);
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
+	glOrtho(0, win_w, win_h, 0, 0, 1);
 
-	glBegin(GL_QUADS);
-	glColor3f(1., 0., 0.); glVertex3f(-.75, -.75, 0.);
-	glColor3f(0., 1., 0.); glVertex3f( .75, -.75, 0.);
-	glColor3f(0., 0., 1.); glVertex3f( .75,  .75, 0.);
-	glColor3f(1., 1., 0.); glVertex3f(-.75,  .75, 0.);
+	glColor3f(1, 1, 1);
+
+	glBegin(GL_LINE_LOOP);
+	glVertex2fv(p1);
+	glVertex2fv(p2);
+	glVertex2fv(p3);
 	glEnd();
-	glFlush();
 
+	GalSwapBuffers();
+
+	return 0;
+}
+
+static eint win_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
+{
+	win_w = resize->w;
+	win_h = resize->h;
+	egui_make_GL(hobj);
+	glViewport(0, 0, win_w, win_h);
 	return 0;
 }
 
 int main(int argc, char *const argv[])
 {
-	eHandle win, vbox, image;
+	eHandle win, vbox, drawable;
 
 	egui_init(argc, argv);
 
@@ -47,11 +61,12 @@ int main(int argc, char *const argv[])
 	egui_box_set_spacing(vbox, 20);
 	egui_add(win, vbox);
 
-    image  = egui_image_new(500, 400);
-	egui_make_GL(image);
-	egui_add(vbox, image);
-	egui_set_focus(image);
-    e_signal_connect(image, SIG_EXPOSE, image_expose);
+    drawable  = egui_drawable_new(500, 400);
+	egui_make_GL(drawable);
+	egui_add(vbox, drawable);
+	egui_set_focus(drawable);
+    e_signal_connect(drawable, SIG_EXPOSE, win_expose);
+	e_signal_connect(drawable, SIG_RESIZE, win_resize);
 	
 	egui_main();
 

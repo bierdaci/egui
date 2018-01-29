@@ -12,6 +12,7 @@ static eint window_init(eHandle, eValist);
 static void window_init_orders(eGeneType, ePointer);
 
 static void window_add(eHandle, eHandle);
+static void window_remove(eHandle, eHandle);
 static void window_request_layout(eHandle, eHandle, eint, eint, ebool, ebool);
 static void window_move(eHandle hobj);
 static eint window_expose_bg(eHandle, GuiWidget *, GalEventExpose *);
@@ -179,6 +180,7 @@ static void window_init_orders(eGeneType new, ePointer this)
 	w->move           = window_move;
 	w->raise          = window_raise;
 	w->lower          = window_lower;
+	w->remove         = window_remove;
 	w->resize         = window_resize;
 	w->destroy        = window_destroy;
 	w->configure      = window_configure;
@@ -278,25 +280,19 @@ static eint window_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 {
 	GuiBox *box = GUI_BOX_DATA(hobj);
 
-#ifdef WIN32
-	ebool update = efalse;
-	if (wid->rect.w != resize->w || wid->rect.h != resize->h)
-		update = etrue;
-#endif
+	if (wid->rect.w != resize->w || wid->rect.h != resize->h) {
 
-	wid->rect.w = resize->w;
-	wid->rect.h = resize->h;
-	if (box->head) {
-		eHandle cobj = box->head->obj.hobj;
-		GUI_WIDGET_ORDERS(cobj)->request_resize(cobj,
-				resize->w - box->border_width * 2,
-				resize->h - box->border_width * 2);
-	}
+		wid->rect.w = resize->w;
+		wid->rect.h = resize->h;
+		if (box->head) {
+			eHandle cobj = box->head->obj.hobj;
+			GUI_WIDGET_ORDERS(cobj)->request_resize(cobj,
+					resize->w - box->border_width * 2,
+					resize->h - box->border_width * 2);
+		}
 
-#ifdef WIN32
-	if (update)
-#endif
 		egui_update(hobj);
+	}
 
 	return 0;
 }
@@ -348,7 +344,48 @@ static void window_add(eHandle hobj, eHandle cobj)
 
 		egal_window_resize(pw->window, pw->rect.w, pw->rect.h);
 		bin->focus = cobj;
+		bin->enter = 0;
 	}
+}
+
+static void remove_sub_window(eHandle hobj, GuiWidget *wid, GuiBin *bin)
+{
+	GuiWidget *cw;
+
+	if (!bin) return;
+
+	cw = bin->head;
+
+	while (cw) {
+		GuiBin *cb;
+
+		if (cw->window)
+			egal_window_remove(cw->window);
+		else if ((cb = GUI_BIN_DATA((OBJECT_OFFSET(cw)))))
+			remove_sub_window(OBJECT_OFFSET(cw), cw, cb);
+
+		cw = cw->next;
+	}
+}
+
+static void window_remove(eHandle pobj, eHandle cobj)
+{
+	GuiBin   *bin = GUI_BIN_DATA(pobj);
+	GuiWidget *cw = GUI_WIDGET_DATA(cobj);
+	GuiBox   *box = GUI_BOX_DATA(pobj);
+	
+	e_free(box->head);
+	box->head = NULL;
+
+	STRUCT_LIST_DELETE(bin->head, bin->tail, cw, prev, next);
+
+	if (!cw->window)
+		remove_sub_window(cobj, cw, GUI_BIN_DATA(cobj));
+	else
+		egal_window_remove(cw->window);
+
+	e_object_unref(pobj);
+	cw->parent = 0;
 }
 
 static void window_request_layout(eHandle hobj, eHandle cobj, eint req_w, eint req_h, ebool fixed, ebool add)

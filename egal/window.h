@@ -71,8 +71,7 @@ typedef enum {
 } GalPBFunc;
 
 struct _GalWindowManager {
-	GalWindow   (*wait_event)(GalEvent *, ebool);
-	void        (*get_event)(GalEvent *);
+	eint        (*get_event)(GalEvent *, ebool);
 	GalWindow   (*window_new)(GalWindowAttr *);
 	GalDrawable (*drawable_new)(eint, eint, ebool);
 	GalImage*   (*image_new)(eint, eint, ebool);
@@ -365,6 +364,7 @@ struct _GalSurface {
 typedef enum {
 	GAL_ET_QUIT,
 	GAL_ET_PRIVATE,
+	GAL_ET_PRIVATE_SAFE,
 	GAL_ET_CONFIGURE,
 	GAL_ET_RESIZE,
 	GAL_ET_EXPOSE,
@@ -535,8 +535,7 @@ void egal_window_set_attr(GalWindow, GalWindowAttr *);
 void egal_window_get_attr(GalWindow, GalWindowAttr *);
 void egal_window_get_origin(GalWindow, eint *, eint *);
 
-GalWindow egal_window_wait_event(GalEvent *, ebool);
-void egal_window_get_event(GalEvent *event);
+eint egal_window_get_event(GalEvent *event, ebool);
 eint egal_window_init(void);
 
 void egal_window_make_GL(GalWindow);

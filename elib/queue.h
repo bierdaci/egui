@@ -37,6 +37,7 @@ eint e_queue_write_wait(Queue *queue, ePointer buf, eint size);
 eint e_queue_read_wait(Queue *queue, ePointer buf, eint size);
 eint e_queue_write_try(Queue *queue, ePointer buf, eint size);
 eint e_queue_read_try(Queue *queue, ePointer buf, eint size);
+eint e_queue_throw(Queue *queue, eint size);
 eint e_queue_peek(Queue *queue, ePointer buf, eint size);
 eint e_queue_seek(Queue *queue, ePointer buf, eint offset, eint size);
 

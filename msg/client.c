@@ -923,6 +923,7 @@ static int args_ip(int argc, char * const argv[], struct sockaddr_in *seraddr)
 
 			seraddr->sin_family = AF_INET;
 			inet_pton(AF_INET, ip, &seraddr->sin_addr);
+			printf("%d\n", n);
 			if (n == 2)
 				seraddr->sin_port = htons(atoi(port));
 			else

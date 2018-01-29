@@ -151,12 +151,12 @@ static ePointer png_load_begin(void)
 		return NULL;
 	}
 
-	if (setjmp(lc->png_read_ptr->jmpbuf)) {
-		if (lc->png_info_ptr)
-			png_destroy_read_struct(&lc->png_read_ptr, NULL, NULL);
-		e_free(lc);
-		return NULL;
-	}
+	//if (setjmp(lc->png_read_ptr->jmpbuf)) {
+	//	if (lc->png_info_ptr)
+	//		png_destroy_read_struct(&lc->png_read_ptr, NULL, NULL);
+	//	e_free(lc);
+	//	return NULL;
+	//}
 
 	lc->png_info_ptr = png_create_info_struct(lc->png_read_ptr);
 
@@ -206,9 +206,9 @@ static ebool png_load_increment(ePointer context, const euchar *buf, png_size_t 
 	lc->last_pass_seen_in_chunk = -1;
 	lc->max_row_seen_in_chunk = -1;
 
-	if (setjmp(lc->png_read_ptr->jmpbuf))
-		return efalse;
-	else
+	//if (setjmp(lc->png_read_ptr->jmpbuf))
+	//	return efalse;
+	//else
 		png_process_data(lc->png_read_ptr, lc->png_info_ptr, (png_bytep)buf, size);
 
 	if (lc->fatal_error_occurred)
@@ -310,7 +310,7 @@ png_error_callback(png_structp png_read_ptr, png_const_charp error_msg)
 
 	lc->fatal_error_occurred = etrue;
 
-	longjmp(png_read_ptr->jmpbuf, 1);
+	//longjmp(png_read_ptr->jmpbuf, 1);
 }
 
 static void
@@ -364,11 +364,11 @@ static ebool png_load_header(GalPixbuf *pixbuf, ePointer data, euint len)
 #endif
 	if (!png_read_ptr) return efalse;
 
-	if (setjmp(png_read_ptr->jmpbuf)) {
-		if (png_info_ptr)
-			png_destroy_read_struct(&png_read_ptr, NULL, NULL);
-		return efalse;
-	}
+	//if (setjmp(png_read_ptr->jmpbuf)) {
+	//	if (png_info_ptr)
+	//		png_destroy_read_struct(&png_read_ptr, NULL, NULL);
+	//	return efalse;
+	//}
 
 	png_info_ptr = png_create_info_struct(png_read_ptr);
 	if (!png_info_ptr) {
@@ -396,296 +396,3 @@ void _gal_pixbuf_png_fill_vtable(GalPixbufModule *module)
 	//module->save = png_save;
 	//module->save_to_callback = png_save_to_callback;
 }
-
-#if 0
-static ebool
-png_text_to_pixbuf_option(png_text text_ptr, char **key, char **value)
-{
-	ebool is_ascii = etrue;
-	euint i;
-
-	for (i = 0; i < text_ptr.text_length; i++)
-		if (text_ptr.text[i] & 0x80) {
-			is_ascii = efalse;
-			break;
-		}
-
-	if (is_ascii)
-		*value = e_strdup(text_ptr.text);
-	else
-		*value = g_convert(text_ptr.text, -1, "UTF-8", "ISO-8859-1", NULL, NULL, NULL);
-
-	if (*value) {
-		*key = g_strconcat("tEXt::", text_ptr.key, NULL);
-		return etrue;
-	}
-	else {
-		//g_warning("Couldn't convert text chunk value to UTF-8.");
-		*key = NULL;
-		return efalse;
-	}
-}
-static void
-png_simple_error_callback(png_structp png_save_ptr, png_const_charp error_msg)
-{
-	//GError **error;
-
-	//error = png_get_error_ptr(png_save_ptr);
-
-	///* I don't trust libpng to call the error callback only once,
-	// * so check for already-set error
-	// */
-	//if (error && *error == NULL) {
-	//	g_set_error(error,
-	//			GDK_PIXBUF_ERROR,
-	//			GDK_PIXBUF_ERROR_FAILED,
-	//			_("Fatal error in PNG pixbuf file: %s"),
-	//			error_msg);
-	//}
-
-	longjmp(png_save_ptr->jmpbuf, 1);
-}
-
-static void
-png_simple_warning_callback(png_structp png_save_ptr, png_const_charp warning_msg)
-{
-}
-
-typedef struct {
-	GalPixbufSaveFunc save_func;
-	ePointer user_data;
-	GError **error;
-} SaveToFunctionIoPtr;
-
-static void
-png_save_to_callback_write_func(png_structp png_ptr, png_bytep data, png_size_t length)
-{
-	SaveToFunctionIoPtr *ioptr = png_get_io_ptr (png_ptr);
-
-	if (!ioptr->save_func((euchar *)data, length, ioptr->error, ioptr->user_data)) {
-		/* If save_func has already set an error, which it
-		   should have done, this won't overwrite it. */
-		png_error(png_ptr, "write function failed");
-	}
-}
-
-static void png_save_to_callback_flush_func(png_structp png_ptr)
-{
-}
-
-static ebool real_save_png(GalPixbuf *pixbuf, 
-		euchar           **keys,
-		euchar           **values,
-		ebool          to_callback,
-		FILE             *f,
-		GalPixbufSaveFunc save_func,
-		ePointer          user_data)
-{
-	png_structp png_ptr;
-	png_infop info_ptr;
-	png_textp text_ptr = NULL;
-	euchar *ptr;
-	euchar *pixels;
-	euint y;
-	euint i;
-	png_bytep row_ptr;
-	png_color_8 sig_bit;
-	euint w, h, rowstride;
-	euint has_alpha;
-	euint bpc;
-	euint num_keys;
-	euint compression = -1;
-	ebool success = etrue;
-	SaveToFunctionIoPtr to_callback_ioptr;
-
-	num_keys = 0;
-
-	if (keys && *keys) {
-		euchar **kiter = keys;
-		euchar **viter = values;
-
-		while (*kiter) {
-			if (strncmp (*kiter, "tEXt::", 6) == 0) {
-				euchar  *key = *kiter + 6;
-				euint     len = strlen (key);
-				if (len <= 1 || len > 79) {
-					g_set_error (error,
-							GDK_PIXBUF_ERROR,
-							GDK_PIXBUF_ERROR_BAD_OPTION,
-							_("Keys for PNG text chunks must have at least 1 and at most 79 characters."));
-					return efalse;
-				}
-				for (i = 0; i < len; i++) {
-					if ((euchar)key[i] > 127) {
-						printf("Keys for PNG text chunks must be ASCII characters.");
-						return efalse;
-					}
-				}
-				num_keys++;
-			} else if (strcmp (*kiter, "compression") == 0) {
-				char *endptr = NULL;
-				compression = strtol (*viter, &endptr, 10);
-
-				if (endptr == *viter) {
-					g_set_error(error,
-							GDK_PIXBUF_ERROR,
-							GDK_PIXBUF_ERROR_BAD_OPTION,
-							_("PNG compression level must be a value between 0 and 9; value '%s' could not be parsed."),
-							*viter);
-					return efalse;
-				}
-				if (compression < 0 || compression > 9) {
-					/* This is a user-visible error;
-					 * lets people skip the range-checking
-					 * in their app.
-					 */
-					g_set_error (error,
-							GDK_PIXBUF_ERROR,
-							GDK_PIXBUF_ERROR_BAD_OPTION,
-							_("PNG compression level must be a value between 0 and 9; value '%d' is not allowed."),
-							compression);
-					return efalse;
-				}
-			} else {
-				g_warning ("Unrecognized parameter (%s) passed to PNG saver.", *kiter);
-			}
-
-			++kiter;
-			++viter;
-		}
-	}
-
-	if (num_keys > 0) {
-		text_ptr = e_calloc(sizeof(png_text), num_keys);
-		for (i = 0; i < num_keys; i++) {
-			text_ptr[i].compression = PNG_TEXT_COMPRESSION_NONE;
-			text_ptr[i].key  = keys[i] + 6;
-			text_ptr[i].text = g_convert(values[i], -1, 
-					"ISO-8859-1", "UTF-8", 
-					NULL, &text_ptr[i].text_length, 
-					NULL);
-
-#ifdef PNG_iTXt_SUPPORTED 
-			if (!text_ptr[i].text) {
-				text_ptr[i].compression = PNG_ITXT_COMPRESSION_NONE;
-				text_ptr[i].text = e_strdup(values[i]);
-				text_ptr[i].text_length = 0;
-				text_ptr[i].itxt_length = e_strlen(text_ptr[i].text);
-				text_ptr[i].lang = NULL;
-				text_ptr[i].lang_key = NULL;
-			}
-#endif
-
-			if (!text_ptr[i].text) {
-				g_set_error (error,
-						GDK_PIXBUF_ERROR,
-						GDK_PIXBUF_ERROR_BAD_OPTION,
-						_("Value for PNG text chunk %s cannot be converted to ISO-8859-1 encoding."), keys[i] + 6);
-				num_keys = i;
-				for (i = 0; i < num_keys; i++)
-					e_free(text_ptr[i].text);
-				e_free(text_ptr);
-				return efalse;
-			}
-		}
-	}
-
-	bpc = gdk_pixbuf_get_bits_per_sample(pixbuf);
-	w = gdk_pixbuf_get_width(pixbuf);
-	h = gdk_pixbuf_get_height(pixbuf);
-	rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-	has_alpha = gdk_pixbuf_get_has_alpha(pixbuf);
-	pixels = gdk_pixbuf_get_pixels(pixbuf);
-
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
-			error,
-			png_simple_error_callback,
-			png_simple_warning_callback);
-	if (png_ptr == NULL) {
-		success = efalse;
-		goto cleanup;
-	}
-
-	info_ptr = png_create_info_struct (png_ptr);
-	if (info_ptr == NULL) {
-		success = efalse;
-		goto cleanup;
-	}
-	if (setjmp(png_ptr->jmpbuf)) {
-		success = efalse;
-		goto cleanup;
-	}
-
-	if (num_keys > 0) {
-		png_set_text(png_ptr, info_ptr, text_ptr, num_keys);
-	}
-
-	if (to_callback) {
-		to_callback_ioptr.save_func = save_func;
-		to_callback_ioptr.user_data = user_data;
-		to_callback_ioptr.error = error;
-		png_set_write_fn (png_ptr, &to_callback_ioptr,
-				png_save_to_callback_write_func,
-				png_save_to_callback_flush_func);
-	} else {
-		png_init_io(png_ptr, f);
-	}
-
-	if (compression >= 0)
-		png_set_compression_level(png_ptr, compression);
-
-	if (has_alpha) {
-		png_set_IHDR(png_ptr, info_ptr, w, h, bpc,
-				PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
-				PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-	} else {
-		png_set_IHDR(png_ptr, info_ptr, w, h, bpc,
-				PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-				PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-	}
-	sig_bit.red = bpc;
-	sig_bit.green = bpc;
-	sig_bit.blue = bpc;
-	sig_bit.alpha = bpc;
-	png_set_sBIT(png_ptr, info_ptr, &sig_bit);
-	png_write_info(png_ptr, info_ptr);
-	png_set_shift(png_ptr, &sig_bit);
-	png_set_packing(png_ptr);
-
-	ptr = pixels;
-	for (y = 0; y < h; y++) {
-		row_ptr = (png_bytep)ptr;
-		png_write_rows(png_ptr, &row_ptr, 1);
-		ptr += rowstride;
-	}
-
-	png_write_end(png_ptr, info_ptr);
-
-cleanup:
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-
-	if (num_keys > 0) {
-		for (i = 0; i < num_keys; i++)
-			e_free (text_ptr[i].text);
-		e_free(text_ptr);
-	}
-
-	return success;
-}
-
-static ebool
-png_save(FILE *f, GalPixbuf *pixbuf, euchar **keys, euchar **values)
-{
-	return real_save_png(pixbuf, keys, values, error, efalse, f, NULL, NULL);
-}
-
-static ebool
-png_save_to_callback(GalPixbufSaveFunc save_func,
-		ePointer           user_data,
-		GalPixbuf          *pixbuf, 
-		euchar          **keys,
-		euchar          **values)
-{
-	return real_save_png(pixbuf, keys, values, etrue, NULL, save_func, user_data);
-}
-#endif

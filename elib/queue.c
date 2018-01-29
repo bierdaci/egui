@@ -218,3 +218,32 @@ eint e_queue_seek(Queue *queue, ePointer buf, eint offset, eint size)
 
 	return retval;
 }
+
+eint e_queue_throw(Queue *queue, eint size)
+{
+	eint t = 0;
+
+	e_thread_mutex_lock(&queue->lock);
+
+	if (size > queue->len)
+		size = queue->len;
+
+	if (queue->pos + size > queue->size) {
+		eint n = queue->size - queue->pos;
+		queue->pos  = 0;
+		queue->len -= n;
+		size -= n;
+		t    += n;
+	}
+
+	queue->pos += size;
+	queue->len -= size;
+	t += size;
+
+	if (queue->len == 0)
+		queue->pos = 0;
+
+	e_thread_mutex_unlock(&queue->lock);
+
+	return t;
+}

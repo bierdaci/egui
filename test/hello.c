@@ -362,7 +362,7 @@ int main(int argc, char *const argv[])
 	label = egui_simple_label_new(_("Russian Block"));
 	egui_add(vbox, label);
 
-    image  = egui_image_new(_WIDTH * B_SIZE, _HIGH * B_SIZE);
+    image  = egui_drawable_new(_WIDTH * B_SIZE, _HIGH * B_SIZE);
 	egui_add(vbox, image);
 	egui_set_focus(image);
     e_signal_connect(image, SIG_EXPOSE, image_expose);
@@ -383,13 +383,6 @@ int main(int argc, char *const argv[])
   	bn = egui_button_new(80, 35);
 	e_signal_connect2(bn, SIG_CLICKED, bn_clicked, (ePointer)image, (ePointer)2);
 	egui_add(hbox, bn);
-   
-	img = egal_image_new_from_file("3.gif");
-	if(!img){
-		printf("...............load \"3.gif\" failed\n");
-		return 1;
-	}
-
 
     e_timer_add(100, timer_cb, 0);
 	cur_block = &t_block3;

@@ -10,17 +10,33 @@
 #include <sys/types.h>
 
 #ifdef WIN32
+
 #define _WIN32_WINNT	0x0500
+
 #include <windows.h>
 #include <io.h>
+
+#pragma comment(lib, "ws2_32.lib")
 
 #else
 
 #include <unistd.h>
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <dirent.h>
+#include <errno.h>
+#include <signal.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #endif
 
@@ -38,26 +54,40 @@ typedef va_list				eValist;
 
 #ifdef WIN32
 
+#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
+#define DELTA_EPOCH_IN_MICROSECS 11644473600000000Ui64
+#else
+#define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
+#endif
+
 struct timezone {
 	int tz_minuteswest;
 	int tz_dsttime;
 };
+
+int gettimeofday(struct timeval *tp, struct timezone *tzp);
 
 typedef struct {
 	HANDLE handle;
 	LONG value;
 } handle_sem_t;
 
-int gettimeofday(struct timeval *tp, void *tzp);
-
 #define e_thread_t				HANDLE
 #define e_thread_mutexattr_t	ePointer
 #define e_thread_rwlockattr_t	ePointer
 #define e_thread_mutex_t		handle_sem_t
-#define e_thread_rwlock_t		handle_sem_t
+//#define e_thread_rwlock_t		SRWLOCK
+#define e_thread_rwlock_t		HANDLE
 #define e_thread_cond_t			CRITICAL_SECTION
 #define e_thread_condattr_t		CRITICAL_SECTION
 #define e_sem_t					handle_sem_t
+
+#define PROT_READ	0x1
+#define PROT_WRITE	0x2
+#define PROT_EXEC	0x4
+
+#define MAP_SHARED	0x01
+#define MAP_PRIVATE	0x02
 
 enum {
     DT_UNKNOWN = 0,
@@ -89,16 +119,32 @@ struct dirent {
      echar  d_name[256];
 };
 
+typedef struct {
+	HANDLE fd;
+	HANDLE map;
+} eFileMap;
+
+typedef eHandle eMapHandle;
+typedef SOCKET eSocket_t;
+
 #define __dirfd(dp)    ((dp)->dd_fd)
-
+#ifndef _WIN64
 extern FILE _iob[3];
-
+#endif
 DIR *e_opendir(const echar *);
 struct dirent *e_readdir(DIR *);
 void e_rewinddir(DIR *);
 eint e_closedir(DIR *);
 
+static INLINE void e_sleep(int time)
+{
+	Sleep(time * 1000);
+}
+
 #else
+
+typedef int eSocket_t;
+typedef int eMapHandle;
 
 #define e_thread_t				pthread_t
 #define e_thread_mutexattr_t	pthread_mutexattr_t
@@ -129,7 +175,21 @@ static INLINE eint e_closedir(DIR *dir)
 	return closedir(dir);
 }
 
+#define e_sleep	sleep
+
 #endif
+int e_open_file(const char *filename, int flags);
+void e_close_file(int fd);
+eMapHandle e_map_open_file(const char *name, int flags);
+void e_map_close(eMapHandle fd);
+int  e_map_read_file(eMapHandle hmap, void *buf, int size);
+int  e_map_write_file(eMapHandle hmap, void *buf, int size);
+int  e_map_seek(eMapHandle hmap, int offset, int whence);
+int  e_map_get_size(eMapHandle hmap);
+void *e_mmap(void *addr, size_t length, int prot, int flags, eMapHandle fd, off_t offset);
+int  e_munmap(void *addr, size_t length);
+int  e_socket_init(void);
+int  e_socket_close(eSocket_t fd);
 
 eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg);
 eint e_thread_join(e_thread_t thread, void **retval);
@@ -145,6 +205,8 @@ eint e_thread_rwlock_wrlock(e_thread_rwlock_t *rwlock);
 eint e_thread_rwlock_tryrdlock(e_thread_rwlock_t *rwlock);
 eint e_thread_rwlock_trywrlock(e_thread_rwlock_t *rwlock);
 eint e_thread_rwlock_unlock(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_rdunlock(e_thread_rwlock_t *rwlock);
+eint e_thread_rwlock_wrunlock(e_thread_rwlock_t *rwlock);
 eint e_thread_cond_init(e_thread_cond_t *, e_thread_condattr_t *);
 eint e_thread_cond_broadcast(e_thread_cond_t *);
 eint e_thread_cond_wait(e_thread_cond_t *, e_thread_mutex_t *);

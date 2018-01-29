@@ -24,10 +24,10 @@ static eint clicked_new_window(eHandle hobj, ePointer data)
 {
 	static eHandle subwin = 0;
 	if (!subwin) {
-		subwin = egui_window_new(GUI_WINDOW_POPUP);
 		eHandle box = egui_vbox_new();
-		egui_add(subwin, box);
 		eHandle button = egui_button_new(80, 40);
+		subwin = egui_window_new(GUI_WINDOW_POPUP);
+		egui_add(subwin, box);
 		egui_add(box, button);
 		button = egui_button_new(80, 40);
 		egui_add(box, button);

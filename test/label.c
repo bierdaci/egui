@@ -6,8 +6,6 @@
 
 #include <math.h>
 
-#include <X11/extensions/Xrender.h>
-
 static void vbox_add_label(eHandle vbox, const echar *text)
 {
 	eHandle hbox, label;
@@ -33,7 +31,7 @@ static eint draw_expose_bg(eHandle hobj, GuiWidget *wid, GalEventExpose *exp)
 	GalRect *prc = &exp->rect;
 
 	if (!image)
-		image = egal_image_new_from_file(_("1.png"));
+		image = egal_image_new_from_file(_("1.jpg"));
 
 	egal_draw_image(wid->drawable, exp->pb, 
 			prc->x, prc->y,

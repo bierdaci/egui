@@ -398,17 +398,11 @@ GalCursor egal_cursor_new_pixbuf(GalPixbuf *pixbuf, eint x, eint y)
 	return 0;
 }
 
-GalWindow egal_window_wait_event(GalEvent *event, ebool recv)
-{
-	if (_gwm.wait_event)
-		return _gwm.wait_event(event, recv);
-	return 0;
-}
-
-void egal_window_get_event(GalEvent *event)
+eint egal_window_get_event(GalEvent *event, ebool recv)
 {
 	if (_gwm.get_event)
-		_gwm.get_event(event);
+		return _gwm.get_event(event, recv);
+	return 0;
 }
 
 #ifdef linux

@@ -13,6 +13,19 @@ else
 endif
 endif
 
-libelib_la_SOURCES = object.c queue.c std.c elist.c eutf8.c esignal.c etree.c memory.c timer.c xml.c conf.c $(marshal_SOURCES)
+libelib_la_SOURCES = \
+	object.c \
+	queue.c \
+	std.c \
+	elist.c \
+	eutf8.c \
+	esignal.c \
+	etree.c \
+	memory.c \
+	timer.c \
+	xml.c \
+	stack.c \
+	conf.c \
+	$(marshal_SOURCES)
 
 ## widget_la_LIBADD = $(libe)

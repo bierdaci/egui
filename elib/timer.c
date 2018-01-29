@@ -191,7 +191,11 @@ static ePointer thread_timer_handler(ePointer data)
 			timer->msec = timer->msec % timer->interval;
 		}
 		else {
+#ifdef WIN32
+			Sleep(timer->interval - timer->msec);
+#else
 			usleep((timer->interval - timer->msec) * 1000 - timer->remain);
+#endif
 		}
 
 		gettimeofday(&tp, &tzp);

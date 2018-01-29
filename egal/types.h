@@ -3,28 +3,13 @@
 
 #ifdef WIN32
 #include <ewinconfig.h>
+#pragma comment(lib, "msimg32.lib") 
+#pragma comment(lib, "imm32.lib")
 #else
 #include <econfig.h>
 #endif
 
 #include <elib/types.h>
-
-#ifdef _GAL_SUPPORT_OPENGL
-
-#ifdef WIN32
-#define _WIN32_WINNT	0x0500
-#include <windows.h>
-#include <io.h>
-#include <gl/gl.h>
-#pragma comment(lib,"opengl32.lib")
-#pragma comment(lib, "msimg32.lib")
-#pragma comment(lib, "imm32.lib")
-#elif linux
-#include <GL/glx.h>
-#include <GL/glu.h>
-#endif
-
-#endif
 
 typedef euint eGlyph;
 typedef struct _GalPoint   GalPoint;

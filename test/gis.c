@@ -4,6 +4,18 @@
 
 #include <egui/egui.h>
 
+#define GLEW_STATIC
+
+#include <GL/glew.h>
+/*
+#pragma comment(lib, "glew32s.lib")
+#pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "elib.lib")
+#pragma comment(lib, "egal.lib")
+#pragma comment(lib, "egui.lib")
+#pragma comment(lib, "libpng.lib")
+#pragma comment(lib, "jpeg.lib")
+*/
 static GalCursor cursor;
 static void path_node_reset(void);
 
@@ -833,6 +845,6 @@ int main(int argc, char *const argv[])
 	//gis_load_mif("mif\\river4", 1, 0, 1);
 	//gis_load_mif("mif\\bou1_4_poly", 1, 0, 1);
 	egui_main();
-
+//	FT_Glyph_To_Bitmap(NULL, 0, NULL, 0);
 	return 0;
 }

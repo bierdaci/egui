@@ -4909,7 +4909,7 @@ eint e_gb2312_char_len(euchar *str)
 	return 2;
 }
 
-int e_gb2312_strlen(euchar *str)
+int e_gb2312_strlen(euchar *str, essize max)
 {
 	int i, j;
 
