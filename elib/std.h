@@ -238,7 +238,7 @@ void e_strfreev(echar **str_array);
 #define e_renew(type, ptr, nmemb)  e_realloc(ptr, sizeof(type) * nmemb)
 #define ALIGN_WORD(size) ((size + sizeof(elong) - 1) & ~(sizeof(elong) - 1))
 
-static INLINE ePointer e_malloc(euint size)
+static INLINE void *e_malloc(euint size)
 {
 	if (!size)
 		return NULL;

@@ -786,11 +786,17 @@ ePointer e_genetype_orders(eGeneType gene, eGeneType type)
 	return ((eGene *)gene)->orders_base + node->info.orders_offset;
 }
 
+static void cell_init_orders(eGeneType new, ePointer this)
+{
+	((eCellOrders *)this)->free  = e_free;
+	((eCellOrders *)this)->alloc = e_malloc;;
+}
+
 eGeneType e_genetype_cell(void)
 {
 	static eDnaNode node;
 	static eGene    gene      = {NULL};
-	static eCellOrders orders = {NULL, NULL};
+	static eCellOrders orders = {NULL, NULL, NULL, NULL, NULL, NULL};
 
 	if (gene.nodes == NULL) {
 		node.id          = 0;
@@ -802,7 +808,7 @@ eGeneType e_genetype_cell(void)
 		node.info.orders_size = sizeof(eCellOrders);
 		node.info.init_data   = NULL;
 		node.info.free_data   = NULL;
-		node.info.init_orders = NULL;
+		node.info.init_orders = cell_init_orders;
 		node.info.object_offset = sizeof(eObject) + sizeof(ePointer);
 		node.info.orders_offset = 0;
 
@@ -885,9 +891,9 @@ void e_object_unref(eHandle hobj)
 		abort();
 
 	if (--obj->ref_count == 0) {
-		e_signal_emit(hobj, SIG_FREE);
+		e_signal_emit(hobj, SIG_RELEASE);
 		call_node_free(obj, obj->gene->nodes, obj->gene->node_num - 1);
-		e_free(obj);
+		ors->free(obj);
 	}
 }
 
@@ -962,7 +968,8 @@ static eHandle object_new_valist(eGene *gene, eValist vp)
 	eCellOrders *ors = (eCellOrders *)gene->orders_base;
 	eObject     *obj;
 
-	obj = e_calloc(sizeof(eObject) + gene->object_size, 1);
+	obj = ors->alloc(sizeof(eObject) + gene->object_size);
+	memset(obj, 0, sizeof(eObject) + gene->object_size);
 	obj->gene = gene;
 	e_thread_mutex_init(&obj->slot_lock, NULL);
 

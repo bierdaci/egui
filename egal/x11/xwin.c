@@ -2214,7 +2214,7 @@ static GalCursor x11_cursor_new_pixbuf(GalPixbuf *pixbuf, eint x, eint y)
 
 	if (x < 0 || x >= pixbuf->w)
 		return 0;
-	if (y < y || y >= pixbuf->h)
+	if (y < 0 || y >= pixbuf->h)
 		return 0;
 
 	xcimage = create_cursor_image(pixbuf, x, y);

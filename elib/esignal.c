@@ -2,7 +2,7 @@
 #include "esignal.h"
 #include "list.h"
 
-esig_t SIG_FREE;
+esig_t SIG_RELEASE;
 
 static eTree *signal_tree = NULL;
 #ifdef WIN32
@@ -513,8 +513,8 @@ void e_signal_init(void)
 #ifdef WIN32
 	e_thread_mutex_init(&signal_lock, NULL);
 #endif
-	SIG_FREE = e_signal_new("free",
+	SIG_RELEASE = e_signal_new("release",
 			GTYPE_CELL,
-			STRUCT_OFFSET(eCellOrders, free),
+			STRUCT_OFFSET(eCellOrders, release),
 			efalse, 0, NULL);
 }

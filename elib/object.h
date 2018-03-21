@@ -99,10 +99,12 @@ struct _eCell {
 };
 
 struct _eCellOrders {
-	void (*refer)(eHandle);
-	void (*unref)(eHandle);
-	eint (* init)(eHandle, eValist vp);
-	void (* free)(eHandle);
+	void  (*refer)(eHandle);
+	void  (*unref)(eHandle);
+	eint  (* init)(eHandle, eValist vp);
+	void  (*release)(eHandle);
+	void *(*alloc)(euint size);
+	void  (* free)(void *);
 };
 
 eGeneType e_genetype_cell(void);

@@ -50,7 +50,7 @@ struct _eSignalSlot {
 	ePointer  data4;
 };
 
-extern esig_t SIG_FREE;
+extern esig_t SIG_RELEASE;
 
 esig_t e_signal_new(const char *, eGeneType, euint32, ebool, eSignalType, const char *, ...);
 esig_t e_signal_new_label(const char *, eGeneType, const char *, ...);
