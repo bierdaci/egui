@@ -332,8 +332,16 @@ static eint entry_imeinput(eHandle hobj, GalEventImeInput *ent)
 static eint entry_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 {
 	GuiEntry *entry = GUI_ENTRY_DATA(hobj);
-	eint cw = entry->offsets[entry->s_ioff].x;
+	eint cw;
 
+	if (entry->font == 0) {
+		entry->font = egal_default_font();
+		set_cursor_pos(hobj, entry, entry->s_ioff);
+		entry->old_w = wid->rect.w;
+		return 0;
+	}
+
+	cw = entry->offsets[entry->s_ioff].x;
 	if (resize->w > entry->old_w && entry->offset_x > 0) {
 		if (entry->total_w - entry->offset_x < resize->w) {
 			entry->offset_x = entry->total_w - resize->w + 1;

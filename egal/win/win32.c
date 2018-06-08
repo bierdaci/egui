@@ -75,6 +75,7 @@ int w32_wmananger_init(GalWindowManager *wm)
 
 	w32_tree = e_tree_new(w32_compare_func);
 	e_thread_mutex_init(&tree_lock, NULL);
+
 	e_thread_mutex_init(&enter_create_lock, NULL);
 	e_thread_mutex_init(&wait_create_lock, NULL);
 	e_thread_mutex_lock(&wait_create_lock);
@@ -109,13 +110,13 @@ int w32_wmananger_init(GalWindowManager *wm)
 
 static GalWindow find_window(HWND hwnd)
 {
-	GalWindow window;
+	 GalWindow window;
 
-	e_thread_mutex_lock(&tree_lock);
-	window = (GalWindow)e_tree_lookup(w32_tree, (eConstPointer)hwnd);
-	e_thread_mutex_unlock(&tree_lock);
+	 e_thread_mutex_lock(&tree_lock);
+	 window = (GalWindow)e_tree_lookup(w32_tree, (eConstPointer)hwnd);
+	 e_thread_mutex_unlock(&tree_lock);
 
-	return window;
+	 return window;
 }
 
 static void check_mouse_leave(void)
@@ -452,7 +453,7 @@ static int mouse_event_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (w_grab_mouse)
 			gent.window = w_grab_mouse;
 		else
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 		egal_add_event(&gent);
 		return 1;
 	}
@@ -469,6 +470,16 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	switch (msg)
 	{
+		case WM_CREATE:
+		{
+			GalWindow window = (GalWindow)((CREATESTRUCT *)lParam)->lpCreateParams;
+			SetWindowLongPtr(wnd, GWLP_USERDATA, (LONG_PTR)window);
+			e_thread_mutex_lock(&tree_lock);
+			e_tree_insert(w32_tree, (ePointer)wnd, (ePointer)window);
+			e_thread_mutex_unlock(&tree_lock);
+		}
+		break;
+
 		case WM_INPUTLANGCHANGE:
 			break;
 
@@ -483,7 +494,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (w_grab_key)
 				gent.window = w_grab_key;
 			else
-				gent.window = find_window(wnd);
+				gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			egal_add_event(&gent);
 			break;
 
@@ -494,7 +505,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (w_grab_key)
 				gent.window = w_grab_key;
 			else
-				gent.window = find_window(wnd);
+				gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			egal_add_event(&gent);
 			break;
 
@@ -517,7 +528,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			POINT pt;
 			gent.type = GAL_ET_FOCUS_IN;
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			egal_add_event(&gent);
 			GetCursorPos(&pt);
 			gent.e.mouse.root_x  = pt.x;
@@ -533,7 +544,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case WM_KILLFOCUS:
 			gent.type = GAL_ET_FOCUS_OUT;
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			egal_add_event(&gent);
 			break;
 
@@ -547,7 +558,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			gent.e.expose.rect.y = ps.rcPaint.top;
 			gent.e.expose.rect.w = ps.rcPaint.right - ps.rcPaint.left;
 			gent.e.expose.rect.h = ps.rcPaint.bottom - ps.rcPaint.top;
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			egal_add_event(&gent);
 			break;
 		}
@@ -556,35 +567,22 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_SIZE:
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			if (gent.window) {
 				GalWindow32 *xwin = W32_WINDOW_DATA(gent.window);
 				int w = LOWORD(lParam);
 				int h = HIWORD(lParam);
-				if (xwin->is_configure < 1) {
-					xwin->ntype = wParam;
-					xwin->is_configure++;
-					gent.type = GAL_ET_CONFIGURE;
-					gent.e.configure.rect.x = 0;
-					gent.e.configure.rect.y = 0;
-					gent.e.configure.rect.w = w;
-					gent.e.configure.rect.h = h;
+				if (w > 0 && h > 0) {
+					gent.type = GAL_ET_RESIZE;
+					gent.e.resize.w = w;
+					gent.e.resize.h = h;
 					egal_add_event(&gent);
-				}
-				else if (xwin->ntype != wParam) {
-					xwin->ntype = wParam;
-					if (w > 0 && h > 0) {
-						gent.type = GAL_ET_RESIZE;
-						gent.e.resize.w = w;
-						gent.e.resize.h = h;
-						egal_add_event(&gent);
-					}
 				}
 			}
 		break;
 
 		case WM_SIZING:
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			if (gent.window) {
 				RECT rect;
 				GetClientRect(wnd, &rect);
@@ -596,7 +594,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 		case WM_CLOSE:
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			if (gent.window) {
 				gent.type = GAL_ET_DESTROY;
 				egal_add_event(&gent);
@@ -606,7 +604,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_GETMINMAXINFO:
 		{
 			PMINMAXINFO minfo = (PMINMAXINFO)lParam;
-			eHandle window = find_window(wnd);
+			eHandle window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			if (minfo && window) {
 				GalWindow32 *xwin = W32_WINDOW_DATA(window);
 				minfo->ptMinTrackSize.x = xwin->min_w;
@@ -618,7 +616,7 @@ static int  CALLBACK WinProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_IME_COMPOSITION:
 		{
 			HIMC himc = ImmGetContext(wnd);
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			if (gent.window && himc && (lParam & GCS_RESULTSTR)) {
 				euchar buf[128];
 				int len = ImmGetCompositionString(himc, GCS_RESULTSTR, NULL, 0);
@@ -677,19 +675,26 @@ static int  CALLBACK WinProcChild(HWND wnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 	switch (msg)
 	{
+		case WM_CREATE:
+		{
+			GalWindow window = (GalWindow)((CREATESTRUCT *)lParam)->lpCreateParams;
+			SetWindowLongPtr(wnd, GWLP_USERDATA, (LONG_PTR)window);
+			e_thread_mutex_lock(&tree_lock);
+			e_tree_insert(w32_tree, (ePointer)wnd, (ePointer)window);
+			e_thread_mutex_unlock(&tree_lock);
+		}
+		break;
+
 		case WM_SIZE:
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			if (gent.window) {
 				GalWindow32 *xwin = W32_WINDOW_DATA(gent.window);
 				int w = LOWORD(lParam);
 				int h = HIWORD(lParam);
-				if (!xwin->is_configure) {
-					xwin->is_configure = TRUE;
-					gent.type = GAL_ET_CONFIGURE;
-					gent.e.configure.rect.x = 0;
-					gent.e.configure.rect.y = 0;
-					gent.e.configure.rect.w = w;
-					gent.e.configure.rect.h = h;
+				if (w > 0 && h > 0) {
+					gent.type = GAL_ET_RESIZE;
+					gent.e.resize.w = w;
+					gent.e.resize.h = h;
 					egal_add_event(&gent);
 				}
 			}
@@ -705,7 +710,7 @@ static int  CALLBACK WinProcChild(HWND wnd, UINT msg, WPARAM wParam, LPARAM lPar
 			gent.e.expose.rect.y = ps.rcPaint.top;
 			gent.e.expose.rect.w = ps.rcPaint.right - ps.rcPaint.left;
 			gent.e.expose.rect.h = ps.rcPaint.bottom - ps.rcPaint.top;
-			gent.window = find_window(wnd);
+			gent.window = GetWindowLongPtr(wnd, GWLP_USERDATA);
 			egal_add_event(&gent);
 			break;
 		}
@@ -869,26 +874,20 @@ static ebool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 		    parent->hwnd,
 		    NULL,
 		    hmodule,
-		    (void *)window);
-
-#ifdef _GAL_SUPPORT_OPENGL
-	if (currentGL.win == child)
-		makeCurrent32(child);
-#endif
-
-	e_thread_mutex_lock(&tree_lock);
-	e_tree_insert(w32_tree, (ePointer)child->hwnd, (ePointer)window);
-	e_thread_mutex_unlock(&tree_lock);
+		    (LPVOID)window);
 
 	if (child->attr.type == GalWindowChild)
 		EnableWindow(child->hwnd, FALSE);
-
-	w32_create_child_window(child);
 
 	if (child->attr.visible)
 		ShowWindow(child->hwnd, SW_SHOWNORMAL);
 	else
 		ShowWindow(child->hwnd, SW_HIDE);
+
+#ifdef _GAL_SUPPORT_OPENGL
+	if (currentGL.win == child)
+		makeCurrent32(child);
+#endif
 
 	if (child->attr.wclass == GAL_INPUT_OUTPUT) {
 		GalDrawable32 *xdraw = W32_DRAWABLE_DATA(window);
@@ -898,6 +897,8 @@ static ebool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 		xdraw->handle   = child->hwnd;
 		xdraw->depth    = depth;
 	}
+
+	w32_create_child_window(child);
 
 	return etrue;
 }
@@ -920,6 +921,7 @@ static void w32_destory_window(GalWindow32 *xwin)
 	e_thread_mutex_lock(&tree_lock);
 	e_tree_remove(w32_tree, (ePointer)xwin->hwnd);
 	e_thread_mutex_unlock(&tree_lock);
+
 #ifdef _GAL_SUPPORT_OPENGL
 	if (xwin->hdc) {
 		wglDeleteContext(xwin->hrc);
@@ -940,8 +942,9 @@ static eint w32_window_put(GalWindow win1, GalWindow win2, eint x, eint y)
 	child->x = x;
 	child->y = y;
 	w32_list_add(parent, child);
-	if (parent->hwnd && !child->hwnd)
+	if (parent->hwnd && !child->hwnd) {
 		w32_create_window(parent, child);
+	}
 	else if (parent->hwnd && child->hwnd && parent->hwnd != child->hwnd) {
 		SetParent(child->hwnd, parent->hwnd);
 		MoveWindow(child->hwnd, child->x, child->y, child->w, child->h, TRUE);

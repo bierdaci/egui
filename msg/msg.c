@@ -1207,7 +1207,7 @@ static eint clicked_login_account(eHandle hobj, ePointer data)
 	passwd[n] = 0;
 	if (main_window((char *)name, (char *)passwd) < 0)
 		return -1;
-	e_signal_emit(dlg, SIG_DESTROY);
+	egui_hide(dlg, efalse);
 	return 0;
 }
 
@@ -1227,7 +1227,7 @@ static void login_account_dlg(void)
 	eHandle dlg, vbox, frame, vbox1, hbox, label, entry1, entry2, bn;
 
 	dlg = egui_window_new(GUI_WINDOW_TOPLEVEL);
-	//e_signal_connect(dlg, SIG_DESTROY, egui_quit);
+	e_signal_connect(dlg, SIG_DESTROY, egui_quit);
 
 	egui_box_set_border_width(dlg, 5);
 

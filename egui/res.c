@@ -101,7 +101,7 @@ ePointer egui_res_find_item(GuiResItem *item, const echar *name)
 		e_strcpy(path, res_path);
 	}
 	else if (stat("./res/", &st) == 0) {
-		res_path = _("./res");
+		res_path = _("./res/");
 		e_strcpy(path, res_path);
 	}
 	else {

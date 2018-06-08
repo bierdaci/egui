@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-#include <X11/extensions/Xrender.h>
+//#include <X11/extensions/Xrender.h>
 
 static GalImage *image = NULL;
 static GalPixbuf *pixbuf1, *pixbuf2 = NULL;
@@ -56,7 +56,8 @@ int main(int argc, char *const argv[])
 	eHandle win, label, btn1, btn2, btn3, vscrollbar, hscrollbar;
 	eHandle scrwin, fixed;
 	GalPixbuf pixbuf;
-
+	float f = 1.5;
+	GalPB pb;
 	egui_init(argc, argv);
 
 	win   = egui_window_new(GUI_WINDOW_TOPLEVEL);
@@ -100,10 +101,10 @@ int main(int argc, char *const argv[])
 
 	//egal_pixbuf_composite(pixbuf1, 450, 450, pixbuf.w * 2, pixbuf.h * 2, pixbuf2, 0, 0, 1.0, 1.0, PIXOPS_INTERP_HYPER);
 
-	float f = 1.5;
+
 	pixbuf1 = egal_pixbuf_new_from_file(_("1.jpg"), f, f);
 	image = egal_image_new_from_pixbuf(pixbuf1);
-	GalPB pb = egal_pb_new(GUI_WIDGET_DATA(fixed)->drawable, NULL);
+	pb = egal_pb_new(GUI_WIDGET_DATA(fixed)->drawable, NULL);
 	//egal_draw_image(GUI_WIDGET_DATA(fixed)->window, pb, 0, 0, image, 0, 0, image->w, image->h);
 	e_signal_connect(fixed, SIG_EXPOSE_BG, test_expose_bg);
 

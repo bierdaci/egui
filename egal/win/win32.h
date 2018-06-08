@@ -31,7 +31,6 @@ struct _GalWindow32 {
 	GalCursor cursor;
 	BOOL is_enter;
 	BOOL is_configure;
-	DWORD ntype;
 #ifdef _GAL_SUPPORT_OPENGL
 	HDC hdc;
 	HGLRC hrc;

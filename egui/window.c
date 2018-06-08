@@ -281,9 +281,9 @@ static eint window_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 	GuiBox *box = GUI_BOX_DATA(hobj);
 
 	if (wid->rect.w != resize->w || wid->rect.h != resize->h) {
-
 		wid->rect.w = resize->w;
 		wid->rect.h = resize->h;
+
 		if (box->head) {
 			eHandle cobj = box->head->obj.hobj;
 			GUI_WIDGET_ORDERS(cobj)->request_resize(cobj,

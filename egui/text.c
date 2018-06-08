@@ -571,8 +571,16 @@ static eint text_resize(eHandle hobj, GuiWidget *wid, GalEventResize *resize)
 {
 	GuiText *text = GUI_TEXT_DATA(hobj);
 
-	if (text->font == 0)
+	if (text->font == 0) {
+		text->font  = egal_default_font();
+		text->hline = egal_font_height(text->font) + text->spacing;
+		text->table_w = get_space_width(text->font)  * text->space_mul;
+		if (text->nchar == 0)
+			text_line_insert(text, _("\n"), 1);
+		text_wrap(hobj, text);
+		text_cursor_setpos(hobj, text, text->line_head, NULL, 0, etrue);	
 		return 0;
+	}
 
 	wid->rect.w  = resize->w;
 	wid->rect.h  = resize->h;

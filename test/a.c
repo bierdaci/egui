@@ -1,13 +1,109 @@
-发信人: ruilinbupt (), 信区: WarCraft 
-标  题: 僵尸老克城墙德上传说第一 
-发信站: 水木社区 (Fri Nov 28 10:39:13 2014), 站内 
-  
-  
-这个赛季用这套德也非常偶然，遇到一个德5胜的任务，拿咆哮德做的时候被猎爹各种教育，从4级掉到了6级，就换了这套城墙德，结果胜率很不错，一路很顺利的打上了传说，看着胜率不错，就有了冲一冲排名的想法，期间打到过一次第2，4连胜未能渡劫后一路连败掉到了2000多，还好最后稳扎稳打又打回来了，昨晚一波13连胜直接从20名打到第一，运气比较好，2-1 2连胜就渡劫了，第一次上传说也是用德，打到传说第一也是德，看来德还真是我的福星职业 
-卡组和最近流行的墙德比较像，但是我放弃了炎术师和血法，带了蓝龙增加中期强度，僵尸和老克是卡组中的绝对mvp，打猎人前期摸到僵尸就很稳，打慢速职业基本有1/3是靠老克赚一波卡差赢的 
-卡组的优势对抗是打法师，猎人，战士，打咆哮德也是优势，打萨满，奇迹贼，术士是劣势对抗，和牧师55开，骑士打的太少不好说 
-优势对抗好打，这里说说我对劣势对抗的理解吧 
-打术士，打动物园没什么好说的，就看双方抽的怎么样了，总体来说劣势。打大王术也是劣势对抗，我看xingsu直播墙德打大王术的时候都是拼命抢血打，我的思路不太一样。其实大王术如果没有大王的话卡组质量是挺低的，能打的仆从只有10个左右，而我们的卡组能打的仆从有20个，只要术士变不了大王，那么我们完全可以跟术士打牌库，一直仆从的交换，术士其实是换不过的，我们的目标就是和术士拖，僵尸是这里的mvp卡，靠着僵尸的送血，术士血线下不去，红巨人就上不来，平白少了2个战斗力，然后尽量场面给压力，逼迫术士用虹吸来解场，总之就是尽量让术士血线高，然后场面上保持1-2怪的压力，什么时候摸到蘑菇就可以压低血线抢一波了，不过这种打法的前提是术士前期节奏不要太快，那种4 5费连续巨人，德又没摸到王牌的对局基本赢不了 
-打奇迹贼，核心就是能在5费之前骗出闷棍来，5费前怪被闷，只会亏节奏，不会亏血，5费之后再被闷的话往往就又亏节奏又亏血了，所以前期拿激活换闷棍是很划算的，只要贼的闷棍交得早，后期的墙能让贼来仆从交换的话，贼的输出很可能不够 
-打萨满，其实就看谁能站住场了，蘑菇是这里对抗的核心卡，德打萨满最大的问题就是怪上场就被解，完全没有输出，最后被图腾压死。蘑菇在这里就很强，比较好的场面是场上站住了一个怪的时候，后手压一个蘑菇，这样逼迫萨满下回合只能做仆从交换，比较可以抢回节奏，蓝龙不要轻易上，有时候法强横扫可以救你一命，还有记住萨满的呱和震击的用量，用的差不多了就可以上510大树了 
-最后说一句，用德的话一定要有一颗祈祷起手成长激活，7费准时知识树的心！ 
+#include <stdio.h>
+
+#include <egui/egui.h>
+#include <egal/pixbuf.h>
+
+
+static void bn_insert_text(eHandle hobj, ePointer data)
+{
+	const echar *str = _("\n.....浣犲ソ鍟婏紝鎴戜滑 濂絓n鍝堜繚鍝堝搱........\n");
+	egui_insert_text((eHandle)data, str, e_strlen(str));
+}
+
+static void bn_clear_text(eHandle hobj, ePointer data)
+{
+	//static ebool only = efalse;
+	//only = !only;
+	//egui_text_set_only_read((eHandle)data, only);
+	egui_text_clear((eHandle)data);
+}
+
+static eint bn_underlines(eHandle hobj, ePointer data)
+{
+	egui_text_set_underline((eHandle)data);
+	return 0;
+}
+
+static eint bn_hscrollbar(eHandle hobj, ePointer data)
+{
+	if (GUI_STATUS_VISIBLE(data))
+		egui_hide((eHandle)data, etrue);
+	else
+		egui_show((eHandle)data, etrue);
+	return 0;
+}
+
+int main(int argc, char *const argv[])
+{
+	eHandle win, vbox, hbox, vbox1, text;
+	eHandle vscrollbar, hscrollbar;
+	eHandle hbox1, bn1, bn2, bn3, bn4;
+	FILE *infile;
+
+	egui_init(argc, argv);
+
+	win  = egui_window_new(GUI_WINDOW_TOPLEVEL);
+	egui_request_resize(win, 500, 500);
+	e_signal_connect(win, SIG_DESTROY, egui_quit);
+	vbox = egui_vbox_new();
+	egui_box_set_align(vbox, BoxAlignEnd);
+	egui_box_set_spacing(vbox, 10);
+	egui_box_set_layout(vbox, BoxLayout_SPREAD);
+	egui_set_expand(vbox, etrue);
+
+	vbox1 = egui_vbox_new();
+	egui_set_expand(vbox1, etrue);
+	text = egui_text_new(400, 400);
+	vscrollbar = egui_vscrollbar_new(etrue);
+	hscrollbar = egui_hscrollbar_new(etrue);
+	egui_hook_v(text, vscrollbar);
+
+	egui_add(vbox1, text);
+	egui_add(vbox1, hscrollbar);
+
+	hbox = egui_hbox_new();
+	egui_set_expand(hbox, etrue);
+
+	egui_add(hbox, vbox1);
+	egui_add(hbox, vscrollbar);
+
+	hbox1 = egui_hbox_new();
+	egui_box_set_spacing(hbox1, 10);
+	bn1 = egui_label_button_new(_("insert"));
+	bn2 = egui_label_button_new(_("clear"));
+	bn3 = egui_label_button_new(_("unline"));
+	bn4 = egui_label_button_new(_("hide_h"));
+	egui_add(hbox1, bn1);
+	egui_add(hbox1, bn2);
+	egui_add(hbox1, bn3);
+	egui_add(hbox1, bn4);
+
+	egui_add(vbox, hbox);
+	egui_add(vbox, hbox1);
+	egui_add(win, vbox);
+
+	e_signal_connect1(bn1, SIG_CLICKED, bn_insert_text, (ePointer)text);
+	e_signal_connect1(bn2, SIG_CLICKED, bn_clear_text, (ePointer)text);
+	e_signal_connect1(bn3, SIG_CLICKED, bn_underlines, (ePointer)text);
+	e_signal_connect1(bn4, SIG_CLICKED, bn_hscrollbar, (ePointer)hscrollbar);
+
+	infile = fopen("a.c", "r");
+	if (infile) {
+		echar buffer[1024];
+		eint nchars;
+
+		while (1) {
+			nchars = fread(buffer, 1, 1024, infile);
+			egui_text_append(text, buffer, nchars);
+
+			if (nchars < 1024)
+				break;
+		}
+
+		fclose(infile);
+	}
+
+	egui_main();
+
+	return 0;
+}

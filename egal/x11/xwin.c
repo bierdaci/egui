@@ -84,7 +84,6 @@ struct _GalWindowX11 {
 	GalWindowX11 *parent;
 	Window xid;
 	GalCursor cursor;
-	ebool is_configure;
 
 	list_t list;
 	list_t child_head;
@@ -411,7 +410,6 @@ static int translate_key(XKeyEvent *event)
 	return -1;
 }
 
-
 static ebool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 {
 	switch (event->type) {
@@ -431,27 +429,14 @@ static ebool x11_predicate(Display *display, XEvent *event, GalEvent *ent)
 		{
 			XConfigureEvent *e = &event->xconfigure;
 			GalWindowX11 *xwin = X11_WINDOW_DATA(x11_find_gwin(event->xany.window));
-			if (!xwin->is_configure) {
-				xwin->is_configure = etrue;
-				ent->type = GAL_ET_CONFIGURE;
-				ent->e.configure.rect.x = e->x;
-				ent->e.configure.rect.y = e->y;
-				ent->e.configure.rect.w = e->width;
-				ent->e.configure.rect.h = e->height;
-			}
-			else {
-				if (xwin->attr.type != GalWindowChild) {
 #ifdef _GAL_SUPPORT_CAIRO
-					GalSurfaceX11 *xface =
-						X11_SURFACE_DATA(X11_DRAWABLE_DATA(OBJECT_OFFSET(xwin))->surface);
-					cairo_xlib_surface_set_size(xface->surface, e->width, e->height);
+			GalSurfaceX11 *xface =
+				X11_SURFACE_DATA(X11_DRAWABLE_DATA(OBJECT_OFFSET(xwin))->surface);
+			cairo_xlib_surface_set_size(xface->surface, e->width, e->height);
 #endif
-					ent->type = GAL_ET_RESIZE;
-					ent->e.resize.w = e->width;
-					ent->e.resize.h = e->height;
-				}
-			}
-
+			ent->type = GAL_ET_RESIZE;
+			ent->e.resize.w = e->width;
+			ent->e.resize.h = e->height;
 			return etrue;
 		}
 		case KeyPress:
@@ -577,12 +562,6 @@ static eint x11_get_event(GalEvent *gent, ebool recv)
 		if (x11_predicate(x11_dpy, &xent, gent)) {
 			gent->window = x11_find_gwin(xent.xany.window);
 			if (gent->window) {
-#ifdef _GAL_SUPPORT_CAIRO
-				if (gent->type == GAL_ET_CONFIGURE) {
-					GalSurfaceX11 *xface = X11_SURFACE_DATA(X11_DRAWABLE_DATA(gent->window)->surface);
-					cairo_xlib_surface_set_size(xface->surface, gent->e.configure.rect.w, gent->e.configure.rect.h);
-				}
-#endif
 				if (gent->type == GAL_ET_FOCUS_IN) {
 					GalWindowX11 *xwin = X11_WINDOW_DATA(gent->window);
 					if (xwin && xwin->attr.type != GalWindowChild) {

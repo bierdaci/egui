@@ -159,6 +159,10 @@ static void widget_request_resize(eHandle hobj, eint w, eint h)
 	if (wid->window)
 		egal_window_resize(wid->window, resize.w, resize.h);
 
+	if (!e_object_type_check(hobj, GTYPE_BIN)) {
+		wid->rect.w = resize.w;
+		wid->rect.h = resize.h;
+	}
 	e_signal_emit(hobj, SIG_RESIZE, &resize);
 }
 
