@@ -26,5 +26,6 @@
 #include <egui/filesel.h>
 #include <egui/ddlist.h>
 #include <egui/drawable.h>
+#include <egui/gamewindow.h>
 
 #endif

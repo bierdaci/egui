@@ -233,12 +233,14 @@ static void leave_signal_emit(eHandle hobj)
 static void menu_shell_realize(eHandle hobj, GuiWidget *wid)
 {
 	GalWindowAttr attr = {0};
+	GalVisualInfo info;
 
+	egal_get_visual_info(0, &info);
 	attr.type    = GalWindowTemp;
 	attr.x       = 0;
 	attr.y       = 0;
-	attr.width   = 4000;
-	attr.height  = 4000;
+	attr.width   = info.w;
+	attr.height  = info.h;
 	attr.wclass  = GAL_INPUT_ONLY;
 	attr.wa_mask = GAL_WA_NOREDIR;
 	attr.input_event = etrue;
