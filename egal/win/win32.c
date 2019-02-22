@@ -62,7 +62,7 @@ int w32_wmananger_init(GalWindowManager *wm)
 {
 	GalWindowAttr attributes;
 	GalDrawable32 *xdraw;
-
+	RECT WindowRect;
 	//GdiSetBatchLimit(1);
 
 	hmodule = GetModuleHandle(NULL);
@@ -79,6 +79,12 @@ int w32_wmananger_init(GalWindowManager *wm)
 	e_thread_mutex_init(&enter_create_lock, NULL);
 	e_thread_mutex_init(&wait_create_lock, NULL);
 	e_thread_mutex_lock(&wait_create_lock);
+
+	WindowRect.left   = (long)0;
+	WindowRect.right  = (long)1280-1;
+	WindowRect.top    = (long)0;
+	WindowRect.bottom = (long)800-1;
+	AdjustWindowRectEx(&WindowRect, WS_POPUP, FALSE, WS_EX_APPWINDOW);	
 
 	attributes.type = GalWindowRoot;
 	root_window     = w32_window_new(&attributes);
@@ -729,12 +735,30 @@ static ATOM  RegisterGalClass(GalWindowType type)
 {
 	static ATOM topClass    = 0;
 	static ATOM tempClass   = 0;
+	static ATOM fullClass   = 0;
 	static ATOM childClass  = 0;
 	static ATOM dialogClass = 0;
 	ATOM kclass;
 	WNDCLASSEX  wce = {0};
 
-	if (type == GalWindowTop) {
+	if (type == GalWindowFull) {
+		if (fullClass == 0) {
+			wce.cbSize = sizeof(wce);
+			wce.style          = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+			wce.lpfnWndProc    = WinProc;
+			wce.cbClsExtra     = 0;
+			wce.cbWndExtra     = 0;
+			wce.hInstance      = GetModuleHandle(NULL);
+			wce.hIcon          = LoadIcon(NULL, IDI_WINLOGO);	
+			wce.hCursor        = LoadCursor(NULL, IDC_ARROW);
+			wce.hbrBackground  = NULL;
+			wce.lpszMenuName   = NULL;
+			wce.lpszClassName  = "fullsceen";
+			fullClass = RegisterClassEx(&wce);
+		}
+		kclass = fullClass;
+	}
+	else if (type == GalWindowTop) {
 		if (topClass == 0) {
 			wce.cbSize = sizeof(wce);
 			wce.style  = 0;
@@ -827,6 +851,115 @@ static void makeCurrent32(GalWindow32 *win32)
 	wglMakeCurrent(currentGL.hdc, win32->hrc);
 }
 #endif
+
+typedef struct {
+  DEVMODE devmode;
+  int valid;
+  int cap[4];
+} DisplayMode;
+
+static DisplayMode *dmodes;
+static DisplayMode *currentDm = NULL;
+static int ndmodes = -1;
+
+static void initGameModeSupport(void)
+{
+	DEVMODE dm;
+	DWORD mode;
+	int i;
+
+	ndmodes = 0;
+	mode = 0;
+	while (EnumDisplaySettings(NULL, mode, &dm)) {
+		printf("%d  %d  %d  %d\n", dm.dmPelsWidth, dm.dmPelsHeight, dm.dmDisplayFrequency, dm.dmBitsPerPel);
+		ndmodes++;
+		mode++;
+	}
+
+	dmodes = (DisplayMode *)malloc(ndmodes * sizeof(DisplayMode));
+
+	i = 0;
+	mode = 0;
+	while (EnumDisplaySettings(NULL, mode, &dm)) {
+			dmodes[i].devmode = dm;
+			dmodes[i].valid = 1;
+			dmodes[i].cap[0] = dm.dmPelsWidth;
+			dmodes[i].cap[1] = dm.dmPelsHeight;
+			dmodes[i].cap[2] = dm.dmBitsPerPel;
+			if (dm.dmDisplayFrequency == 0) {
+				dmodes[i].cap[3] = 60;
+			}
+			else {
+				dmodes[i].cap[3] = dm.dmDisplayFrequency;
+			}
+			i++;
+		mode++;
+	}
+
+	assert(i == ndmodes);
+}
+
+static ebool w32_create_fullscreen(GalWindow32 *parent, GalWindow32 *child)
+{
+	GalWindow  window = OBJECT_OFFSET(child);
+	eint  depth  = 0;
+	DWORD dwExStyle;
+	DWORD dwStyle;
+	RECT WindowRect;
+	ATOM kclass;
+
+ 	DEVMODE dmScreenSettings;
+
+ //initGameModeSupport();
+
+	//memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
+	//dmScreenSettings.dmSize       = sizeof(dmScreenSettings);
+	//dmScreenSettings.dmPelsWidth  = 1280;
+	//dmScreenSettings.dmPelsHeight = 800;
+	//dmScreenSettings.dmBitsPerPel = 32;
+	//dmScreenSettings.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+	//if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+	//	return efalse;
+	dwExStyle = 0;
+	dwStyle   = WS_EX_TOPMOST | WS_VISIBLE | WS_POPUP | WS_MAXIMIZE;
+	//ShowCursor(FALSE);
+	//WindowRect.left   = (long)0;
+	//WindowRect.right  = (long)1280;
+	//WindowRect.top    = (long)0;
+	//WindowRect.bottom = (long)800;
+	//AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);
+
+	kclass = RegisterGalClass(child->attr.type);
+
+	child->hwnd = CreateWindowEx(dwExStyle,
+		    MAKEINTRESOURCE(kclass),
+		    "egui",
+		    dwStyle,
+		    child->x, child->y,
+		    child->w, child->h,
+		    parent->hwnd,
+		    NULL,
+		    hmodule,
+		    (LPVOID)window);
+
+	ShowWindow(child->hwnd, SW_SHOWNORMAL);
+
+#ifdef _GAL_SUPPORT_OPENGL
+	if (currentGL.win == child)
+		makeCurrent32(child);
+#endif
+
+	if (child->attr.wclass == GAL_INPUT_OUTPUT) {
+		GalDrawable32 *xdraw = W32_DRAWABLE_DATA(window);
+		xdraw->w        = child->w;
+		xdraw->h        = child->h;
+		xdraw->isdev	= etrue;
+		xdraw->handle   = child->hwnd;
+		xdraw->depth    = depth;
+	}
+
+	return etrue;
+}
 
 static ebool w32_create_window(GalWindow32 *parent, GalWindow32 *child)
 {
@@ -1622,7 +1755,10 @@ static eint w32_window_init(eHandle hobj, GalWindowAttr *attr)
 	INIT_LIST_HEAD(&xwin->child_head);
 	e_thread_mutex_init(&xwin->lock, NULL);
 
-	if (xwin->attr.type == GalWindowTop
+	if (xwin->attr.type == GalWindowFull) {
+		w32_create_fullscreen(w32_root, xwin);
+	}
+	else if (xwin->attr.type == GalWindowTop
 			|| xwin->attr.type == GalWindowDialog
 			|| xwin->attr.type == GalWindowTemp) {
 		if (!w32_create_window(w32_root, xwin))
@@ -1894,10 +2030,17 @@ static GalColormap *w32_get_colormap(GalDrawable drawable)
 
 static int w32_get_visual_info(GalDrawable drawable, GalVisualInfo *vinfo)
 {
-	GalDrawable32 *xdraw = W32_DRAWABLE_DATA(drawable);
-	vinfo->w     = xdraw->w;
-	vinfo->h     = xdraw->h;
-	vinfo->depth = xdraw->depth;
+	if (root_window == drawable) {
+		vinfo->w = GetSystemMetrics(SM_CXSCREEN);
+		vinfo->h = GetSystemMetrics(SM_CYSCREEN);
+		vinfo->depth = W32_DRAWABLE_DATA(drawable);
+	}
+	else {
+		GalDrawable32 *xdraw = W32_DRAWABLE_DATA(drawable);
+		vinfo->w     = xdraw->w;
+		vinfo->h     = xdraw->h;
+		vinfo->depth = xdraw->depth;
+	}
 	return 0;
 }
 

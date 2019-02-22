@@ -4,7 +4,7 @@ lib_LTLIBRARIES = libelib.la
 #noinst_LTLIBRARIES = libelib.la
 
 if USE_MARSHAL_ARM
-    marshal_SOURCES = marshal-arm1.s marshal-arm2.s
+    marshal_SOURCES = marshal-armv6-1.s marshal-armv6-2.s
 else
 if USE_MARSHAL64
     marshal_SOURCES = marshal64.S marshal641.S

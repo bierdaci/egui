@@ -241,7 +241,10 @@ GalVisual *egal_get_visual(GalDrawable drawable)
 
 eint egal_get_visual_info(GalDrawable drawable, GalVisualInfo *info)
 {
-	return GAL_DRAWABLE_ORDERS(drawable)->get_visual_info(drawable, info);
+	if (drawable)
+		return GAL_DRAWABLE_ORDERS(drawable)->get_visual_info(drawable, info);
+
+	return GAL_DRAWABLE_ORDERS(_gwm.root_window)->get_visual_info(_gwm.root_window, info);
 }
 
 eint egal_drawable_get_mark(GalDrawable drawable)

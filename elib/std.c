@@ -29,7 +29,7 @@ echar *e_strcasestr(const echar *s1, const echar *s2)
 //static FILE _iob1 = __iob_func()[1];
 //static FILE _iob2 = __iob_func()[2];
 #ifndef _WIN64
-FILE _iob[3] = {0, 0, 0};
+//FILE _iob[3] = {0, 0, 0};
 #endif
 /*
 int gettimeofday(struct timeval *tp, struct timezone *tzp)
@@ -101,7 +101,8 @@ eint e_thread_create(e_thread_t *thread, void *(*routine)(void *), ePointer arg)
 
 eint e_thread_join(e_thread_t thread, void **retval)
 {
-	return -1;
+	WaitForSingleObject(thread, INFINITE);
+	return 0;
 }
 
 eint e_thread_mutex_init(e_thread_mutex_t *mutex, const e_thread_mutexattr_t *mutexattr)
@@ -478,6 +479,7 @@ int e_socket_init(void)
 
 int e_socket_close(eSocket_t fd)
 {
+	shutdown(fd, 2);
 	return closesocket(fd);
 }
 
@@ -675,11 +677,12 @@ int e_munmap(void *addr, size_t length)
 
 int e_socket_init(void)
 {
-	return 1;
+	return 0;
 }
 
 int e_socket_close(eSocket_t fd)
 {
+	shutdown(fd, SHUT_RDWR);
 	return close(fd);
 }
 

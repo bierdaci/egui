@@ -118,7 +118,8 @@ typedef enum {
 	GalWindowTop	= 1,
 	GalWindowTemp   = 2,
 	GalWindowRoot	= 3,
-	GalWindowDialog = 4,
+	GalWindowFull   = 4,
+	GalWindowDialog = 5,
 } GalWindowType;
 
 typedef enum {        

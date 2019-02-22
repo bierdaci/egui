@@ -402,7 +402,7 @@ static int translate_key(XKeyEvent *event)
 	if (keysym > 0 && keysym <= GAL_KC_asciitilde)
 		return keysym;
 
-	for (i = 0; i < sizeof(x11_keymap); i++) {
+	for (i = 0; i < sizeof(x11_keymap) / sizeof(x11_keymap[0]); i++) {
 		if (x11_keymap[i].xkey == keysym)
 			return x11_keymap[i].gkey;
 	}
@@ -717,6 +717,81 @@ static ebool x11_create_window(GalWindowX11 *parent, GalWindowX11 *child)
 
 	if (child->attr.type == GalWindowDialog)
 		XSetTransientForHint(x11_dpy, child->xid, parent->xid);
+
+	return etrue;
+}
+
+#include <X11/extensions/xf86vmode.h>
+static ebool x11_create_fullscreen(GalWindowX11 *parent, GalWindowX11 *child)
+{
+	GalWindow window = OBJECT_OFFSET(child);
+
+#define MOUSE_MASK  (ButtonPressMask \
+	 | ButtonReleaseMask | PointerMotionMask \
+	 | ButtonMotionMask | EnterWindowMask  \
+	 | LeaveWindowMask) 
+#define KEY_MASK (KeyPressMask | KeyReleaseMask)
+#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask )
+
+	XSetWindowAttributes attr;
+	unsigned long mask;
+
+	attr.background_pixel = XBlackPixel(x11_dpy, x11_vinfo->screen);
+	attr.border_pixel = 0;
+	attr.colormap = XCreateColormap(x11_dpy, parent->xid, x11_vinfo->visual, AllocNone);
+	attr.event_mask = X_MASK;
+	attr.override_redirect = True;
+	attr.backing_store = NotUseful;
+	attr.save_under = False;
+
+	mask = CWBackPixel | CWColormap | CWSaveUnder | CWBackingStore | CWEventMask | CWOverrideRedirect;
+
+	child->xid = XCreateWindow(x11_dpy, parent->xid, 0, 0, 
+			child->w, child->h, 
+			0, x11_vinfo->depth, InputOutput,
+			x11_vinfo->visual, mask, &attr);
+
+	e_thread_mutex_lock(&tree_lock);
+	e_tree_insert(x11_tree, (ePointer)child->xid, (ePointer)window);
+	e_thread_mutex_unlock(&tree_lock);
+
+	XMapWindow(x11_dpy, child->xid);
+
+#ifdef _GAL_SUPPORT_OPENGL
+	if (x11_glc->current == child) {
+		glXMakeCurrent(x11_dpy, child->xid, x11_glc->context);
+		x11_glc->xid = child->xid;
+	}
+#endif
+
+	XSync(x11_dpy, efalse);
+	while (GrabSuccess != XGrabPointer(
+			   x11_dpy, child->xid,
+			   etrue,
+			   ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask,
+			   GrabModeAsync, GrabModeAsync,
+			   child->xid, None, 0)) {
+		usleep(100);
+	}
+
+    while (GrabSuccess != XGrabKeyboard(
+        x11_dpy,
+        child->xid,
+        efalse,
+        GrabModeAsync, GrabModeAsync, 0)) {
+		usleep(100);
+	}
+
+    XSetInputFocus(x11_dpy, child->xid, RevertToNone, 0);
+
+    XWarpPointer(
+        x11_dpy,
+        None,
+        x11_root->xid,
+        0, 0, 0, 0,
+        x11_root->w/2, x11_root->h/2);
+
+	x11_drawable_init(window, child->xid, child->w, child->h, x11_vinfo->depth);
 
 	return etrue;
 }
@@ -1060,11 +1135,6 @@ static void x11_warp_pointer(GalWindow window, int sx, int sy, int sw, int sh, i
 		XWarpPointer(x11_dpy, None, xwin->xid, sx, sy, sw, sh, dx, dy);
 }
 
-#define MOUSE_MASK  (ButtonPressMask \
-	 | ButtonReleaseMask | PointerMotionMask \
-	 | ButtonMotionMask | EnterWindowMask  \
-	 | LeaveWindowMask) 
-
 static void x11_get_pointer(GalWindow window,
 		eint *root_x, eint *root_y,
 		eint *win_x, eint *win_y, GalModifierType *mask)
@@ -1360,11 +1430,47 @@ static GalCursor x11_window_get_cursor(GalWindow window)
 
 static eint x11_window_set_attr(GalWindow window, GalWindowAttr *attr)
 {
-	//GalWindowX11 *xwin = X11_WINDOW_DATA(window);
+	GalWindowX11 *xwin = X11_WINDOW_DATA(window);
 
-	//XSetWindowAttributes
-	//XWindowAttributes xattr;
-	//XChangeWindowAttributes(x11_dpy, xwin->xid, &xattr);
+	//XWindowAttributes xattribs;
+	XSetWindowAttributes xattribs;
+
+	eulong xevent_mask = 0;
+
+	e_memset(&xattribs, 0, sizeof(xattribs));
+
+	if (attr->wa_mask & GAL_WA_NOREDIR)
+		xevent_mask |= CWOverrideRedirect;
+
+	if (attr->input_event) {
+		xattribs.event_mask |= INPUT_MASK;
+		xevent_mask         |= CWEventMask;
+	}
+
+	if (attr->event_mask) {
+		xattribs.event_mask |= attr->event_mask;
+		xevent_mask         |= CWEventMask;
+	}
+
+	if (attr->wclass == GAL_INPUT_OUTPUT) {
+		if (attr->output_event) {
+			xattribs.event_mask |= EXPOSE_MASK;
+			xevent_mask         |= CWEventMask;
+		}
+
+		//xattribs.bit_gravity = StaticGravity;
+		xattribs.colormap    = x11_cmap.xmap;
+
+#ifdef _GAL_SUPPORT_OPENGL
+		xevent_mask |= CWColormap;
+#endif
+	}
+	else if (attr->wclass == GAL_INPUT_ONLY) {
+		xevent_mask |= CWOverrideRedirect;
+		xattribs.event_mask &= ~EXPOSE_MASK;
+		xattribs.override_redirect = etrue;
+	}
+	XChangeWindowAttributes(x11_dpy, xwin->xid, xevent_mask, &xattribs);
 	return 0;
 }
 
@@ -1535,7 +1641,11 @@ static eint x11_window_init(eHandle hobj, GalWindowAttr *attr)
 	INIT_LIST_HEAD(&xwin->child_head);
 	e_thread_mutex_init(&xwin->lock, NULL);
 
-	if (xwin->attr.type == GalWindowTop
+	if (xwin->attr.type == GalWindowFull) {
+		x11_create_fullscreen(x11_root, xwin);
+		x11_list_add(x11_root, xwin);
+	}
+	else if (xwin->attr.type == GalWindowTop
 			|| xwin->attr.type == GalWindowDialog
 			|| xwin->attr.type == GalWindowTemp) {
 		if (!x11_create_window(x11_root, xwin))
